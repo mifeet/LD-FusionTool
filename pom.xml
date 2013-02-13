@@ -1,80 +1,80 @@
 <?xml version="1.0" ?>
 <project
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-	xmlns="http://maven.apache.org/POM/4.0.0" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<groupId>cz.cuni.mff.odcleanstore.cr</groupId>
 	<artifactId>odcs-cr-batch</artifactId>
 	<version>0.1</version>
 	<packaging>jar</packaging>
 
+	<properties>
+		<odcs-version>1.0-SNAPSHOT</odcs-version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 	<name>Conflict Resolution - standalone batch</name>
 	<description>Batch processing tool based on Conflict Resolution component from ODCleanStore.</description>
 
-    <url>https://github.com/mifeet/cr-batch</url>
+	<url>https://github.com/mifeet/cr-batch</url>
 	<licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-    
-    <developers>
-        <developer>
-            <id>jm</id>
-            <name>Jan Michelfeit</name>
-            <organization>Faculty of Mathematics and Physics, Charles University in Prague</organization>
-        </developer>
-    </developers>
-    <contributors>
-        <contributor>
-            <name>Tomáš Knap</name>
-            <email>knap@ksi.mff.cuni.cz</email>
-            <url>http://www.ksi.mff.cuni.cz/~knap</url>
-            <organization>Faculty of Mathematics and Physics, Charles University in Prague</organization>
-        </contributor>
-    </contributors>
-    
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
-    <repositories>
-        <repository>
-            <id>melati.org</id>
-            <name>NG4J at melati.org</name>
-            <url>http://melati.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>odcleanstore</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>odcleanstore-thirdpary</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/thirdparty/</url>
-        </repository>
-    </repositories>
-    
-    <distributionManagement>
-        <repository>
-            <id>odcleanstore</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>odcleanstore</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-    
+	<developers>
+		<developer>
+			<id>jm</id>
+			<name>Jan Michelfeit</name>
+			<organization>Faculty of Mathematics and Physics, Charles University in Prague</organization>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Tomáš Knap</name>
+			<email>knap@ksi.mff.cuni.cz</email>
+			<url>http://www.ksi.mff.cuni.cz/~knap</url>
+			<organization>Faculty of Mathematics and Physics, Charles University in Prague</organization>
+		</contributor>
+	</contributors>
+
+	<repositories>
+		<repository>
+			<id>melati.org</id>
+			<name>NG4J at melati.org</name>
+			<url>http://melati.org/maven2/</url>
+		</repository>
+		<repository>
+			<id>odcleanstore</id>
+			<url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/groups/public/</url>
+		</repository>
+		<repository>
+			<id>odcleanstore-thirdpary</id>
+			<url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/thirdparty/</url>
+		</repository>
+	</repositories>
+
+	<distributionManagement>
+		<repository>
+			<id>odcleanstore</id>
+			<url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>odcleanstore</id>
+			<url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>cz.cuni.mff.odcleanstore</groupId>
 			<artifactId>odcs-backend</artifactId>
-			<version>1.0.1</version>
+			<version>${odcs-version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -107,27 +107,27 @@
 
 	<build>
 		<plugins>
-		    <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>attached</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>cz.cuni.mff.odcleanstore.crbatch.Application</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-            </plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>attached</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>cz.cuni.mff.odcleanstore.crbatch.Application</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -161,12 +161,13 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 		</plugins>
 
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
