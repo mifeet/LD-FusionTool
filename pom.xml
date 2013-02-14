@@ -139,6 +139,9 @@
 							<classpathPrefix>lib/</classpathPrefix>
 						</manifest>
 					</archive>
+					<includes>
+						<include>log4j.properties</include>
+					</includes>
 				</configuration>
 			</plugin>
 			<plugin>
