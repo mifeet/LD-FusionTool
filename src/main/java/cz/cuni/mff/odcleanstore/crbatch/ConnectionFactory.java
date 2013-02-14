@@ -30,7 +30,7 @@ public class ConnectionFactory {
      * @return database connection
      * @throws ConnectionException database connection error
      */
-    protected VirtuosoConnectionWrapper createConnection() throws ConnectionException {
+    public VirtuosoConnectionWrapper createConnection() throws ConnectionException {
         JDBCConnectionCredentials credentials = new JDBCConnectionCredentials(connectionString, username, password);
         return VirtuosoConnectionWrapper.createConnection(credentials);
     }

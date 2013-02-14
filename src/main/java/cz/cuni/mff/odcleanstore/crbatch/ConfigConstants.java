@@ -13,6 +13,17 @@ public final class ConfigConstants {
     /** Disable constructor for a utility class. */
     private ConfigConstants() {
     }
+    
+    /**
+     * SPARQL query variable referring to the named graph in named graph constraint pattern.
+     * @see Config#setNamedGraphConstraintPattern(String)
+     */
+    public static final String NG_CONSTRAINT_PATTERN_VARIABLE = "?g";
+    
+    /**
+     * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
+     */
+    public static final int MAX_QUERY_LIST_LENGTH = 25;
 
     /**
      * Coefficient used in quality computation formula. Value N means that (N+1)

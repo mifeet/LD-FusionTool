@@ -1,15 +1,19 @@
 package cz.cuni.mff.odcleanstore.crbatch;
 
+
 /**
  * Class encapsulating CR-batch configuration.
  * @author Jan Michelfeit
  * @TODO javadoc
+ * @TODO split into part representing the configuration file and part representing general config (e.g. queryTimeout)
  */
 public class Config {
     private String databaseConnectionString;
     private String databaseUsername;
     private String databasePassword;
     private Integer queryTimeout = ConfigConstants.DEFAULT_QUERY_TIMEOUT;
+    private String namedGraphConstraintPattern;
+    
     
     /**
      * @return the databaseConnectionString
@@ -104,4 +108,11 @@ public class Config {
         return ConfigConstants.MAX_DATE_DIFFERENCE;
     }
 
+    public String getNamedGraphConstraintPattern() {
+        return namedGraphConstraintPattern;
+    }
+
+    public void setNamedGraphConstraintPattern(String namedGraphConstraintPattern) {
+        this.namedGraphConstraintPattern = namedGraphConstraintPattern;
+    }
 }
