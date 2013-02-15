@@ -4,8 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMapping;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.QueryUtils;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.SameAsLinkLoader;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
@@ -27,16 +29,18 @@ public final class Application {
         config.setDatabasePassword("dba");
         config.setDatabaseUsername("dba");
         config.setNamedGraphConstraintPattern(QueryUtils.preprocessGroupGraphPattern(
-                        ConfigConstants.NG_CONSTRAINT_PATTERN_VARIABLE + " <" + ODCS.isLatestUpdate + "> 1"));
+                        ConfigConstants.NG_CONSTRAINT_PATTERN_VARIABLE + " <" + ODCS.isLatestUpdate + "> ?x FILTER(?x = 1)"));
 //        config.setNamedGraphConstraintPattern(QueryUtils.preprocessGroupGraphPattern(
 //                        ConfigConstants.NG_CONSTRAINT_PATTERN_VARIABLE + " <" + ODCS.metadataGraph + "> ?x"));
 //        
         
         ConnectionFactory connectionFactory = new ConnectionFactory(config);
-        NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, config.getNamedGraphConstraintPattern());
         try {
-            NamedGraphMetadataMap ngs = graphLoader.getNamedGraphs();
-            System.out.println(ngs);
+            NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, config.getNamedGraphConstraintPattern());
+            NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
+            
+            SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, config.getNamedGraphConstraintPattern());
+            URIMapping uriMapping = sameAsLoader.getSameAsMappings();
         } catch (Exception e) {
             e.printStackTrace();
         }

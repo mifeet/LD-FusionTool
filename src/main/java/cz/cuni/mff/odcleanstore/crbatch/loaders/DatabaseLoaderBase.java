@@ -17,6 +17,12 @@ public abstract class DatabaseLoaderBase {
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
      */
     protected static final int MAX_QUERY_LIST_LENGTH = ConfigConstants.MAX_QUERY_LIST_LENGTH;
+
+    /**
+     * A random prefix for variables used in SPARQL queries so that they don't conflict
+     * with variables used in named graph constraint pattern.
+     */
+    protected static final String VAR_PREFIX = "afdc1ea803_";
     
     /** Database connection. */
     private VirtuosoConnectionWrapper connection;

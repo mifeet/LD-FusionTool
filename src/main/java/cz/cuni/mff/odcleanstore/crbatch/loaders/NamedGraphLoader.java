@@ -23,19 +23,13 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
- * TODO: javadoc.
+ * Loads URIs and metadata of named graphs to be processed.
+ * Only payload graphs are included.
  * @author Jan Michelfeit
- * 
  */
 public class NamedGraphLoader extends DatabaseLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(NamedGraphLoader.class);
     
-    /**
-     * A random prefix for variables used in SPARQL queries so that they don't conflict
-     * with variables used in named graph constraint pattern.
-     */
-    private static final String VAR_PREFIX = "afdc1ea803_";
-
     /**
      * SPARQL query that gets metadata for named graphs to be processed.
      * Variable ?g represents the named graph.
@@ -44,6 +38,8 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
      * Must be formatted with arguments:
      * (1) named graph constraint pattern
      * (2) graph name prefix filter
+     * 
+     * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
     private static final String METADATA_QUERY = "SPARQL"
             + "\n SELECT DISTINCT ?g ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
@@ -78,6 +74,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     }
 
     /**
+     * @TODO javadoc
      * @return
      */
     public NamedGraphMetadataMap getNamedGraphs() throws CRBatchException {
