@@ -3,6 +3,8 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch;
 
+import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
+
 /**
  * Temporary class with configuration constants.
  * 
@@ -58,4 +60,9 @@ public final class ConfigConstants {
      * Zero means no timeout.
      */
     public static final int DEFAULT_QUERY_TIMEOUT = 120;
+    
+    /**
+     * Default prefix of named graphs and URIs where query results and metadata in the output are placed.
+     */
+    public static final String DEFAULT_RESULT_DATA_PREFIX = ODCS.getURI() + "query/";
 }

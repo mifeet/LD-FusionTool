@@ -1,5 +1,8 @@
 package cz.cuni.mff.odcleanstore.crbatch;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
+
+
 
 /**
  * Class encapsulating CR-batch configuration.
@@ -13,6 +16,7 @@ public class Config {
     private String databasePassword;
     private Integer queryTimeout = ConfigConstants.DEFAULT_QUERY_TIMEOUT;
     private String namedGraphConstraintPattern;
+    private AggregationSpec aggregationSpec;
     
     
     /**
@@ -114,5 +118,17 @@ public class Config {
 
     public void setNamedGraphConstraintPattern(String namedGraphConstraintPattern) {
         this.namedGraphConstraintPattern = namedGraphConstraintPattern;
+    }
+
+    public String getResultDataURIPrefix() {
+        return ConfigConstants.DEFAULT_RESULT_DATA_PREFIX;
+    }
+
+    public AggregationSpec getAggregationSpec() {
+        return aggregationSpec;
+    }
+
+    public void setAggregationSpec(AggregationSpec aggregationSpec) {
+        this.aggregationSpec = aggregationSpec;
     }
 }
