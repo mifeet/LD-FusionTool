@@ -7,13 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMapping;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
+import cz.cuni.mff.odcleanstore.crbatch.ConfigConstants;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
@@ -27,7 +29,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
     
     /**
      * SPARQL query that gets owl:sameAs links from relevant payload graphs.
-     * Variable ?g represents the named graph.
+     * Variable {@link ConfigConstants#NG_CONSTRAINT_VAR} represents the named graph.
      * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
      * 
      * Must be formatted with arguments:
@@ -38,16 +40,16 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %1$s"
-            + "\n   GRAPH ?g {"
+            + "\n   GRAPH ?" + ConfigConstants.NG_CONSTRAINT_VAR + " {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
-            + "\n   ?g <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n   %2$s"
             + "\n }";
     
     /**
      * SPARQL query that gets owl:sameAs links from relevant attached graphs.
-     * Variable ?g represents the named graph.
+     * Variable {@link ConfigConstants#NG_CONSTRAINT_VAR} represents the named graph.
      * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
      * 
      * Must be formatted with arguments:
@@ -58,8 +60,8 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %1$s"
-            + "\n   ?g <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n   ?g <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
+            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n   GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
@@ -68,6 +70,12 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
 
     private final String namedGraphConstraintPattern;
 
+    /**
+     * Creates a new instance.
+     * @param connectionFactory factory for database connection
+     * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
+     *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
+     */
     public SameAsLinkLoader(ConnectionFactory connFactory, String namedGraphConstraintPattern) {
         super(connFactory);
         this.namedGraphConstraintPattern = namedGraphConstraintPattern;
@@ -77,17 +85,17 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * @TODO javadoc
      * @return
      */
-    public URIMapping getSameAsMappings() throws CRBatchException {
+    public URIMappingIterable getSameAsMappings() throws CRBatchException {
         long startTime = System.currentTimeMillis();
-        URIMappingImpl uriMapping = new URIMappingImpl();
+        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl();
         long linkCount = 0;
         try {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
-                    namedGraphConstraintPattern, QueryUtils.getGraphPrefixFilter("g"));
+                    namedGraphConstraintPattern, LoaderUtils.getGraphPrefixFilter(ConfigConstants.NG_CONSTRAINT_VAR));
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
             
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
-                    namedGraphConstraintPattern, QueryUtils.getGraphPrefixFilter("g"));
+                    namedGraphConstraintPattern, LoaderUtils.getGraphPrefixFilter(ConfigConstants.NG_CONSTRAINT_VAR));
             linkCount += loadSameAsLinks(uriMapping, attachedQuery);
         } catch (DatabaseException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Database error", e);
@@ -99,7 +107,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
         return uriMapping;
     }
     
-    private long loadSameAsLinks(URIMappingImpl uriMapping, String query) throws DatabaseException {
+    private long loadSameAsLinks(URIMappingIterableImpl uriMapping, String query) throws DatabaseException {
         final int resource1Index = 1;
         final int resource2Index = 2;
         long linkCount = 0;

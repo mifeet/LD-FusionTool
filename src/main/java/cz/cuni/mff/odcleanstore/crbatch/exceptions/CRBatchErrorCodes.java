@@ -13,6 +13,8 @@ public final class CRBatchErrorCodes {
     }
 
     public static final int QUERY_NG_METADATA = 10;
-    public static final int QUERY_SAMEAS= 11;
-    
+    public static final int QUERY_SAMEAS = 11;
+    public static final int QUERY_TRIPLE_SUBJECTS = 12;
+    public static final int TRIPLE_SUBJECT_ITERATION = 13;
+    public static final int QUERY_QUADS = 14;
 }

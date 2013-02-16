@@ -15,6 +15,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
+import cz.cuni.mff.odcleanstore.crbatch.ConfigConstants;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -32,8 +33,9 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     
     /**
      * SPARQL query that gets metadata for named graphs to be processed.
-     * Variable ?g represents the named graph.
-     * Result contains variables ?g ?gp ?go representing triples with metadata about named graph ?g.
+     * Variable ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the named graph.
+     * Result contains variables ?{@value ConfigConstants#NG_CONSTRAINT_VAR} ?gp ?go representing triples with
+     * metadata about named graph ?{@value ConfigConstants#NG_CONSTRAINT_VAR}.
      * 
      * Must be formatted with arguments:
      * (1) named graph constraint pattern
@@ -42,14 +44,14 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
      * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
     private static final String METADATA_QUERY = "SPARQL"
-            + "\n SELECT DISTINCT ?g ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
+            + "\n SELECT DISTINCT ?" + ConfigConstants.NG_CONSTRAINT_VAR + " ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
             + "\n WHERE {"
             + "\n   %1$s"
-            + "\n   GRAPH ?g {"
+            + "\n   GRAPH ?" + ConfigConstants.NG_CONSTRAINT_VAR + " {"
             + "\n     ?" + VAR_PREFIX + "x ?" + VAR_PREFIX + "y ?" + VAR_PREFIX + "z"
             + "\n   }"
-            + "\n   ?g <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   ?g ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
+            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
             + "\n   %2$s"
             + "\n }";
     
@@ -68,6 +70,12 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
 
     private final String namedGraphConstraintPattern;
 
+    /**
+     * Creates a new instance.
+     * @param connectionFactory factory for database connection
+     * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
+     *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
+     */
     public NamedGraphLoader(ConnectionFactory connFactory, String namedGraphConstraintPattern) {
         super(connFactory);
         this.namedGraphConstraintPattern = namedGraphConstraintPattern;
@@ -96,7 +104,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     
     private NamedGraphMetadataMap loadNamedGraphMetadata() throws DatabaseException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
-                namedGraphConstraintPattern, QueryUtils.getGraphPrefixFilter("g"));
+                namedGraphConstraintPattern, LoaderUtils.getGraphPrefixFilter(ConfigConstants.NG_CONSTRAINT_VAR));
         final int graphIndex = 1;
         final int propertyIndex = 2;
         final int valueIndex = 3;

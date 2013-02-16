@@ -15,10 +15,10 @@ public final class ConfigConstants {
     }
     
     /**
-     * SPARQL query variable referring to the named graph in named graph constraint pattern.
+     * SPARQL query variable name referring to the named graph in named graph constraint pattern.
      * @see Config#setNamedGraphConstraintPattern(String)
      */
-    public static final String NG_CONSTRAINT_PATTERN_VARIABLE = "?g";
+    public static final String NG_CONSTRAINT_VAR = "g";
     
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .

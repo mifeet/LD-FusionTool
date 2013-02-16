@@ -11,7 +11,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
  * @TODO: javadoc, merge with DatabaseLoaderBase?
  * @author Jan Michelfeit
  */
-public final class QueryUtils {
+public final class LoaderUtils {
     /**
      * Only named graph having URI not starting with this prefix can be included in query result.
      * @see ODCSInternal#hiddenGraphPrefix
@@ -67,6 +67,6 @@ public final class QueryUtils {
     }
     
     /** Disable constructor for a utility class. */
-    private QueryUtils() {
+    private LoaderUtils() {
     }
 }

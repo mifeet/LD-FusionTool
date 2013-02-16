@@ -30,8 +30,20 @@ public abstract class DatabaseLoaderBase {
     /** Database connection factory. */
     private final ConnectionFactory connectionFactory;
     
+    /**
+     * Creates a new instance.
+     * @param connectionFactory factory for database connection
+     */
     protected DatabaseLoaderBase(ConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
+    }
+    
+    /**
+     * Returns database connection factory.
+     * @return database connection factory
+     */
+    protected ConnectionFactory getConnectionFactory() {
+        return connectionFactory;
     }
     
     /**
