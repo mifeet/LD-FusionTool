@@ -82,8 +82,8 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     }
 
     /**
-     * @TODO javadoc
-     * @return
+     * Loads metadata for payload graphs matching the named graph constraint given in the constructor.
+     * @return metadata for relevant named graphs
      */
     public NamedGraphMetadataMap getNamedGraphs() throws CRBatchException {
         long startTime = System.currentTimeMillis();

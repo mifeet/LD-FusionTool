@@ -8,7 +8,7 @@ import java.util.Locale;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 
 /**
- * @TODO: javadoc, merge with DatabaseLoaderBase?
+ * Utility methods for database loaders.
  * @author Jan Michelfeit
  */
 public final class LoaderUtils {
@@ -54,9 +54,9 @@ public final class LoaderUtils {
     }
     
     /**
-     * TODO: javadoc
-     * @param groupGraphPattern
-     * @return
+     * Prepares SPARQL group graph pattern - trims whitespace and optional enclosing braces.
+     * @param groupGraphPattern SPARQL gropu graph pattern 
+     * @return group graph pattern with trimmed whitespaces & enclosing braces
      */
     public static String preprocessGroupGraphPattern(String groupGraphPattern) {
         String result = groupGraphPattern.trim();

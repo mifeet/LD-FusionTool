@@ -6,7 +6,6 @@ import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMapping;
 import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
@@ -21,7 +20,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
  * Loads owl:sameAs links from named graphs to be processed and their attached graphs.
- * The result is returned as an instance of {@link URIMapping}.
+ * The result is returned as an instance of {@link URIMappingIterable}.
  * @author Jan Michelfeit
  */
 public class SameAsLinkLoader extends DatabaseLoaderBase {
@@ -82,8 +81,10 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
     }
 
     /**
-     * @TODO javadoc
-     * @return
+     * Loads owl:sameAs links from payload graphs matching the named graph constraint given
+     * in the constructor and their attached graphs, create mapping to canonical URIs from them
+     * and return it.
+     * @return mapping to canonical URIs created from relevant owl:sameAs links
      */
     public URIMappingIterable getSameAsMappings() throws CRBatchException {
         long startTime = System.currentTimeMillis();

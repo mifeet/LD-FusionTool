@@ -22,7 +22,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 /**
  * Loads subjects of triples to be processed and gives an iterator over them.
  * The iterator uses an open cursor in the database in the current implementation.
- * @TODO: another option would be to load subjects and keep them all in the memory or on the FS.
+ * @todo another option would be to load subjects and keep them all in the memory or on the FS.
  * @author Jan Michelfeit
  */
 public class TripleSubjectsLoader extends DatabaseLoaderBase {
@@ -70,10 +70,19 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
             return result;
         }
 
+        /**
+         * Returns {@code true} if the iteration has more elements.
+         * @return {@code true} if the iteration has more elements
+         */
         public boolean hasNext() {
             return next != null;
         }
 
+        /**
+         * Returns the next element in the iteration.
+         * @return the next element in the iteration
+         * @throws NoSuchElementException if the iteration has no more elements
+         */
         public Node next() throws CRBatchException {
             if (subjectsResultSet == null) {
                 throw new IllegalStateException("The iterator has been closed");
