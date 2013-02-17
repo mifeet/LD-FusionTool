@@ -1,6 +1,7 @@
 package cz.cuni.mff.odcleanstore.crbatch;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
+import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
 
 
 
@@ -17,7 +18,7 @@ public class Config {
     private Integer queryTimeout = ConfigConstants.DEFAULT_QUERY_TIMEOUT;
     private String namedGraphConstraintPattern;
     private AggregationSpec aggregationSpec;
-    
+    private EnumOutputFormat outputFormat;
     
     /**
      * @return the databaseConnectionString
@@ -130,5 +131,13 @@ public class Config {
 
     public void setAggregationSpec(AggregationSpec aggregationSpec) {
         this.aggregationSpec = aggregationSpec;
+    }
+
+    public EnumOutputFormat getOutputFormat() {
+        return outputFormat;
+    }
+
+    public void setOutputFormat(EnumOutputFormat outputFormat) {
+        this.outputFormat = outputFormat;
     }
 }
