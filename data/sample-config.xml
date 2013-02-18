@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Config>
+  <Prefixes>
+    <Prefix id="rdf" namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
+	<Prefix id="rdfs" namespace="http://www.w3.org/2000/01/rdf-schema#" />
+	<Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
+    <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
+  </Prefixes>
+  <DataSource>
+    <Param name="host" value="localhost" />
+    <Param name="port" value="1111" />
+    <Param name="username" value="dba" />
+    <Param name="password" value="dba" />
+  </DataSource>
+  <SourceGraphsRestriction graphvar="g">
+    ?g odcs:LatestUpdate ?x FILTER (?x = 1)  
+  </SourceGraphsRestriction>
+  <ConflictResolution>
+    <Param name="defaultMultivalue" value="true"/>
+    <Param name="defaultAggregation" value="ALL" />
+    <Param name="defaultAggregationErrorStrategy" value="RETURN_ALL" />
+    <PropertySettings>
+      <Aggregation type="BEST">
+      	<Property id="rdfs:label"/>
+      </Aggregation>
+      <Aggregation type="AVG" multivalue="false">
+        <Property id="http://rdf.freebase.com/ns/location.geocode.longtitude"/>
+        <Property id="http://rdf.freebase.com/ns/location.geocode.latitude" />
+      </Aggregation>
+    </PropertySettings>
+  </ConflictResolution>
+  <Outputs>
+    <Output type="file">
+      <Param name="file" value="out.n3"/>
+      <Param name="format" value="ntriples"/>
+      <!--<Param name="resultDataPrefix" value="http://opendata.cz/infrastructure/odcleanstore/query"/> -->
+    </Output>
+  </Outputs>
+</Config>
