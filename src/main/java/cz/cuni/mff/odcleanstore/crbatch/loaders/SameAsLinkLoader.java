@@ -71,7 +71,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param connFactory factory for database connection
      * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
      *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
      */
@@ -85,6 +85,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * in the constructor and their attached graphs, create mapping to canonical URIs from them
      * and return it.
      * @return mapping to canonical URIs created from relevant owl:sameAs links
+     * @throws CRBatchException error
      */
     public URIMappingIterable getSameAsMappings() throws CRBatchException {
         long startTime = System.currentTimeMillis();

@@ -21,6 +21,9 @@ public class IncrementalRdfXmlWriter extends JenaRdfXmlWriterTrojan implements C
     private final PrintWriter outputWriter;
     private boolean closed = false;
 
+    /**
+     * @param outputWriter writer to which result is written
+     */
     public IncrementalRdfXmlWriter(Writer outputWriter) {
         PrintWriter pw = outputWriter instanceof PrintWriter ? (PrintWriter) outputWriter : new PrintWriter(outputWriter);
         this.outputWriter = pw;

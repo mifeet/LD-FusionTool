@@ -9,18 +9,31 @@ import com.hp.hpl.jena.vocabulary.RDF;
  * @author Jan Michelfeit
  */
 public abstract class JenaRdfXmlWriterTrojan extends Basic {
+    /**
+     * @return tab size
+     */
     protected int getTabSize() {
         return tabSize;
     }
 
+    /**
+     * @return xml base
+     */
     protected String getXmlBase() {
         return xmlBase;
     }
 
+    /**
+     * @return xmlnsDecl()
+     */
     protected String jenaXmlnsDecl() {
         return super.xmlnsDecl();
     }
 
+    /**
+     * @param local 
+     * @return rdfEl(local)
+     */
     protected String jenaRdfEl(String local) {
         return super.rdfEl(local);
     }

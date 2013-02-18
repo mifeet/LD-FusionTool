@@ -21,6 +21,9 @@ public class AlternativeURINavigator {
     private final URIMappingIterable uriMapping;
     private Map<String, List<String>> alternativeURIMap;
     
+    /**
+     * @param uriMapping mapping of URIs to their canonical equivalent
+     */
     public AlternativeURINavigator(URIMappingIterable uriMapping) {
         this.uriMapping = uriMapping;
     }

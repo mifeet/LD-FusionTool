@@ -41,6 +41,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
          * @param query query that retrieves subjects from the database; the query must return
          *      the subjects as the first variable in the results
          * @param connectionFactory connection factory
+         * @throws CRBatchException error
          */
         /*package*/SubjectsIterator(String query, ConnectionFactory connectionFactory) throws CRBatchException {
             try {
@@ -81,7 +82,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
         /**
          * Returns the next element in the iteration.
          * @return the next element in the iteration
-         * @throws NoSuchElementException if the iteration has no more elements
+         * @throws CRBatchException error
          */
         public Node next() throws CRBatchException {
             if (subjectsResultSet == null) {
@@ -138,6 +139,12 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
     
     private final String namedGraphConstraintPattern;
 
+    /**
+     * @param connFactory database connection factory
+     * @param namedGraphConstraintPattern
+     * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
+     *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
+     */
     public TripleSubjectsLoader(ConnectionFactory connFactory, String namedGraphConstraintPattern) {
         super(connFactory);
         this.namedGraphConstraintPattern = namedGraphConstraintPattern;
@@ -149,6 +156,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
      * The iterator should be closed after it is no longer needed.
      * The current implementation returns distinct values.
      * @return iterator over subjects of relevant triples
+     * @throws CRBatchException error
      */
     public SubjectsIterator getTripleSubjectIterator() throws CRBatchException {
         long startTime = System.currentTimeMillis();

@@ -95,14 +95,17 @@
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <module name="JavadocMethod">
-        	<property name="excludeScope" value="private"/>
-        </module>
         <module name="JavadocType">
+        	<property name="scope" value="private" />
         	<property name="allowUnknownTags" value="true" />
+        	<property name="authorFormat" value="\S"/>
+        </module>
+        <module name="JavadocMethod">
+        	<property name="scope" value="package"/>
+        	<!--<property name="allowMissingThrowsTags" value="true"/>-->
         </module>
         <module name="JavadocVariable">
-        	<property name="excludeScope" value="private"/>
+        	<property name="scope" value="package"/>
         </module>
         <module name="JavadocStyle"/>
         
@@ -225,7 +228,7 @@
         <module name="ArrayTypeStyle"/>
         <!--<module name="FinalParameters"/>-->
         <!--<module name="TodoComment">
-		    <property name="format" value="todo:|TODO:|@todo|FIXME"/>
+		    <property name="format" value="todo:|TODO:|@todo|@TODO|FIXME"/>
 		</module>-->
         <module name="UpperEll"/>
 

@@ -13,7 +13,6 @@ public class CRBatchException extends ODCleanStoreException {
 
     /**
      * Constructs a new exception with the given cause.
-     * @param errorType type of the error
      * @param errorCode code of the error
      * @param cause the cause
      */
@@ -24,7 +23,6 @@ public class CRBatchException extends ODCleanStoreException {
 
     /**
      * Constructs a new exception with the given message and cause.
-     * @param errorType type of the error
      * @param errorCode code of the error
      * @param message the detail message
      * @param cause the cause
@@ -36,7 +34,6 @@ public class CRBatchException extends ODCleanStoreException {
 
     /**
      * Constructs a new exception with the given message.
-     * @param errorType type of the error
      * @param errorCode code of the error
      * @param message the detail message
      */

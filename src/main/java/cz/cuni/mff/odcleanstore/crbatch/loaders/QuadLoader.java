@@ -125,7 +125,7 @@ public class QuadLoader extends DatabaseLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param connFactory factory for database connection
      * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs
      *        (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
@@ -141,7 +141,9 @@ public class QuadLoader extends DatabaseLoaderBase {
      * Returns quads having the given uri or one of its owl:sameAs alternatives as their subject.
      * Triples are loaded from payload graphs matching the given named graph constraint pattern
      * and from their attached graphs.
+     * @param uri searched subject URI
      * @return collection of quads having uri as their subject
+     * @throws CRBatchException error
      */
     public Collection<Quad> getQuadsForURI(String uri) throws CRBatchException {
         long startTime = System.currentTimeMillis();

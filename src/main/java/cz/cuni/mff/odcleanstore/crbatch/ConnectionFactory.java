@@ -15,9 +15,7 @@ public class ConnectionFactory {
 
     /**
      * Creates a new instance.
-     * @param connectionString JDBC connection string
-     * @param username user name
-     * @param password password
+     * @param config configuration object containing connection credentials
      */
     public ConnectionFactory(Config config) {
         this.connectionString = config.getDatabaseConnectionString();

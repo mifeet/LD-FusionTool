@@ -72,7 +72,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param connFactory factory for database connection
      * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
      *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
      */
@@ -84,6 +84,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     /**
      * Loads metadata for payload graphs matching the named graph constraint given in the constructor.
      * @return metadata for relevant named graphs
+     * @throws CRBatchException error
      */
     public NamedGraphMetadataMap getNamedGraphs() throws CRBatchException {
         long startTime = System.currentTimeMillis();

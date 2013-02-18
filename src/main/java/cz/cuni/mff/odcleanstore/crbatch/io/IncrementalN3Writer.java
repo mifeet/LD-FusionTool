@@ -18,6 +18,9 @@ public class IncrementalN3Writer extends N3JenaWriterCommon implements Closeable
     private Map<Resource, String> cachedBNodesMap = null;
     private final Writer outputWriter;
 
+    /**
+     * @param outputWriter writer to which result is written
+     */
     public IncrementalN3Writer(Writer outputWriter) {
         this.outputWriter = outputWriter;
     }
