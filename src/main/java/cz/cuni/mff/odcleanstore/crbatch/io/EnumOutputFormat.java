@@ -4,19 +4,17 @@
 package cz.cuni.mff.odcleanstore.crbatch.io;
 
 /**
+ * Type of result output.
  * @author Jan Michelfeit
  */
 public enum EnumOutputFormat {
-    RDF_XML("rdf"),
-    N3("n3");
+    /**
+     * File in RDF/XML.
+     */
+    RDF_XML,
     
-    private final String fileExtension;
-    
-    private EnumOutputFormat(String fileExtension) {
-        this.fileExtension = fileExtension;
-    }
-    
-    public String getFileExtension() {
-        return fileExtension;
-    }
+    /**
+     * File in N3.
+     */
+    N3
 }

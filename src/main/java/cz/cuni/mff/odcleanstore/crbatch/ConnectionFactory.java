@@ -3,6 +3,7 @@ package cz.cuni.mff.odcleanstore.crbatch;
 import cz.cuni.mff.odcleanstore.connection.JDBCConnectionCredentials;
 import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
 import cz.cuni.mff.odcleanstore.connection.exceptions.ConnectionException;
+import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 
 /**
  * Factory class for creating connection to a clean database instance.

@@ -3,6 +3,7 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch.io;
 
+import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 
@@ -45,8 +46,8 @@ public class IncrementalN3Writer extends N3JenaWriterCommon implements Closeable
     }
 
     @Override
-    public void close() {
-        // do nothing
+    public void close() throws IOException {
+        outputWriter.close();
     }
 
     @Override

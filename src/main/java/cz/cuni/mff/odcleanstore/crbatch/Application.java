@@ -9,6 +9,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,11 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationType;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
+import cz.cuni.mff.odcleanstore.crbatch.config.Config;
+import cz.cuni.mff.odcleanstore.crbatch.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.crbatch.config.ConfigImpl;
+import cz.cuni.mff.odcleanstore.crbatch.config.Output;
+import cz.cuni.mff.odcleanstore.crbatch.config.OutputImpl;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalN3Writer;
@@ -51,21 +58,24 @@ public final class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
 
     /**
-     * @param args
-     * 
+     * @param args command line arguments
      */
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
 
-        Config config = new Config();
+        ConfigImpl config = new ConfigImpl();
         config.setDatabaseConnectionString("jdbc:virtuoso://localhost:1111/CHARSET=UTF-8");
         config.setDatabasePassword("dba");
         config.setDatabaseUsername("dba");
-        config.setOutputFormat(EnumOutputFormat.N3);
+        List<Output> outputs = new LinkedList<Output>();
+        outputs.add(new OutputImpl(EnumOutputFormat.N3, new File("out.n3")));
+        outputs.add(new OutputImpl(EnumOutputFormat.RDF_XML, new File("out.rdf")));
+        config.setOutputs(outputs);
         config.setAggregationSpec(new AggregationSpec());
         config.getAggregationSpec().setDefaultAggregation(EnumAggregationType.BEST);
-        config.setNamedGraphConstraintPattern(LoaderUtils.preprocessGroupGraphPattern(
-                "?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.isLatestUpdate + "> ?x FILTER(?x = 1)"));
+        config.setNamedGraphRestrictionVar(ConfigConstants.DEFAULT_NAMED_GRAPH_RESTRICTION_VAR);
+        config.setNamedGraphRestrictionPattern(LoaderUtils.preprocessGroupGraphPattern(
+                "?" + config.getNamedGraphRestrictionVar() + " <" + ODCS.isLatestUpdate + "> ?x FILTER(?x = 1)"));
         // config.setNamedGraphConstraintPattern(QueryUtils.preprocessGroupGraphPattern(
         // ConfigConstants.NG_CONSTRAINT_PATTERN_VARIABLE + " <" + ODCS.metadataGraph + "> ?x"));
         //
@@ -75,32 +85,33 @@ public final class Application {
         
         ConnectionFactory connectionFactory = new ConnectionFactory(config);
         try {
-            NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, config.getNamedGraphConstraintPattern());
+            NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, config.getNamedGraphRestrictionPattern(),
+                    config.getNamedGraphRestrictionVar());
             NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
 
             // Load & resolve owl:sameAs links
-            SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, config.getNamedGraphConstraintPattern());
+            SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, config.getNamedGraphRestrictionPattern(),
+                    config.getNamedGraphRestrictionVar());
             URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings();
             AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
-            
+
             // Get iterator over subjects of relevant triples
             TripleSubjectsLoader tripleSubjectsLoader = new TripleSubjectsLoader(connectionFactory,
-                    config.getNamedGraphConstraintPattern());
+                    config.getNamedGraphRestrictionPattern(), config.getNamedGraphRestrictionVar());
             SubjectsIterator subjectsIterator = tripleSubjectsLoader.getTripleSubjectIterator();
             HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
-            
+
             // Initialize CR
             ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
-            
+
             // Initialize output writer
             // TODO: writing could be more (esp. memory) efficient by avoiding models and serializing manually
-            Writer outputWriter = createOutputWriter(config);
-            CloseableRDFWriter rdfWriter = createRDFWriter(outputWriter, config);
-            
+            List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs());
+
             // Load relevant triples (quads) subject by subject so that we can apply CR to them
-            QuadLoader quadLoader = new QuadLoader(connectionFactory, config.getNamedGraphConstraintPattern(),
-                    alternativeURINavigator);
-            
+            QuadLoader quadLoader = new QuadLoader(connectionFactory, config.getNamedGraphRestrictionPattern(),
+                    config.getNamedGraphRestrictionVar(), alternativeURINavigator);
+
             while (subjectsIterator.hasNext()) {
                 Node nextSubject = subjectsIterator.next();
                 String uri;
@@ -130,14 +141,16 @@ public final class Application {
                 
                 // Write result to output
                 Model resolvedModel = crQuadsAsModel(resolvedQuads);
-                rdfWriter.write(resolvedModel); 
-                outputWriter.flush(); // TODO: ?
+                for (CloseableRDFWriter writer : rdfWriters) {
+                    writer.write(resolvedModel);
+                }
             }
             
-            testBNodes(rdfWriter);
+            testBNodes(rdfWriters);
             
-            rdfWriter.close();
-            outputWriter.close();
+            for (CloseableRDFWriter writer : rdfWriters) {
+                writer.close();
+            }
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -147,7 +160,7 @@ public final class Application {
         LOG.debug("CR-batch executed in {} ms", System.currentTimeMillis() - startTime);
     }
     
-    private static void testBNodes(CloseableRDFWriter rdfWriter) {
+    private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
         Node b1 = Node.createAnon(new AnonId("anon1"));
         Node b2 = Node.createAnon(new AnonId("anon2"));
         Node r = Node.createURI("http://example.com");
@@ -162,37 +175,43 @@ public final class Application {
         Model m4 = ModelFactory.createDefaultModel();
         m4.add(m4.asStatement(new Triple(r, r2, b2)));
         
-        rdfWriter.write(m1); 
-        rdfWriter.write(m2); 
-        rdfWriter.write(m3); 
-        rdfWriter.write(m4); 
+        for (CloseableRDFWriter writer : rdfWriters) {
+            writer.write(m1);
+            writer.write(m2);
+            writer.write(m3);
+            writer.write(m4);
+        }
     }
 
     
-    /**
-     * @return
-     */
-    private static Writer createOutputWriter(Config config) throws IOException {
-        String fileName = "out." + config.getOutputFormat().getFileExtension(); // TODO
-        OutputStream outputStream = new FileOutputStream(new File(fileName));
+    private static Writer createOutputWriter(File file) throws IOException {
+        OutputStream outputStream = new FileOutputStream(file);
         Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
         return outputWriter;
     }
-    
-    private static CloseableRDFWriter createRDFWriter(Writer outputWriter, Config config) {
-        switch (config.getOutputFormat()) {
-        case RDF_XML:
-            IncrementalRdfXmlWriter rdfXmlWriter = new IncrementalRdfXmlWriter(outputWriter);
-            // Settings making writing faster
-            rdfXmlWriter.setProperty("allowBadURIs", "true");
-            rdfXmlWriter.setProperty("relativeURIs", "");
-            //rdfXmlWriter.setProperty("tab", "0");
-            //return rdfXmlWriter;
-            // TODO: rdfXmlWriter doesn't work properly yet
-        case N3:
-        default:
-            return new IncrementalN3Writer(outputWriter);
+
+    private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs) throws IOException {
+        List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
+        for (Output output : outputs) {
+            Writer writer = createOutputWriter(output.getFileLocation());
+            switch (output.getFormat()) {
+            case RDF_XML:
+                IncrementalRdfXmlWriter rdfXmlWriter = new IncrementalRdfXmlWriter(writer);
+                // Settings making writing faster
+                rdfXmlWriter.setProperty("allowBadURIs", "true");
+                rdfXmlWriter.setProperty("relativeURIs", "");
+                // rdfXmlWriter.setProperty("tab", "0");
+                // TODO: rdfXmlWriter doesn't work properly yet
+                writers.add(rdfXmlWriter);
+                break;
+            case N3:
+            default:
+                IncrementalN3Writer n3writer = new IncrementalN3Writer(writer);
+                writers.add(n3writer);
+                break;
+            }
         }
+        return writers;
     }
 
     /**

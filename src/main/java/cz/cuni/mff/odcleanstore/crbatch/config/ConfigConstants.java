@@ -1,7 +1,7 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.crbatch;
+package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
@@ -18,9 +18,20 @@ public final class ConfigConstants {
     
     /**
      * SPARQL query variable name referring to the named graph in named graph constraint pattern.
-     * @see Config#setNamedGraphConstraintPattern(String)
+     * @see Config#getNamedGraphRestrictionPattern()
      */
-    public static final String NG_CONSTRAINT_VAR = "g";
+    public static final String DEFAULT_NAMED_GRAPH_RESTRICTION_VAR = "g";
+    
+    /**
+     * Default timeout for database queries in seconds.
+     * Zero means no timeout.
+     */
+    public static final int DEFAULT_QUERY_TIMEOUT = 120;
+    
+    /**
+     * Default prefix of named graphs and URIs where query results and metadata in the output are placed.
+     */
+    public static final String DEFAULT_RESULT_DATA_URI_PREFIX = ODCS.getURI() + "query/";
     
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
@@ -54,15 +65,4 @@ public final class ConfigConstants {
      * 31622400 s ~ 366 days
      */
     public static final long MAX_DATE_DIFFERENCE = 31622400;
-    
-    /**
-     * Default timeout for database queries in seconds.
-     * Zero means no timeout.
-     */
-    public static final int DEFAULT_QUERY_TIMEOUT = 120;
-    
-    /**
-     * Default prefix of named graphs and URIs where query results and metadata in the output are placed.
-     */
-    public static final String DEFAULT_RESULT_DATA_PREFIX = ODCS.getURI() + "query/";
 }

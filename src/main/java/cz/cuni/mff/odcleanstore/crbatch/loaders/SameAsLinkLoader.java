@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
-import cz.cuni.mff.odcleanstore.crbatch.ConfigConstants;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -28,56 +27,55 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
     
     /**
      * SPARQL query that gets owl:sameAs links from relevant payload graphs.
-     * Variable {@link ConfigConstants#NG_CONSTRAINT_VAR} represents the named graph.
+     * Variable {@link #ngRestrictionVar} represents the named graph.
      * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
      * 
      * Must be formatted with arguments:
-     * (1) named graph constraint pattern
-     * (2) graph name prefix filter
+     * (1) named graph restriction pattern
+     * (2) named graph restriction variable
+     * (3) graph name prefix filter
      */
     private static final String PAYLOAD_SAMEAS_QUERY = "SPARQL"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %1$s"
-            + "\n   GRAPH ?" + ConfigConstants.NG_CONSTRAINT_VAR + " {"
+            + "\n   GRAPH ?%2$s {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
-            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   %2$s"
+            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   %3$s"
             + "\n }";
     
     /**
      * SPARQL query that gets owl:sameAs links from relevant attached graphs.
-     * Variable {@link ConfigConstants#NG_CONSTRAINT_VAR} represents the named graph.
+     * Variable {@link #ngRestrictionVar} represents the named graph.
      * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
      * 
      * Must be formatted with arguments:
-     * (1) named graph constraint pattern
-     * (2) graph name prefix filter
+     * (1) named graph restriction pattern
+     * (2) named graph restriction variable
+     * (3) graph name prefix filter
      */
     private static final String ATTACHED_SAMEAS_QUERY = "SPARQL"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %1$s"
-            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   ?%2$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
+            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n   GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
-            + "\n   %2$s"
+            + "\n   %3$s"
             + "\n }";
-
-    private final String namedGraphConstraintPattern;
 
     /**
      * Creates a new instance.
-     * @param connFactory factory for database connection
-     * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
-     *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
+     * @param connectionFactory factory for database connection
+     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
+     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern
      */
-    public SameAsLinkLoader(ConnectionFactory connFactory, String namedGraphConstraintPattern) {
-        super(connFactory);
-        this.namedGraphConstraintPattern = namedGraphConstraintPattern;
+    public SameAsLinkLoader(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
+        super(connectionFactory, ngRestrictionPattern, ngRestrictionVar);
     }
 
     /**
@@ -93,11 +91,11 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
         long linkCount = 0;
         try {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
-                    namedGraphConstraintPattern, LoaderUtils.getGraphPrefixFilter(ConfigConstants.NG_CONSTRAINT_VAR));
+                    ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
             
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
-                    namedGraphConstraintPattern, LoaderUtils.getGraphPrefixFilter(ConfigConstants.NG_CONSTRAINT_VAR));
+                    ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
             linkCount += loadSameAsLinks(uriMapping, attachedQuery);
         } catch (DatabaseException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Database error", e);

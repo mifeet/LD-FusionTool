@@ -5,8 +5,8 @@ package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
 import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
 import cz.cuni.mff.odcleanstore.connection.exceptions.ConnectionException;
-import cz.cuni.mff.odcleanstore.crbatch.ConfigConstants;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
+import cz.cuni.mff.odcleanstore.crbatch.config.ConfigConstants;
 
 /**
  * @author Jan Michelfeit
@@ -30,12 +30,22 @@ public abstract class DatabaseLoaderBase {
     /** Database connection factory. */
     private final ConnectionFactory connectionFactory;
     
+    /** SPARQL group graph pattern limiting source payload named graphs. */
+    protected final String ngRestrictionPattern;
+    
+    /** SPARQL query variable name referring to the filtered named graph in {@link #namedGraphRestrictionPattern}. */
+    protected final String ngRestrictionVar;
+    
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
+     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
+     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern  
      */
-    protected DatabaseLoaderBase(ConnectionFactory connectionFactory) {
+    protected DatabaseLoaderBase(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
         this.connectionFactory = connectionFactory;
+        this.ngRestrictionPattern = ngRestrictionPattern;
+        this.ngRestrictionVar = ngRestrictionVar;
     }
     
     /**

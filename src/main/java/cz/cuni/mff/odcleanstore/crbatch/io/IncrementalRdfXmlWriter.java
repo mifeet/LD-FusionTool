@@ -3,6 +3,7 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch.io;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
@@ -89,11 +90,12 @@ public class IncrementalRdfXmlWriter extends JenaRdfXmlWriterTrojan implements C
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         if (closed) {
             return;
         }
         writeRDFTrailer(outputWriter, lastBase);
+        outputWriter.close();
         closed = true;
     }
 

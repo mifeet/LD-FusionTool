@@ -15,7 +15,6 @@ import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
-import cz.cuni.mff.odcleanstore.crbatch.ConfigConstants;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -33,26 +32,27 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     
     /**
      * SPARQL query that gets metadata for named graphs to be processed.
-     * Variable ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the named graph.
-     * Result contains variables ?{@value ConfigConstants#NG_CONSTRAINT_VAR} ?gp ?go representing triples with
-     * metadata about named graph ?{@value ConfigConstants#NG_CONSTRAINT_VAR}.
+     * Variable {@link #ngRestrictionVar}  represents the named graph.
+     * Result contains variables {@link #ngRestrictionVar}, ?gp, ?go representing triples with
+     * metadata about named graph ?{@link #ngRestrictionVar}.
      * 
      * Must be formatted with arguments:
-     * (1) named graph constraint pattern
-     * (2) graph name prefix filter
+     * (1) named graph restriction pattern
+     * (2) named graph restriction variable
+     * (3) graph name prefix filter
      * 
      * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
     private static final String METADATA_QUERY = "SPARQL"
-            + "\n SELECT DISTINCT ?" + ConfigConstants.NG_CONSTRAINT_VAR + " ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
+            + "\n SELECT DISTINCT ?%2$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
             + "\n WHERE {"
             + "\n   %1$s"
-            + "\n   GRAPH ?" + ConfigConstants.NG_CONSTRAINT_VAR + " {"
+            + "\n   GRAPH ?%2$s {"
             + "\n     ?" + VAR_PREFIX + "x ?" + VAR_PREFIX + "y ?" + VAR_PREFIX + "z"
             + "\n   }"
-            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
-            + "\n   %2$s"
+            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   ?%2$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
+            + "\n   %3$s"
             + "\n }";
     
     /**
@@ -68,19 +68,16 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
             + "\n   FILTER (?publishedBy IN (%1$s))"
             + "\n }";
 
-    private final String namedGraphConstraintPattern;
-
     /**
      * Creates a new instance.
-     * @param connFactory factory for database connection
-     * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
-     *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
+     * @param connectionFactory factory for database connection
+     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
+     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern
      */
-    public NamedGraphLoader(ConnectionFactory connFactory, String namedGraphConstraintPattern) {
-        super(connFactory);
-        this.namedGraphConstraintPattern = namedGraphConstraintPattern;
+    public NamedGraphLoader(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
+        super(connectionFactory, ngRestrictionPattern, ngRestrictionVar);
     }
-
+    
     /**
      * Loads metadata for payload graphs matching the named graph constraint given in the constructor.
      * @return metadata for relevant named graphs
@@ -105,7 +102,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     
     private NamedGraphMetadataMap loadNamedGraphMetadata() throws DatabaseException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
-                namedGraphConstraintPattern, LoaderUtils.getGraphPrefixFilter(ConfigConstants.NG_CONSTRAINT_VAR));
+                ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
         final int graphIndex = 1;
         final int propertyIndex = 2;
         final int valueIndex = 3;

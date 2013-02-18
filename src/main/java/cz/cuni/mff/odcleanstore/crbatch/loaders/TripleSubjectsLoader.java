@@ -12,7 +12,6 @@ import com.hp.hpl.jena.graph.Node;
 import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
 import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
-import cz.cuni.mff.odcleanstore.crbatch.ConfigConstants;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -111,43 +110,42 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
     
     /**
      * SPARQL query that gets all distinct subjects of triples to be processed.
-     * Variable ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents a relevant payload graph.
+     * Variable {@link #ngRestrictionVar} represents a relevant payload graph.
      * 
      * Must be formatted with arguments:
-     * (1) named graph constraint pattern
-     * (2) graph name prefix filter
+     * (1) named graph restriction pattern
+     * (2) named graph restriction variable
+     * (3) graph name prefix filter
      */
     private static final String SUBJECTS_QUERY = "SPARQL"
             + "\n SELECT DISTINCT ?" + VAR_PREFIX + "s"
             + "\n WHERE {"
             + "\n   %1$s"
-            + "\n   ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   %2$s"
+            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   %3$s"
             + "\n   {"
-            + "\n     GRAPH ?" + ConfigConstants.NG_CONSTRAINT_VAR + " {"
+            + "\n     GRAPH ?%2$s {"
             + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     }"
             + "\n   }"
             + "\n   UNION"
             + "\n   {"
-            + "\n     ?" + ConfigConstants.NG_CONSTRAINT_VAR + " <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
+            + "\n     ?%2$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
             + "\n     GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     }"
             + "\n   }"
             + "\n }";
     
-    private final String namedGraphConstraintPattern;
 
     /**
-     * @param connFactory database connection factory
-     * @param namedGraphConstraintPattern
-     * @param namedGraphConstraintPattern SPARQL group graph pattern limiting source payload named graphs 
-     *      (where ?{@value ConfigConstants#NG_CONSTRAINT_VAR} represents the payload graph)
+     * Creates a new instance.
+     * @param connectionFactory factory for database connection
+     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
+     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern
      */
-    public TripleSubjectsLoader(ConnectionFactory connFactory, String namedGraphConstraintPattern) {
-        super(connFactory);
-        this.namedGraphConstraintPattern = namedGraphConstraintPattern;
+    public TripleSubjectsLoader(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
+        super(connectionFactory, ngRestrictionPattern, ngRestrictionVar);
     }
 
     /**
@@ -162,7 +160,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
         long startTime = System.currentTimeMillis();
         
         String query = String.format(Locale.ROOT, SUBJECTS_QUERY,
-                namedGraphConstraintPattern, LoaderUtils.getGraphPrefixFilter(ConfigConstants.NG_CONSTRAINT_VAR));
+                ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
         SubjectsIterator result = new SubjectsIterator(query, getConnectionFactory());
         LOG.debug("CR-batch: Triple subjects iterator initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;
