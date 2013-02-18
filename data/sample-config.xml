@@ -13,12 +13,14 @@
     <Param name="password" value="dba" />
   </DataSource>
   <SourceGraphsRestriction graphvar="g">
-    ?g odcs:LatestUpdate ?x FILTER (?x = 1)  
+    ?g odcs:LatestUpdate ?x FILTER (?x = 1)   
   </SourceGraphsRestriction>
   <ConflictResolution>
-    <Param name="defaultMultivalue" value="true"/>
-    <Param name="defaultAggregation" value="ALL" />
-    <Param name="defaultAggregationErrorStrategy" value="RETURN_ALL" />
+  	<DefaultSettings>
+      <Param name="defaultMultivalue" value="true"/>
+      <Param name="defaultAggregation" value="ALL" />
+      <Param name="aggregationErrorStrategy" value="RETURN_ALL" />
+    </DefaultSettings>
     <PropertySettings>
       <Aggregation type="BEST">
       	<Property id="rdfs:label"/>

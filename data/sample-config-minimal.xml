@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Config>
+  <DataSource>
+    <Param name="host" value="localhost" />
+    <Param name="port" value="1111" />
+    <Param name="username" value="dba" />
+    <Param name="password" value="dba" />
+  </DataSource>
+  <Outputs>
+    <Output type="file">
+      <Param name="file" value="out.n3"/>
+      <Param name="format" value="ntriples"/>
+    </Output>
+  </Outputs>
+</Config>
