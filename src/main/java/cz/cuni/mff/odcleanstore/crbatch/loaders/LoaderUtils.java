@@ -10,6 +10,8 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 /**
  * Utility methods for database loaders.
  * @author Jan Michelfeit
+ * TODO: merge to DatabaseLoaderBase
+ * 
  */
 public final class LoaderUtils {
     /**
@@ -49,19 +51,6 @@ public final class LoaderUtils {
         String result = String.format(Locale.ROOT, PREFIX_FILTER_CLAUSE_NEGATIVE, graphVariable, ENGINE_TEMP_GRAPH_PREFIX);
         if (GRAPH_PREFIX_FILTER != null) {
             result += String.format(Locale.ROOT, PREFIX_FILTER_CLAUSE, graphVariable, GRAPH_PREFIX_FILTER);
-        }
-        return result;
-    }
-    
-    /**
-     * Prepares SPARQL group graph pattern - trims whitespace and optional enclosing braces.
-     * @param groupGraphPattern SPARQL gropu graph pattern 
-     * @return group graph pattern with trimmed whitespaces & enclosing braces
-     */
-    public static String preprocessGroupGraphPattern(String groupGraphPattern) {
-        String result = groupGraphPattern.trim();
-        if (result.startsWith("{") && result.endsWith("}")) {
-            result = result.substring(1, result.length() - 1);
         }
         return result;
     }

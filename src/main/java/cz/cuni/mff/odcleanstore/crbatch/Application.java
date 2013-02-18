@@ -26,18 +26,14 @@ import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
 import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationType;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
-import cz.cuni.mff.odcleanstore.crbatch.config.ConfigConstants;
-import cz.cuni.mff.odcleanstore.crbatch.config.ConfigImpl;
+import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
-import cz.cuni.mff.odcleanstore.crbatch.config.OutputImpl;
+import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
-import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalN3Writer;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalRdfXmlWriter;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.LoaderUtils;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.QuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.SameAsLinkLoader;
@@ -46,7 +42,6 @@ import cz.cuni.mff.odcleanstore.crbatch.loaders.TripleSubjectsLoader.SubjectsIte
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
-import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import de.fuberlin.wiwiss.ng4j.Quad;
 
@@ -63,26 +58,17 @@ public final class Application {
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
 
-        ConfigImpl config = new ConfigImpl();
-        config.setDatabaseConnectionString("jdbc:virtuoso://localhost:1111/CHARSET=UTF-8");
-        config.setDatabasePassword("dba");
-        config.setDatabaseUsername("dba");
-        List<Output> outputs = new LinkedList<Output>();
-        outputs.add(new OutputImpl(EnumOutputFormat.N3, new File("out.n3")));
-        outputs.add(new OutputImpl(EnumOutputFormat.RDF_XML, new File("out.rdf")));
-        config.setOutputs(outputs);
-        config.setAggregationSpec(new AggregationSpec());
-        config.getAggregationSpec().setDefaultAggregation(EnumAggregationType.BEST);
-        config.setNamedGraphRestrictionVar(ConfigConstants.DEFAULT_NAMED_GRAPH_RESTRICTION_VAR);
-        config.setNamedGraphRestrictionPattern(LoaderUtils.preprocessGroupGraphPattern(
-                "?" + config.getNamedGraphRestrictionVar() + " <" + ODCS.isLatestUpdate + "> ?x FILTER(?x = 1)"));
-        // config.setNamedGraphConstraintPattern(QueryUtils.preprocessGroupGraphPattern(
-        // ConfigConstants.NG_CONSTRAINT_PATTERN_VARIABLE + " <" + ODCS.metadataGraph + "> ?x"));
-        //
+        File configFile = new File("./data/sample-config.xml");
+        Config config = null;
+        try {
+            config = ConfigReader.parseConfigXml(configFile);
+        } catch (InvalidInputException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
 
         // TODO: check valid input
-        
-        
+
         ConnectionFactory connectionFactory = new ConnectionFactory(config);
         try {
             NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, config.getNamedGraphRestrictionPattern(),
@@ -122,36 +108,36 @@ public final class Application {
                 } else {
                     continue;
                 }
-                
+
                 String canonicalURI = uriMapping.getCanonicalURI(uri);
                 if (resolvedCanonicalURIs.contains(canonicalURI)) {
                     // avoid processing a URI multiple times
                     continue;
                 }
                 resolvedCanonicalURIs.add(canonicalURI);
-                
+
                 // Load quads for the given subject
                 Collection<Quad> quads = quadLoader.getQuadsForURI(canonicalURI);
-                
+
                 // Resolve conflicts
                 Collection<CRQuad> resolvedQuads = conflictResolver.resolveConflicts(quads);
                 // TODO: remove
-                LOG.info("Resolved {} quads for URI <{}> resulting in {} quads", 
+                LOG.info("Resolved {} quads for URI <{}> resulting in {} quads",
                         new Object[] { quads.size(), canonicalURI, resolvedQuads.size() });
-                
+
                 // Write result to output
                 Model resolvedModel = crQuadsAsModel(resolvedQuads);
                 for (CloseableRDFWriter writer : rdfWriters) {
                     writer.write(resolvedModel);
                 }
             }
-            
+
             testBNodes(rdfWriters);
-            
+
             for (CloseableRDFWriter writer : rdfWriters) {
                 writer.close();
             }
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -159,7 +145,7 @@ public final class Application {
         LOG.debug("----------------------------");
         LOG.debug("CR-batch executed in {} ms", System.currentTimeMillis() - startTime);
     }
-    
+
     private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
         Node b1 = Node.createAnon(new AnonId("anon1"));
         Node b2 = Node.createAnon(new AnonId("anon2"));
@@ -174,7 +160,7 @@ public final class Application {
         m3.add(m3.asStatement(new Triple(r, r, b1)));
         Model m4 = ModelFactory.createDefaultModel();
         m4.add(m4.asStatement(new Triple(r, r2, b2)));
-        
+
         for (CloseableRDFWriter writer : rdfWriters) {
             writer.write(m1);
             writer.write(m2);
@@ -183,7 +169,6 @@ public final class Application {
         }
     }
 
-    
     private static Writer createOutputWriter(File file) throws IOException {
         OutputStream outputStream = new FileOutputStream(file);
         Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
@@ -234,7 +219,7 @@ public final class Application {
      */
     private static ConflictResolver createConflictResolver(
             Config config, NamedGraphMetadataMap namedGraphsMetadata, URIMappingIterable uriMapping) {
-        
+
         ConflictResolutionConfig crConfig = new ConflictResolutionConfig(
                 config.getAgreeCoeficient(),
                 config.getScoreIfUnknown(),

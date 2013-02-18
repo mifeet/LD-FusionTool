@@ -47,7 +47,7 @@ public final class ConfigReader {
         } catch (Exception e) {
             throw new InvalidInputException("Error parsing configuration file", e);
         }
-
+        
         // Prefixes
         if (configXml.getPrefixes() != null) {
             config.setPrefixes(extractPrefixes(configXml.getPrefixes()));
@@ -65,7 +65,7 @@ public final class ConfigReader {
             if (restriction.getGraphvar() != null) {
                 config.setNamedGraphRestrictionVar(restriction.getGraphvar());
             }
-            config.setNamedGraphRestrictionPattern(restriction.getValue());
+            config.setNamedGraphRestrictionPattern(preprocessGroupGraphPattern(restriction.getValue()));
         }
 
         // Conflict resolution settings
@@ -189,6 +189,19 @@ public final class ConfigReader {
         File fileLocation = new File(fileLocationString);
         
         return new OutputImpl(format, fileLocation);
+    }
+    
+    /**
+     * Prepares SPARQL group graph pattern - trims whitespace and optional enclosing braces.
+     * @param groupGraphPattern SPARQL group graph pattern 
+     * @return group graph pattern with trimmed whitespace & enclosing braces
+     */
+    private String preprocessGroupGraphPattern(String groupGraphPattern) {
+        String result = groupGraphPattern.trim();
+        if (result.startsWith("{") && result.endsWith("}")) {
+            result = result.substring(1, result.length() - 1);
+        }
+        return result;
     }
 
     private ConfigReader() {
