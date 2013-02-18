@@ -13,7 +13,7 @@
     <Param name="password" value="dba" />
   </DataSource>
   <SourceGraphsRestriction graphvar="g">
-    ?g odcs:LatestUpdate ?x FILTER (?x = 1)   
+    ?g odcs:isLatestUpdate ?x FILTER (?x = 1)   
   </SourceGraphsRestriction>
   <ConflictResolution>
   	<DefaultSettings>
