@@ -1,6 +1,7 @@
 package cz.cuni.mff.odcleanstore.crbatch.config;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,8 +18,8 @@ public class ConfigImpl implements Config {
     private String namedGraphRestrictionPattern = "";
     private String namedGraphRestrictionVar = ConfigConstants.DEFAULT_NAMED_GRAPH_RESTRICTION_VAR;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
-    private List<Output> outputs = Collections.<Output>emptyList();
-    private Map<String, String> prefixes = Collections.<String, String>emptyMap();
+    private List<Output> outputs = new LinkedList<Output>();
+    private Map<String, String> prefixes = new HashMap<String, String>();
     private AggregationSpec aggregationSpec;
     
     @Override
