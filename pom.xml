@@ -4,32 +4,16 @@
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 	<modelVersion>4.0.0</modelVersion>
-
+	
 	<groupId>cz.cuni.mff.odcleanstore.cr</groupId>
 	<artifactId>odcs-cr-batch</artifactId>
-	<version>0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
-
-	<properties>
-		<odcs-version>1.0-SNAPSHOT</odcs-version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-
 	<name>Conflict Resolution - standalone batch</name>
+	<version>0.1-SNAPSHOT</version>
+	
 	<description>Batch processing tool based on Conflict Resolution component from ODCleanStore.</description>
-
 	<url>https://github.com/mifeet/cr-batch</url>
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-
 	<developers>
 		<developer>
-			<id>jm</id>
 			<name>Jan Michelfeit</name>
 			<organization>Faculty of Mathematics and Physics, Charles University in Prague</organization>
 		</developer>
@@ -42,6 +26,18 @@
 			<organization>Faculty of Mathematics and Physics, Charles University in Prague</organization>
 		</contributor>
 	</contributors>
+	<licenses>
+		<license>
+  		<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	
+	<properties>
+		<odcs-version>1.0-SNAPSHOT</odcs-version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<repositories>
 		<repository>
@@ -135,41 +131,20 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3.1</version>
-				<configuration>
-					<archive>
-						<manifest>
-							<addClasspath>true</addClasspath>
-							<classpathPrefix>lib/</classpathPrefix>
-						</manifest>
-					</archive>
-					<includes>
-						<include>log4j.properties</include>
-					</includes>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.3</version>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.0</version>
 				<executions>
-					<execution>
-						<id>copy-dependencies</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/lib</outputDirectory>
-							<!-- the two lines below tell Maven not to include test scoped dependencies -->
-							<includeScope>runtime</includeScope>
-							<excludeScope>provided</excludeScope>
-						</configuration>
-					</execution>
+				    <execution>
+				        <phase>package</phase>
+				        <goals>
+				            <goal>shade</goal>
+				        </goals>
+				        <configuration>
+				            <minimizeJar>true</minimizeJar>
+		                </configuration>
+				    </execution>
 				</executions>
 			</plugin>
-
 		</plugins>
 
 		<pluginManagement>
