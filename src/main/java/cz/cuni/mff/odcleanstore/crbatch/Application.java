@@ -30,6 +30,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
+import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalN3Writer;
@@ -71,19 +72,16 @@ public final class Application {
 
         ConnectionFactory connectionFactory = new ConnectionFactory(config);
         try {
-            NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, config.getNamedGraphRestrictionPattern(),
-                    config.getNamedGraphRestrictionVar());
+            NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, (QueryConfig) config);
             NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
 
             // Load & resolve owl:sameAs links
-            SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, config.getNamedGraphRestrictionPattern(),
-                    config.getNamedGraphRestrictionVar());
+            SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, (QueryConfig) config);
             URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings();
             AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
 
             // Get iterator over subjects of relevant triples
-            TripleSubjectsLoader tripleSubjectsLoader = new TripleSubjectsLoader(connectionFactory,
-                    config.getNamedGraphRestrictionPattern(), config.getNamedGraphRestrictionVar());
+            TripleSubjectsLoader tripleSubjectsLoader = new TripleSubjectsLoader(connectionFactory, (QueryConfig) config);
             SubjectsIterator subjectsIterator = tripleSubjectsLoader.getTripleSubjectIterator();
             HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
 
@@ -95,8 +93,7 @@ public final class Application {
             List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs());
 
             // Load relevant triples (quads) subject by subject so that we can apply CR to them
-            QuadLoader quadLoader = new QuadLoader(connectionFactory, config.getNamedGraphRestrictionPattern(),
-                    config.getNamedGraphRestrictionVar(), alternativeURINavigator);
+            QuadLoader quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
 
             while (subjectsIterator.hasNext()) {
                 Node nextSubject = subjectsIterator.next();

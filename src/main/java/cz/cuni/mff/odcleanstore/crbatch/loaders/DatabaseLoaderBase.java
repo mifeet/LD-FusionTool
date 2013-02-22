@@ -3,10 +3,14 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
+import java.util.Locale;
+
 import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
 import cz.cuni.mff.odcleanstore.connection.exceptions.ConnectionException;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 
 /**
  * @author Jan Michelfeit
@@ -24,28 +28,48 @@ public abstract class DatabaseLoaderBase {
      */
     protected static final String VAR_PREFIX = "afdc1ea803_";
     
+    /**
+     * Only named graph having URI not starting with this prefix can be included in query result.
+     * @see ODCSInternal#hiddenGraphPrefix
+     */
+    private static final String ENGINE_TEMP_GRAPH_PREFIX = ODCSInternal.hiddenGraphPrefix;
+
+    /**
+     * (Debug) Only named graph having URI starting with this prefix can be included in query result.
+     * If the value is null, there is now restriction on named graph URIs.
+     * This constant is only for debugging purposes and should be null in production environment.
+     */
+    private static final String GRAPH_PREFIX_FILTER = null;
+    
+    /**
+     * SPARQL snippet restricting a variable to start with the given string.
+     * Must be formatted with a string argument.
+     */
+    private static final String PREFIX_FILTER_CLAUSE = " FILTER (bif:starts_with(str(?%s), '%s')) ";
+
+    /**
+     * SPARQL snippet restricting a variable NOT to start with the given string.
+     * Must be formatted with a string argument.
+     */
+    private static final String PREFIX_FILTER_CLAUSE_NEGATIVE = " FILTER (!bif:starts_with(str(?%s), '%s')) ";
+
     /** Database connection. */
     private VirtuosoConnectionWrapper connection;
     
     /** Database connection factory. */
     private final ConnectionFactory connectionFactory;
     
-    /** SPARQL group graph pattern limiting source payload named graphs. */
-    protected final String ngRestrictionPattern;
-    
-    /** SPARQL query variable name referring to the filtered named graph in {@link #namedGraphRestrictionPattern}. */
-    protected final String ngRestrictionVar;
+    /** Settings for SPARQL queries. */
+    protected final QueryConfig queryConfig;
     
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
-     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
-     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern  
+     * @param queryConfig Settings for SPARQL queries  
      */
-    protected DatabaseLoaderBase(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
+    protected DatabaseLoaderBase(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
         this.connectionFactory = connectionFactory;
-        this.ngRestrictionPattern = ngRestrictionPattern;
-        this.ngRestrictionVar = ngRestrictionVar;
+        this.queryConfig = queryConfig;
     }
     
     /**
@@ -67,6 +91,32 @@ public abstract class DatabaseLoaderBase {
             connection = connectionFactory.createConnection();
         }
         return connection;
+    }
+    
+    /**
+     * Returns a SPARQL snippet restricting a named graph URI referenced by variable queryConfig.getNamedGraphRestrictionVar()
+     * to  {@value GRAPH_PREFIX_FILTER}.
+     * Returns an empty string if {@link GRAPH_PREFIX_FILTER} is null.
+     * @see #GRAPH_PREFIX_FILTER
+     * @return SPARQL query snippet
+     */
+    protected String getGraphPrefixFilter() {
+        return getGraphPrefixFilter(queryConfig.getNamedGraphRestrictionVar());
+    }
+    
+    /**
+     * Returns a SPARQL snippet restricting a named graph URI referenced by the given variable to GRAPH_PREFIX_FILTER.
+     * Returns an empty string if GRAPH_PREFIX_FILTER is null.
+     * @see #GRAPH_PREFIX_FILTER
+     * @param graphVariable SPARQL variable name
+     * @return SPARQL query snippet
+     */
+    private static String getGraphPrefixFilter(String graphVariable) {
+        String result = String.format(Locale.ROOT, PREFIX_FILTER_CLAUSE_NEGATIVE, graphVariable, ENGINE_TEMP_GRAPH_PREFIX);
+        if (GRAPH_PREFIX_FILTER != null) {
+            result += String.format(Locale.ROOT, PREFIX_FILTER_CLAUSE, graphVariable, GRAPH_PREFIX_FILTER);
+        }
+        return result;
     }
 
     /**

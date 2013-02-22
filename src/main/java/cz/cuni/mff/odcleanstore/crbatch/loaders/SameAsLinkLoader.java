@@ -10,6 +10,7 @@ import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
+import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
@@ -71,11 +72,10 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
-     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
-     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern
+     * @param queryConfig Settings for SPARQL queries  
      */
-    public SameAsLinkLoader(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
-        super(connectionFactory, ngRestrictionPattern, ngRestrictionVar);
+    public SameAsLinkLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
+        super(connectionFactory, queryConfig);
     }
 
     /**
@@ -91,18 +91,22 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
         long linkCount = 0;
         try {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
-                    ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
+                    queryConfig.getNamedGraphRestrictionPattern(),
+                    queryConfig.getNamedGraphRestrictionVar(),
+                    getGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
-            
+
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
-                    ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
+                    queryConfig.getNamedGraphRestrictionPattern(),
+                    queryConfig.getNamedGraphRestrictionVar(),
+                    getGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, attachedQuery);
         } catch (DatabaseException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Database error", e);
         } finally {
             closeConnectionQuietly();
         }
-        
+
         LOG.debug("CR-batch: loaded & resolved {} owl:sameAs links in {} ms", linkCount, System.currentTimeMillis() - startTime);
         return uriMapping;
     }
@@ -113,7 +117,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
         long linkCount = 0;
         long startTime = System.currentTimeMillis();
         WrappedResultSet resultSet = getConnection().executeSelect(query);
-        LOG.debug("CR-batch: Payload owl:sameAs query took {} ms", System.currentTimeMillis() - startTime);
+        LOG.debug("CR-batch: Query for owl:sameAs links took {} ms", System.currentTimeMillis() - startTime);
         try {
             while (resultSet.next()) {
                 String uri1 = resultSet.getString(resource1Index);

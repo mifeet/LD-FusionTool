@@ -13,6 +13,7 @@ import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
 import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
+import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
@@ -141,11 +142,10 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
-     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
-     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern
+     * @param queryConfig Settings for SPARQL queries  
      */
-    public TripleSubjectsLoader(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
-        super(connectionFactory, ngRestrictionPattern, ngRestrictionVar);
+    public TripleSubjectsLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
+        super(connectionFactory, queryConfig);
     }
 
     /**
@@ -160,7 +160,9 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
         long startTime = System.currentTimeMillis();
         
         String query = String.format(Locale.ROOT, SUBJECTS_QUERY,
-                ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
+                queryConfig.getNamedGraphRestrictionPattern(),
+                queryConfig.getNamedGraphRestrictionVar(),
+                getGraphPrefixFilter());
         SubjectsIterator result = new SubjectsIterator(query, getConnectionFactory());
         LOG.debug("CR-batch: Triple subjects iterator initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;

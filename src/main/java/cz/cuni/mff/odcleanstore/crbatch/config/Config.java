@@ -1,7 +1,6 @@
 package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import java.util.List;
-import java.util.Map;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
 
@@ -9,7 +8,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
  * Encapsulation of CR-batch configuration.
  * @author Jan Michelfeit
  */
-public interface Config {
+public interface Config extends QueryConfig {
     /**
      * Virtuoso database connection string.
      * @return database connection string
@@ -29,19 +28,6 @@ public interface Config {
     String getDatabasePassword();
     
     /**
-     * SPARQL group graph pattern limiting source payload named graphs.
-     * Value of {@link #getNamedGraphRestrictionVar()} is the name of the SPARQL variable representing the payload graph.
-     * @return SPARQL variable name
-     */
-    String getNamedGraphRestrictionPattern();
-    
-    /**
-     * Variable representing named graphs in source named graph restriction pattern.
-     * @return SPARQL variable name
-     */
-    String getNamedGraphRestrictionVar();
-
-    /**
      * Prefix of named graphs and URIs where query results and metadata in the output are placed.
      * @return graph name prefix
      */
@@ -52,12 +38,6 @@ public interface Config {
      * @return list of result data outputs
      */
     List<Output> getOutputs();
-    
-    /**
-     * Map of namespace prefixes that can be used (e.g. in SPARQL expressions or aggregation settings).
-     * @return map of namespace prefixes
-     */
-    Map<String, String> getPrefixes();
 
     /**
      * Aggregation settings for conflict resolution.

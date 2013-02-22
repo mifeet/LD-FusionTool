@@ -13,6 +13,7 @@ import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
+import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
@@ -125,13 +126,12 @@ public class QuadLoader extends DatabaseLoaderBase {
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
-     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
-     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern
+     * @param queryConfig Settings for SPARQL queries
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      */
-    public QuadLoader(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar,
+    public QuadLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig,
             AlternativeURINavigator alternativeURINavigator) {
-        super(connectionFactory, ngRestrictionPattern, ngRestrictionVar);
+        super(connectionFactory, queryConfig);
         this.alternativeURINavigator = alternativeURINavigator;
     }
 
@@ -151,9 +151,9 @@ public class QuadLoader extends DatabaseLoaderBase {
             List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
             if (alternativeURIs.size() <= 1) {
                 String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
-                        ngRestrictionPattern, 
-                        ngRestrictionVar,
-                        LoaderUtils.getGraphPrefixFilter(ngRestrictionVar), 
+                        queryConfig.getNamedGraphRestrictionPattern(),
+                        queryConfig.getNamedGraphRestrictionVar(),
+                        getGraphPrefixFilter(),
                         uri);
                 addQuadsFromQuery(query, result);
             } else {
@@ -161,9 +161,9 @@ public class QuadLoader extends DatabaseLoaderBase {
                         MAX_QUERY_LIST_LENGTH);
                 for (CharSequence uriList : limitedURIListBuilder) {
                     String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
-                            ngRestrictionPattern, 
-                            ngRestrictionVar,
-                            LoaderUtils.getGraphPrefixFilter(ngRestrictionVar),
+                            queryConfig.getNamedGraphRestrictionPattern(),
+                            queryConfig.getNamedGraphRestrictionVar(),
+                            getGraphPrefixFilter(),
                             uriList);
                     addQuadsFromQuery(query, result);
                 }

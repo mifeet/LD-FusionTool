@@ -16,6 +16,7 @@ import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
+import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.queryexecution.impl.QueryExecutionHelper;
@@ -71,11 +72,10 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
-     * @param ngRestrictionPattern SPARQL group graph pattern limiting source payload named graphs
-     * @param ngRestrictionVar named of SPARQL variable representing the payload graph in namedGraphConstraintPattern
+     * @param queryConfig Settings for SPARQL queries  
      */
-    public NamedGraphLoader(ConnectionFactory connectionFactory, String ngRestrictionPattern, String ngRestrictionVar) {
-        super(connectionFactory, ngRestrictionPattern, ngRestrictionVar);
+    public NamedGraphLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
+        super(connectionFactory, queryConfig);
     }
     
     /**
@@ -102,7 +102,9 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     
     private NamedGraphMetadataMap loadNamedGraphMetadata() throws DatabaseException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
-                ngRestrictionPattern, ngRestrictionVar, LoaderUtils.getGraphPrefixFilter(ngRestrictionVar));
+                queryConfig.getNamedGraphRestrictionPattern(),
+                queryConfig.getNamedGraphRestrictionVar(),
+                getGraphPrefixFilter());
         final int graphIndex = 1;
         final int propertyIndex = 2;
         final int valueIndex = 3;
