@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 package cz.cuni.mff.odcleanstore.crbatch;
 
 import java.io.BufferedWriter;
@@ -12,7 +15,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.simpleframework.xml.core.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,11 +30,9 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
-import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalN3Writer;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalRdfXmlWriter;
@@ -48,81 +48,22 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import de.fuberlin.wiwiss.ng4j.Quad;
 
 /**
- * The main entry point of the application.
+ * Processed RDF data loaded from database with Conflict Resolution and writes the output to a file.
+ * Conflict resolution includes resolution of owl:sameAs link, resolution of instance-level conflicts;
+ * quality & provenance information is not written to the output (as of now).
  * @author Jan Michelfeit
  */
-public final class Application {
-    private static final Logger LOG = LoggerFactory.getLogger(Application.class);
-
-    private static String getUsage() {
-        return "Usage:\n java -jar odcs-cr-batch-<version>.jar <config file>.xml";
-    }
-
+public class CRBatchExecutor {
+    private static final Logger LOG = LoggerFactory.getLogger(CRBatchExecutor.class);
+    
     /**
-     * Main application entry point.
-     * @param args command line arguments
-     */
-    public static void main(String[] args) {
-        if (args == null || args.length < 1) {
-            System.err.println(getUsage());
-            return;
-        }
-        File configFile = new File(args[0]);
-        if (!configFile.isFile() || !configFile.canRead()) {
-            System.err.println("Cannot read the given config file.\n");
-            System.err.println(getUsage());
-            return;
-        }
-
-        Config config = null;
-        try {
-            config = ConfigReader.parseConfigXml(configFile);
-        } catch (InvalidInputException e) {
-            System.err.println("Error in config file:");
-            System.err.println("  " + e.getMessage());
-            if (e.getCause() instanceof PersistenceException) {
-                System.err.println("  " + e.getCause().getMessage());
-            }
-            return;
-        }
-
-        // TODO: check valid input (incl. validity of prefixes)
-        
-        long startTime = System.currentTimeMillis();
-        System.out.println("Starting conflict resolution batch, this may take a while... \n");
-        
-        try {
-            executeCRBatch(config);
-        } catch (CRBatchException e) {
-            System.err.println("Error:");
-            System.err.println("  " + e.getMessage());
-            if (e.getCause() != null) {
-                System.err.println("  " + e.getCause().getMessage());
-            }
-            return;
-        } catch (ConflictResolutionException e) {
-            System.err.println("Conflict resolution error:");
-            System.err.println("  " + e.getMessage());
-            return;
-        } catch (IOException e) {
-            System.err.println("Error when writing results:");
-            System.err.println("  " + e.getMessage());
-            return;
-        }
-
-        System.out.println("----------------------------");
-        System.out.printf("CR-batch executed in %.3f s\n",
-                (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
-    }
-
-    /**
-     * Performs the actual CR-batch task.
+     * Performs the actual CR-batch task according to the given configuration.
      * @param config global configuration
      * @throws CRBatchException general batch error
      * @throws IOException I/O error when writing results
      * @throws ConflictResolutionException conflict resolution error
      */
-    private static void executeCRBatch(Config config) throws CRBatchException, IOException, ConflictResolutionException {
+    public void runCRBatch(Config config) throws CRBatchException, IOException, ConflictResolutionException {
         ConnectionFactory connectionFactory = new ConnectionFactory(config);
 
         // Load source named graphs metadata
@@ -283,9 +224,5 @@ public final class Application {
                 uriMapping);
 
         return conflictResolver;
-    }
-
-    /** Disable constructor. */
-    private Application() {
     }
 }

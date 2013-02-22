@@ -2,8 +2,8 @@
 <Config>
   <Prefixes>
     <Prefix id="rdf" namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
-	<Prefix id="rdfs" namespace="http://www.w3.org/2000/01/rdf-schema#" />
-	<Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
+    <Prefix id="rdfs" namespace="http://www.w3.org/2000/01/rdf-schema#" />
+    <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
   </Prefixes>
   <DataSource>
@@ -16,14 +16,14 @@
     ?g odcs:isLatestUpdate ?x FILTER (?x = 1)   
   </SourceGraphsRestriction>
   <ConflictResolution>
-  	<DefaultSettings>
+    <DefaultSettings>
       <Param name="defaultMultivalue" value="true"/>
       <Param name="defaultAggregation" value="ALL" />
       <Param name="aggregationErrorStrategy" value="RETURN_ALL" />
     </DefaultSettings>
     <PropertySettings>
       <Aggregation type="BEST">
-      	<Property id="rdfs:label"/>
+        <Property id="rdfs:label"/>
       </Aggregation>
       <Aggregation type="AVG" multivalue="false">
         <Property id="http://rdf.freebase.com/ns/location.geocode.longtitude"/>
