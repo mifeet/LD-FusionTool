@@ -127,9 +127,14 @@ public final class Application {
                 for (CloseableRDFWriter writer : rdfWriters) {
                     writer.write(resolvedModel);
                 }
+                
+                // Somehow helps Virtuoso release connections. 
+                // Without call to Thread.sleep(), application may fail with "No buffer space available (maximum connections reached?)"
+                // exception for too many named graphs.
+                Thread.sleep(2);
             }
 
-            testBNodes(rdfWriters);
+            //testBNodes(rdfWriters);
 
             for (CloseableRDFWriter writer : rdfWriters) {
                 writer.close();
