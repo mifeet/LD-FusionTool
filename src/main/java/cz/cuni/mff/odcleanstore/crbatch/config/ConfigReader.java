@@ -32,6 +32,12 @@ import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
  */
 public final class ConfigReader {
 
+    /**
+     * Parses the given configuration file and produces returns the contained configuration as an {@link Config} instance.
+     * @param configFile configuration XMl file
+     * @return parsed configuration
+     * @throws InvalidInputException parsing error
+     */
     public static Config parseConfigXml(File configFile) throws InvalidInputException {
         ConfigReader instance = new ConfigReader();
         return instance.parseConfigXmlImpl(configFile);

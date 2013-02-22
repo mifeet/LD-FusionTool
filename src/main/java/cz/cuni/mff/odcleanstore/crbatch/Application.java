@@ -12,12 +12,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.simpleframework.xml.core.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
@@ -27,10 +26,12 @@ import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
+import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalN3Writer;
@@ -53,48 +54,100 @@ import de.fuberlin.wiwiss.ng4j.Quad;
 public final class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
 
+    private static String getUsage() {
+        return "Usage:\n java -jar odcs-cr-batch-<version>.jar <config file>.xml";
+    }
+
     /**
+     * Main application entry point.
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        long startTime = System.currentTimeMillis();
+        if (args == null || args.length < 1) {
+            System.err.println(getUsage());
+            return;
+        }
+        File configFile = new File(args[0]);
+        if (!configFile.isFile() || !configFile.canRead()) {
+            System.err.println("Cannot read the given config file.\n");
+            System.err.println(getUsage());
+            return;
+        }
 
-        File configFile = new File("./data/sample-config.xml");
         Config config = null;
         try {
             config = ConfigReader.parseConfigXml(configFile);
         } catch (InvalidInputException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error in config file:");
+            System.err.println("  " + e.getMessage());
+            if (e.getCause() instanceof PersistenceException) {
+                System.err.println("  " + e.getCause().getMessage());
+            }
             return;
         }
 
-        // TODO: check valid input
-
-        ConnectionFactory connectionFactory = new ConnectionFactory(config);
+        // TODO: check valid input (incl. validity of prefixes)
+        
+        long startTime = System.currentTimeMillis();
         try {
-            NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, (QueryConfig) config);
-            NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
+            executeCRBatch(config);
+        } catch (CRBatchException e) {
+            System.err.println("Error:");
+            System.err.println("  " + e.getMessage());
+            if (e.getCause() != null) {
+                System.err.println("  " + e.getCause().getMessage());
+            }
+            return;
+        } catch (ConflictResolutionException e) {
+            System.err.println("Conflict resolution error:");
+            System.err.println("  " + e.getMessage());
+            return;
+        } catch (IOException e) {
+            System.err.println("Error when writing results:");
+            System.err.println("  " + e.getMessage());
+            return;
+        }
 
-            // Load & resolve owl:sameAs links
-            SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, (QueryConfig) config);
-            URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings();
-            AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
+        System.out.println("----------------------------");
+        System.out.printf("CR-batch executed in {} s\n",
+                (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
+    }
 
-            // Get iterator over subjects of relevant triples
-            TripleSubjectsLoader tripleSubjectsLoader = new TripleSubjectsLoader(connectionFactory, (QueryConfig) config);
-            SubjectsIterator subjectsIterator = tripleSubjectsLoader.getTripleSubjectIterator();
-            HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
+    /**
+     * Performs the actual CR-batch task.
+     * @param config global configuration
+     * @throws CRBatchException general batch error
+     * @throws IOException I/O error when writing results
+     * @throws ConflictResolutionException conflict resolution error
+     */
+    private static void executeCRBatch(Config config) throws CRBatchException, IOException, ConflictResolutionException {
+        ConnectionFactory connectionFactory = new ConnectionFactory(config);
 
-            // Initialize CR
-            ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
+        // Load source named graphs metadata
+        NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, (QueryConfig) config);
+        NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
 
-            // Initialize output writer
-            // TODO: writing could be more (esp. memory) efficient by avoiding models and serializing manually
-            List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs());
+        // Load & resolve owl:sameAs links
+        SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, (QueryConfig) config);
+        URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings();
+        AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
 
-            // Load relevant triples (quads) subject by subject so that we can apply CR to them
+        // Get iterator over subjects of relevant triples
+        TripleSubjectsLoader tripleSubjectsLoader = new TripleSubjectsLoader(connectionFactory, (QueryConfig) config);
+        SubjectsIterator subjectsIterator = tripleSubjectsLoader.getTripleSubjectIterator();
+
+        // Initialize CR
+        ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
+
+        // Initialize output writer
+        // TODO: writing could be more (esp. memory) efficient by avoiding models and serializing manually
+        List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs());
+
+        try {
+
+            // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
             QuadLoader quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
-
+            HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
             while (subjectsIterator.hasNext()) {
                 Node nextSubject = subjectsIterator.next();
                 String uri;
@@ -127,55 +180,47 @@ public final class Application {
                 for (CloseableRDFWriter writer : rdfWriters) {
                     writer.write(resolvedModel);
                 }
-                
-                // Somehow helps Virtuoso release connections. 
-                // Without call to Thread.sleep(), application may fail with "No buffer space available (maximum connections reached?)"
+
+                // Somehow helps Virtuoso release connections.
+                // Without call to Thread.sleep(), application may fail with
+                // "No buffer space available (maximum connections reached?)"
                 // exception for too many named graphs.
-                Thread.sleep(2);
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
             }
-
-            //testBNodes(rdfWriters);
-
+            // testBNodes(rdfWriters);
+        } finally {
             for (CloseableRDFWriter writer : rdfWriters) {
                 writer.close();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        LOG.debug("----------------------------");
-        LOG.debug("CR-batch executed in {} ms", System.currentTimeMillis() - startTime);
-    }
-
-    private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
-        Node b1 = Node.createAnon(new AnonId("anon1"));
-        Node b2 = Node.createAnon(new AnonId("anon2"));
-        Node r = Node.createURI("http://example.com");
-        Node r2 = Node.createURI("http://example2.com");
-        Model m1 = ModelFactory.createDefaultModel();
-        m1.add(m1.asStatement(new Triple(r, r, b1)));
-        m1.add(m1.asStatement(new Triple(r, r2, b2)));
-        Model m2 = ModelFactory.createDefaultModel();
-        m2.add(m2.asStatement(new Triple(r, r, r)));
-        Model m3 = ModelFactory.createDefaultModel();
-        m3.add(m3.asStatement(new Triple(r, r, b1)));
-        Model m4 = ModelFactory.createDefaultModel();
-        m4.add(m4.asStatement(new Triple(r, r2, b2)));
-
-        for (CloseableRDFWriter writer : rdfWriters) {
-            writer.write(m1);
-            writer.write(m2);
-            writer.write(m3);
-            writer.write(m4);
         }
     }
 
-    private static Writer createOutputWriter(File file) throws IOException {
-        OutputStream outputStream = new FileOutputStream(file);
-        Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-        return outputWriter;
-    }
+//    private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
+//        Node b1 = Node.createAnon(new AnonId("anon1"));
+//        Node b2 = Node.createAnon(new AnonId("anon2"));
+//        Node r = Node.createURI("http://example.com");
+//        Node r2 = Node.createURI("http://example2.com");
+//        Model m1 = ModelFactory.createDefaultModel();
+//        m1.add(m1.asStatement(new Triple(r, r, b1)));
+//        m1.add(m1.asStatement(new Triple(r, r2, b2)));
+//        Model m2 = ModelFactory.createDefaultModel();
+//        m2.add(m2.asStatement(new Triple(r, r, r)));
+//        Model m3 = ModelFactory.createDefaultModel();
+//        m3.add(m3.asStatement(new Triple(r, r, b1)));
+//        Model m4 = ModelFactory.createDefaultModel();
+//        m4.add(m4.asStatement(new Triple(r, r2, b2)));
+//
+//        for (CloseableRDFWriter writer : rdfWriters) {
+//            writer.write(m1);
+//            writer.write(m2);
+//            writer.write(m3);
+//            writer.write(m4);
+//        }
+//    }
 
     private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs) throws IOException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
@@ -201,10 +246,12 @@ public final class Application {
         return writers;
     }
 
-    /**
-     * @param resolvedQuads
-     * @return
-     */
+    private static Writer createOutputWriter(File file) throws IOException {
+        OutputStream outputStream = new FileOutputStream(file);
+        Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+        return outputWriter;
+    }
+
     private static Model crQuadsAsModel(Collection<CRQuad> crQuads) {
         Model model = ModelFactory.createDefaultModel();
         for (CRQuad crQuad : crQuads) {
@@ -213,12 +260,6 @@ public final class Application {
         return model;
     }
 
-    /**
-     * @param config
-     * @param namedGraphsMetadata
-     * @param uriMapping
-     * @return
-     */
     private static ConflictResolver createConflictResolver(
             Config config, NamedGraphMetadataMap namedGraphsMetadata, URIMappingIterable uriMapping) {
 
