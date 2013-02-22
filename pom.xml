@@ -4,12 +4,12 @@
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<groupId>cz.cuni.mff.odcleanstore.cr</groupId>
 	<artifactId>odcs-cr-batch</artifactId>
-	<name>Conflict Resolution - standalone batch</name>
+	<name>Conflict Resolution - standalone CR batch</name>
 	<version>0.1-SNAPSHOT</version>
-	
+
 	<description>Batch processing tool based on Conflict Resolution component from ODCleanStore.</description>
 	<url>https://github.com/mifeet/cr-batch</url>
 	<developers>
@@ -28,12 +28,12 @@
 	</contributors>
 	<licenses>
 		<license>
-  		<name>The Apache Software License, Version 2.0</name>
+			<name>The Apache Software License, Version 2.0</name>
 			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	
+
 	<properties>
 		<odcs-version>1.0-SNAPSHOT</odcs-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -109,24 +109,12 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>attached</goal>
-						</goals>
-					</execution>
-				</executions>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.1</version>
 				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>cz.cuni.mff.odcleanstore.crbatch.Application</mainClass>
-						</manifest>
-					</archive>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
+					<source>1.6</source>
+					<target>1.6</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -134,17 +122,59 @@
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>2.0</version>
 				<executions>
-				    <execution>
-				        <phase>package</phase>
-				        <goals>
-				            <goal>shade</goal>
-				        </goals>
-				        <configuration>
-				            <minimizeJar>true</minimizeJar>
-		                </configuration>
-				    </execution>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<minimizeJar>false</minimizeJar>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<finalName>${artifactId}-${version}-executable</finalName>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>cz.cuni.mff.odcleanstore.crbatch.Application</mainClass>
+								</transformer>
+							</transformers>
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-javadoc</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>-->
 		</plugins>
 
 		<pluginManagement>
