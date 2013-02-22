@@ -38,22 +38,23 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
      * metadata about named graph ?{@link #ngRestrictionVar}.
      * 
      * Must be formatted with arguments:
-     * (1) named graph restriction pattern
-     * (2) named graph restriction variable
-     * (3) graph name prefix filter
+     * (1) namespace prefixes declaration
+     * (2) named graph restriction pattern
+     * (3) named graph restriction variable
+     * (4) graph name prefix filter
      * 
      * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
-    private static final String METADATA_QUERY = "SPARQL"
-            + "\n SELECT DISTINCT ?%2$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
+    private static final String METADATA_QUERY = "SPARQL %1$s"
+            + "\n SELECT DISTINCT ?%3$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
             + "\n WHERE {"
-            + "\n   %1$s"
-            + "\n   GRAPH ?%2$s {"
+            + "\n   %2$s"
+            + "\n   GRAPH ?%3$s {"
             + "\n     ?" + VAR_PREFIX + "x ?" + VAR_PREFIX + "y ?" + VAR_PREFIX + "z"
             + "\n   }"
-            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   ?%2$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
-            + "\n   %3$s"
+            + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   ?%3$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
+            + "\n   %4$s"
             + "\n }";
     
     /**
@@ -102,6 +103,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     
     private NamedGraphMetadataMap loadNamedGraphMetadata() throws DatabaseException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
+                getPrefixDecl(),
                 queryConfig.getNamedGraphRestrictionPattern(),
                 queryConfig.getNamedGraphRestrictionVar(),
                 getGraphPrefixFilter());

@@ -32,19 +32,20 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
      * 
      * Must be formatted with arguments:
-     * (1) named graph restriction pattern
-     * (2) named graph restriction variable
-     * (3) graph name prefix filter
+     * (1) namespace prefixes declaration
+     * (2) named graph restriction pattern
+     * (3) named graph restriction variable
+     * (4) graph name prefix filter
      */
-    private static final String PAYLOAD_SAMEAS_QUERY = "SPARQL"
+    private static final String PAYLOAD_SAMEAS_QUERY = "SPARQL %1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
-            + "\n   %1$s"
-            + "\n   GRAPH ?%2$s {"
+            + "\n   %2$s"
+            + "\n   GRAPH ?%3$s {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
-            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   %3$s"
+            + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   %4$s"
             + "\n }";
     
     /**
@@ -53,20 +54,21 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
      * 
      * Must be formatted with arguments:
-     * (1) named graph restriction pattern
-     * (2) named graph restriction variable
-     * (3) graph name prefix filter
+     * (1) namespace prefixes declaration
+     * (2) named graph restriction patter
+     * (3) named graph restriction variable
+     * (4) graph name prefix filter
      */
-    private static final String ATTACHED_SAMEAS_QUERY = "SPARQL"
+    private static final String ATTACHED_SAMEAS_QUERY = "SPARQL %1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
-            + "\n   %1$s"
-            + "\n   ?%2$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   %2$s"
+            + "\n   ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
+            + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n   GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
-            + "\n   %3$s"
+            + "\n   %4$s"
             + "\n }";
 
     /**
@@ -91,12 +93,14 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
         long linkCount = 0;
         try {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
+                    getPrefixDecl(),
                     queryConfig.getNamedGraphRestrictionPattern(),
                     queryConfig.getNamedGraphRestrictionVar(),
                     getGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
 
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
+                    getPrefixDecl(),
                     queryConfig.getNamedGraphRestrictionPattern(),
                     queryConfig.getNamedGraphRestrictionVar(),
                     getGraphPrefixFilter());

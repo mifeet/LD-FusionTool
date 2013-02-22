@@ -4,6 +4,7 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
 import java.util.Locale;
+import java.util.Map;
 
 import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
 import cz.cuni.mff.odcleanstore.connection.exceptions.ConnectionException;
@@ -62,6 +63,12 @@ public abstract class DatabaseLoaderBase {
     /** Settings for SPARQL queries. */
     protected final QueryConfig queryConfig;
     
+    /** Cached value returned by {@link #getGraphPrefixFilter()}. */
+    private String cachedGraphPrefixFilter;
+    
+    /** Cached value returned by {@link #getPrefixDecl()}. */
+    private String cachedPrefixDecl;
+    
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
@@ -101,9 +108,12 @@ public abstract class DatabaseLoaderBase {
      * @return SPARQL query snippet
      */
     protected String getGraphPrefixFilter() {
-        return getGraphPrefixFilter(queryConfig.getNamedGraphRestrictionVar());
+        if (cachedGraphPrefixFilter == null) {
+            cachedGraphPrefixFilter = getGraphPrefixFilter(queryConfig.getNamedGraphRestrictionVar());
+        }
+        return cachedGraphPrefixFilter;
     }
-    
+
     /**
      * Returns a SPARQL snippet restricting a named graph URI referenced by the given variable to GRAPH_PREFIX_FILTER.
      * Returns an empty string if GRAPH_PREFIX_FILTER is null.
@@ -117,6 +127,37 @@ public abstract class DatabaseLoaderBase {
             result += String.format(Locale.ROOT, PREFIX_FILTER_CLAUSE, graphVariable, GRAPH_PREFIX_FILTER);
         }
         return result;
+    }
+    
+    /**
+     * Returns a SPARQL snippet with namespace prefix declarations.
+     * @return SPARQL query snippet
+     */
+    protected String getPrefixDecl() {
+        if (cachedPrefixDecl == null) {
+            cachedPrefixDecl = buildPrefixDecl(queryConfig.getPrefixes());
+        }
+        return cachedPrefixDecl;
+    }
+
+    /**
+     * Creates SPARQL snippet with prefix declarations for the given namespace prefixes.
+     * @param prefixes namespace prefixes
+     * @return SPARQL query snippet
+     */
+    private static String buildPrefixDecl(Map<String, String> prefixes) {
+        if (prefixes == null) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder("");
+        for (Map.Entry<String, String> entry: prefixes.entrySet()) {
+            result.append("\n PREFIX ")
+                .append(entry.getKey())
+                .append(": <")
+                .append(entry.getValue())
+                .append("> ");
+        }
+        return result.toString();
     }
 
     /**

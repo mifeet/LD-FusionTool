@@ -114,24 +114,25 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
      * Variable {@link #ngRestrictionVar} represents a relevant payload graph.
      * 
      * Must be formatted with arguments:
-     * (1) named graph restriction pattern
-     * (2) named graph restriction variable
-     * (3) graph name prefix filter
+     * (1) namespace prefixes declaration
+     * (2) named graph restriction pattern
+     * (3) named graph restriction variable
+     * (4) graph name prefix filter
      */
-    private static final String SUBJECTS_QUERY = "SPARQL"
+    private static final String SUBJECTS_QUERY = "SPARQL %1$s"
             + "\n SELECT DISTINCT ?" + VAR_PREFIX + "s"
             + "\n WHERE {"
-            + "\n   %1$s"
-            + "\n   ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   %3$s"
+            + "\n   %2$s"
+            + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n   %4$s"
             + "\n   {"
-            + "\n     GRAPH ?%2$s {"
+            + "\n     GRAPH ?%3$s {"
             + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     }"
             + "\n   }"
             + "\n   UNION"
             + "\n   {"
-            + "\n     ?%2$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
+            + "\n     ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
             + "\n     GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     }"
@@ -160,6 +161,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
         long startTime = System.currentTimeMillis();
         
         String query = String.format(Locale.ROOT, SUBJECTS_QUERY,
+                getPrefixDecl(),
                 queryConfig.getNamedGraphRestrictionPattern(),
                 queryConfig.getNamedGraphRestrictionVar(),
                 getGraphPrefixFilter());

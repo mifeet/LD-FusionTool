@@ -37,25 +37,26 @@ public class QuadLoader extends DatabaseLoaderBase {
      * This query is to be used when there are no owl:sameAs alternatives for the given URI.
      * 
      * Must be formatted with arguments:
-     * (1) named graph restriction pattern
-     * (2) named graph restriction variable
-     * (3) graph name prefix filter
-     * (4) searched uri
+     * (1) namespace prefixes declaration
+     * (2) named graph restriction pattern
+     * (3) named graph restriction variable
+     * (4) graph name prefix filter
+     * (5) searched uri
      */
-    private static final String QUADS_QUERY_SIMPLE = "SPARQL"
-            + "\n SELECT ?" + VAR_PREFIX + "g  <%4$s> AS ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+    private static final String QUADS_QUERY_SIMPLE = "SPARQL %1$s"
+            + "\n SELECT ?" + VAR_PREFIX + "g  <%5$s> AS ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n WHERE {"
             + "\n   {"
             + "\n     SELECT DISTINCT "
-            + "\n       ?%2$s AS ?" + VAR_PREFIX + "g"
+            + "\n       ?%3$s AS ?" + VAR_PREFIX + "g"
             + "\n       ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     WHERE {"
-            + "\n       GRAPH ?%2$s {"
-            + "\n         <%4$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n       GRAPH ?%3$s {"
+            + "\n         <%5$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n       }"
-            + "\n       %1$s"
-            + "\n       ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       %3$s"
+            + "\n       %2$s"
+            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n       %4$s"
             + "\n     }"
             + "\n   }"
             + "\n   UNION"
@@ -63,12 +64,12 @@ public class QuadLoader extends DatabaseLoaderBase {
             + "\n     SELECT DISTINCT"
             + "\n       ?" + VAR_PREFIX + "attachedGraph AS ?" + VAR_PREFIX + "g ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     WHERE {"
-            + "\n       %1$s"
-            + "\n       ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       ?%2$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n       %3$s"
+            + "\n       %2$s"
+            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n       ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
+            + "\n       %4$s"
             + "\n       GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n         <%4$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n         <%5$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n       }"
             + "\n     }"
             + "\n   }"
@@ -81,25 +82,26 @@ public class QuadLoader extends DatabaseLoaderBase {
      * This query is to be used when there are multiple owl:sameAs alternatives.
      * 
      * Must be formatted with arguments:
-     * (1) named graph restriction pattern
-     * (2) named graph restriction variable
-     * (3) graph name prefix filter
-     * (4) list of searched URIs (e.g. "<uri1>,<uri2>,<uri3>")
+     * (1) namespace prefixes declaration
+     * (2) named graph restriction pattern
+     * (3) named graph restriction variable
+     * (4) graph name prefix filter
+     * (5) list of searched URIs (e.g. "<uri1>,<uri2>,<uri3>")
      */
-    private static final String QUADS_QUERY_ALTERNATIVE = "SPARQL"
+    private static final String QUADS_QUERY_ALTERNATIVE = "SPARQL %1$s"
             + "\n SELECT ?" + VAR_PREFIX + "g ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n WHERE {"
             + "\n   {"
             + "\n     SELECT DISTINCT "
-            + "\n       ?%2$s AS ?" + VAR_PREFIX + "g"
+            + "\n       ?%3$s AS ?" + VAR_PREFIX + "g"
             + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     WHERE {"
-            + "\n       %1$s"
-            + "\n       ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       %3$s"
-            + "\n       GRAPH ?%2$s {"
+            + "\n       %2$s"
+            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n       %4$s"
+            + "\n       GRAPH ?%3$s {"
             + "\n         ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%4$s))"
+            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%5$s))"
             + "\n       }"
             + "\n     }"
             + "\n   }"
@@ -109,13 +111,13 @@ public class QuadLoader extends DatabaseLoaderBase {
             + "\n       ?" + VAR_PREFIX + "attachedGraph AS ?" + VAR_PREFIX + "g"
             + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     WHERE {"
-            + "\n       %1$s"
-            + "\n       ?%2$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       ?%2$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n       %3$s"
+            + "\n       %2$s"
+            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
+            + "\n       ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
+            + "\n       %4$s"
             + "\n       GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n         ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%4$s))"
+            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%5$s))"
             + "\n       }"
             + "\n     }"
             + "\n   }"
@@ -151,6 +153,7 @@ public class QuadLoader extends DatabaseLoaderBase {
             List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
             if (alternativeURIs.size() <= 1) {
                 String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
+                        getPrefixDecl(),
                         queryConfig.getNamedGraphRestrictionPattern(),
                         queryConfig.getNamedGraphRestrictionVar(),
                         getGraphPrefixFilter(),
@@ -161,6 +164,7 @@ public class QuadLoader extends DatabaseLoaderBase {
                         MAX_QUERY_LIST_LENGTH);
                 for (CharSequence uriList : limitedURIListBuilder) {
                     String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
+                            getPrefixDecl(),
                             queryConfig.getNamedGraphRestrictionPattern(),
                             queryConfig.getNamedGraphRestrictionVar(),
                             getGraphPrefixFilter(),
