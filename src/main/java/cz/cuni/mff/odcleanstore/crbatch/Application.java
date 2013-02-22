@@ -89,6 +89,8 @@ public final class Application {
         // TODO: check valid input (incl. validity of prefixes)
         
         long startTime = System.currentTimeMillis();
+        System.out.println("Starting conflict resolution batch, this may take a while... \n");
+        
         try {
             executeCRBatch(config);
         } catch (CRBatchException e) {
@@ -109,7 +111,7 @@ public final class Application {
         }
 
         System.out.println("----------------------------");
-        System.out.printf("CR-batch executed in {} s\n",
+        System.out.printf("CR-batch executed in %.3f s\n",
                 (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
     }
 
