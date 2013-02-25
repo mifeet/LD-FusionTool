@@ -8,7 +8,7 @@
 	<groupId>cz.cuni.mff.odcleanstore.cr</groupId>
 	<artifactId>odcs-cr-batch</artifactId>
 	<name>Conflict Resolution - standalone CR batch</name>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.2-SNAPSHOT</version>
 
 	<description>Batch processing tool based on Conflict Resolution component from ODCleanStore.</description>
 	<url>https://github.com/mifeet/cr-batch</url>
