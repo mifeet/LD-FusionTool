@@ -2,12 +2,14 @@ package cz.cuni.mff.odcleanstore.crbatch;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import org.simpleframework.xml.core.PersistenceException;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
+import cz.cuni.mff.odcleanstore.crbatch.config.Output;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
@@ -40,6 +42,7 @@ public final class CRBatchApplication {
         Config config = null;
         try {
             config = ConfigReader.parseConfigXml(configFile);
+            checkValidInput(config);
         } catch (InvalidInputException e) {
             System.err.println("Error in config file:");
             System.err.println("  " + e.getMessage());
@@ -50,11 +53,9 @@ public final class CRBatchApplication {
             return;
         }
 
-        // TODO: check valid input (incl. validity of prefixes)
-        
         long startTime = System.currentTimeMillis();
         System.out.println("Starting conflict resolution batch, this may take a while... \n");
-        
+
         try {
             CRBatchExecutor crBatchExecutor = new CRBatchExecutor();
             crBatchExecutor.runCRBatch(config);
@@ -78,6 +79,27 @@ public final class CRBatchApplication {
         System.out.println("----------------------------");
         System.out.printf("CR-batch executed in %.3f s\n",
                 (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
+    }
+
+    private static void checkValidInput(Config config) throws InvalidInputException {
+        if (!ODCSUtils.isValidIRI(config.getResultDataURIPrefix())) {
+            throw new InvalidInputException("Result data URI prefix must be a valid URI, '" + config.getResultDataURIPrefix()
+                    + "' given");
+        }
+        for (Output output : config.getOutputs()) {
+            if (!output.getFileLocation().canWrite()) {
+                throw new InvalidInputException("Cannot write to output file " + output.getFileLocation().getPath());
+            }
+        }
+        for (Map.Entry<String, String> prefixEntry : config.getPrefixes().entrySet()) {
+            if (!prefixEntry.getKey().isEmpty() && !ODCSUtils.isValidNamespacePrefix(prefixEntry.getKey())) {
+                throw new InvalidInputException("Invalid namespace prefix '" + prefixEntry.getKey() + "'");
+            }
+            if (!prefixEntry.getValue().isEmpty() && !ODCSUtils.isValidIRI(prefixEntry.getValue())) {
+                throw new InvalidInputException("Invalid namespace prefix definition for URI '" + prefixEntry.getValue() + "'");
+            }
+        }
+        // intentionally do not check canonical URI files
     }
 
     /** Disable constructor. */
