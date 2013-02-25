@@ -82,6 +82,8 @@ public final class ConfigReader {
                 List<ParamXml> params = configXml.getConflictResolution().getParams();
                 extractConflictResolutionParams(params, config);
             }
+        } else {
+            config.setAggregationSpec(new AggregationSpec());
         }
 
         // Outputs
