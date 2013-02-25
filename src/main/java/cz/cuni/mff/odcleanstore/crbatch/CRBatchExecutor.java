@@ -3,17 +3,23 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,8 +78,10 @@ public class CRBatchExecutor {
 
         // Load & resolve owl:sameAs links
         SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(connectionFactory, (QueryConfig) config);
-        URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings();
+        Set<String> preferredURIs = getPreferredURIs(config.getAggregationSpec(), config.getCanonicalURIsInputFile());
+        URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings(preferredURIs);
         AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
+        HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
 
         // Get iterator over subjects of relevant triples
         TripleSubjectsLoader tripleSubjectsLoader = new TripleSubjectsLoader(connectionFactory, (QueryConfig) config);
@@ -81,16 +89,14 @@ public class CRBatchExecutor {
 
         // Initialize CR
         ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
-
+        
         // Initialize output writer
         // TODO: writing could be more (esp. memory) efficient by avoiding models and serializing manually
         List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs());
 
         try {
-
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
             QuadLoader quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
-            HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
             while (subjectsIterator.hasNext()) {
                 Node nextSubject = subjectsIterator.next();
                 String uri;
@@ -140,6 +146,8 @@ public class CRBatchExecutor {
                 writer.close();
             }
         }
+        
+        writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
     }
 
 //    private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
@@ -164,6 +172,42 @@ public class CRBatchExecutor {
 //            writer.write(m4);
 //        }
 //    }
+
+    private static Set<String> getPreferredURIs(AggregationSpec aggregationSpec, File canonicalURIsInputFile) throws IOException {
+        Set<String> preferredURIs = getSettingsPreferredURIs(aggregationSpec);
+        if (canonicalURIsInputFile != null) {
+            if (canonicalURIsInputFile.isFile() && canonicalURIsInputFile.canRead()) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        new FileInputStream(canonicalURIsInputFile), "UTF-8"));
+                String line = reader.readLine();
+                while (line != null) {
+                    preferredURIs.add(line);
+                    line = reader.readLine();
+                }
+                reader.close();
+            } else {
+                LOG.error("Cannot read canonical URIs from '{}'", canonicalURIsInputFile.getPath());
+               // Intentionally do not throw an exception
+            }
+        }
+
+        return preferredURIs;
+    }
+
+    private static Set<String> getSettingsPreferredURIs(AggregationSpec aggregationSpec) {
+        Set<String> aggregationProperties = aggregationSpec.getPropertyAggregations() == null
+                ? Collections.<String>emptySet()
+                : aggregationSpec.getPropertyAggregations().keySet();
+        Set<String> multivalueProperties = aggregationSpec.getPropertyMultivalue() == null
+                ? Collections.<String>emptySet()
+                : aggregationSpec.getPropertyMultivalue().keySet();
+                
+        Set<String> preferredURIs = new HashSet<String>(
+                aggregationProperties.size() + multivalueProperties.size());
+        preferredURIs.addAll(aggregationProperties);
+        preferredURIs.addAll(multivalueProperties);
+        return preferredURIs;
+    }
 
     private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs) throws IOException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
@@ -224,5 +268,21 @@ public class CRBatchExecutor {
                 uriMapping);
 
         return conflictResolver;
+    }
+    
+    private static void writeCanonicalURIs(HashSet<String> resolvedCanonicalURIs, File outputFile) throws IOException {
+        if (outputFile == null) {
+            return;
+        }
+        if (!outputFile.exists() || outputFile.canWrite()) {
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+            for (String uri : resolvedCanonicalURIs) {
+                writer.println(uri);
+            }
+            writer.close();
+        } else {
+            LOG.error("Cannot write canonical URIs to '{}'", outputFile.getPath());
+            // Intentionally do not throw an exception
+        }
     }
 }

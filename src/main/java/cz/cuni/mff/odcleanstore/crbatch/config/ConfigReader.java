@@ -25,6 +25,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.xml.PropertyXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.SourceGraphsRestrictionXml;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
  * Reads the XML configuration file and produces instances of configuration in a {@link Config} instance.
@@ -53,7 +54,7 @@ public final class ConfigReader {
         } catch (Exception e) {
             throw new InvalidInputException("Error parsing configuration file", e);
         }
-        
+
         // Prefixes
         if (configXml.getPrefixes() != null) {
             config.setPrefixes(extractPrefixes(configXml.getPrefixes()));
@@ -77,6 +78,10 @@ public final class ConfigReader {
         // Conflict resolution settings
         if (configXml.getConflictResolution() != null) {
             config.setAggregationSpec(extractAggregationSpec(configXml.getConflictResolution()));
+            if (configXml.getConflictResolution().getParams() != null) {
+                List<ParamXml> params = configXml.getConflictResolution().getParams();
+                extractConflictResolutionParams(params, config);
+            }
         }
 
         // Outputs
@@ -121,11 +126,11 @@ public final class ConfigReader {
 
     private AggregationSpec extractAggregationSpec(ConflictResolutionXml conflictResolutionXml) throws InvalidInputException {
         AggregationSpec aggregationSpec = new AggregationSpec();
-        if (conflictResolutionXml.getDefaultSettings() != null) {
-            extractAggregationDefaultSettings(conflictResolutionXml.getDefaultSettings(), aggregationSpec);
+        if (conflictResolutionXml.getDefaultAggregation() != null) {
+            extractAggregationDefaultSettings(conflictResolutionXml.getDefaultAggregation(), aggregationSpec);
         }
-        if (conflictResolutionXml.getPropertySettings() != null) {
-            for (AggregationXml aggregationSetting : conflictResolutionXml.getPropertySettings()) {
+        if (conflictResolutionXml.getPropertyAggregations() != null) {
+            for (AggregationXml aggregationSetting : conflictResolutionXml.getPropertyAggregations()) {
                 extractAggregationPropertySettings(aggregationSetting, aggregationSpec);
             }
         }
@@ -175,6 +180,30 @@ public final class ConfigReader {
         }
     }
 
+    private void extractConflictResolutionParams(List<ParamXml> params, ConfigImpl config) throws InvalidInputException {
+        for (ParamXml param : params) {
+            if (param.getValue() == null) {
+                continue;
+            }
+            if ("canonicalUriOutputFile".equalsIgnoreCase(param.getName())) {
+                if (!ODCSUtils.isNullOrEmpty(param.getValue())) {
+                    config.setCanonicalURIsOutputFile(new File(param.getValue()));
+                } else {
+                    config.setCanonicalURIsOutputFile(null);
+                }
+            } else if ("canonicalUriInputFile".equalsIgnoreCase(param.getName())) {
+                if (!ODCSUtils.isNullOrEmpty(param.getValue())) {
+                    config.setCanonicalURIsInputFile(new File(param.getValue()));
+                } else {
+                    config.setCanonicalURIsInputFile(null);
+                }
+            } else {
+                throw new InvalidInputException("Unknown parameter " + param.getName()
+                        + " used in conflict resolution parameters");
+            }
+        }
+    }
+
     private Output extractOutput(OutputXml outputXml) throws InvalidInputException {
         String formatString = extractParamByName(outputXml.getParams(), "format");
         EnumOutputFormat format;
@@ -187,26 +216,26 @@ public final class ConfigReader {
         } else {
             throw new InvalidInputException("Unknown output format " + formatString);
         }
-        
+
         String fileLocationString = extractParamByName(outputXml.getParams(), "file");
         if (fileLocationString == null) {
             throw new InvalidInputException("Name of the output file must be specified");
         }
         File fileLocation = new File(fileLocationString);
-        
+
         return new OutputImpl(format, fileLocation);
     }
-    
+
     /**
      * Prepares SPARQL group graph pattern - trims whitespace and optional enclosing braces.
-     * @param groupGraphPattern SPARQL group graph pattern 
+     * @param groupGraphPattern SPARQL group graph pattern
      * @return group graph pattern with trimmed whitespace & enclosing braces
      */
     private String preprocessGroupGraphPattern(String groupGraphPattern) {
         String result = groupGraphPattern.trim();
-        if (result.startsWith("{") && result.endsWith("}")) {
-            result = result.substring(1, result.length() - 1);
-        }
+        // if (result.startsWith("{") && result.endsWith("}")) {
+        // result = result.substring(1, result.length() - 1);
+        // }
         return result;
     }
 

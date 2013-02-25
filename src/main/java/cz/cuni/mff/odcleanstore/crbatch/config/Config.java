@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.crbatch.config;
 
+import java.io.File;
 import java.util.List;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
@@ -82,4 +83,18 @@ public interface Config extends QueryConfig {
      * @return time interval in seconds
      */
     Long getMaxDateDifference();
+    
+    /**
+     * File where resolved canonical URIs shall be written. 
+     * Null means that canonical URIs will not be written anywhere.
+     * @return file to write canonical URIs to or null
+     */
+    File getCanonicalURIsOutputFile();
+    
+    /**
+     * File with list of preferred canonical URIs, one URI per line. 
+     * Null means no preferred URIs.
+     * @return file with canonical URIs
+     */
+    File getCanonicalURIsInputFile();
 }

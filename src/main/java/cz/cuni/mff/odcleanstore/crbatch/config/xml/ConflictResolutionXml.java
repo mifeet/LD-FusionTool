@@ -13,18 +13,25 @@ import org.simpleframework.xml.Root;
  */
 @Root(name = "ConflictResolution")
 public class ConflictResolutionXml {
-    @ElementList(name = "DefaultSettings", required = false)
-    private List<ParamXml> defaultSettings;
+    @ElementList(name = "Params", required = false)
+    private List<ParamXml> params;
+    
+    @ElementList(name = "DefaultAggregation", required = false)
+    private List<ParamXml> defaultAggregation;
 
-    @ElementList(name = "PropertySettings", required = false)
-    private List<AggregationXml> propertySettings;
+    @ElementList(name = "PropertyAggregations", required = false)
+    private List<AggregationXml> propertyAggregations;
 
-    public List<ParamXml> getDefaultSettings() {
-        return defaultSettings;
+    public List<ParamXml> getParams() {
+        return params;
+    }
+    
+    public List<ParamXml> getDefaultAggregation() {
+        return defaultAggregation;
     }
 
-    public List<AggregationXml> getPropertySettings() {
-        return propertySettings;
+    public List<AggregationXml> getPropertyAggregations() {
+        return propertyAggregations;
     }
 
 }

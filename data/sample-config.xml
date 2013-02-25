@@ -16,12 +16,16 @@
     ?g odcs:isLatestUpdate ?x FILTER (?x = 1)   
   </SourceGraphsRestriction>
   <ConflictResolution>
-    <DefaultSettings>
+    <Params>
+      <Param name="canonicalUriOutputFile" value="canonicalUris.txt" />
+      <Param name="canonicalUriInputFile" value="canonicalUris.txt" />
+    </Params>
+    <DefaultAggregation>
       <Param name="defaultMultivalue" value="true"/>
       <Param name="defaultAggregation" value="ALL" />
       <Param name="aggregationErrorStrategy" value="RETURN_ALL" />
-    </DefaultSettings>
-    <PropertySettings>
+    </DefaultAggregation>
+    <PropertyAggregations>
       <Aggregation type="BEST">
         <Property id="rdfs:label"/>
       </Aggregation>
@@ -29,7 +33,7 @@
         <Property id="http://rdf.freebase.com/ns/location.geocode.longtitude"/>
         <Property id="http://rdf.freebase.com/ns/location.geocode.latitude" />
       </Aggregation>
-    </PropertySettings>
+    </PropertyAggregations>
   </ConflictResolution>
   <Outputs>
     <Output type="file">

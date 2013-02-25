@@ -1,5 +1,9 @@
 package cz.cuni.mff.odcleanstore.crbatch.config;
 
+import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +16,8 @@ import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
  * @author Jan Michelfeit
  */
 public class ConfigImpl implements Config {
+    private static final DateFormat CANONICAL_FILE_SUFFIS_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss");
+    
     private String databaseConnectionString;
     private String databaseUsername;
     private String databasePassword;
@@ -21,6 +27,9 @@ public class ConfigImpl implements Config {
     private List<Output> outputs = new LinkedList<Output>();
     private Map<String, String> prefixes = new HashMap<String, String>();
     private AggregationSpec aggregationSpec;
+    private File canonicalURIsOutputFile = 
+            new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
+    private File canonicalURIsInputFile;
     
     @Override
     public String getDatabaseConnectionString() {
@@ -135,6 +144,32 @@ public class ConfigImpl implements Config {
      */
     public void setAggregationSpec(AggregationSpec aggregationSpec) {
         this.aggregationSpec = aggregationSpec;
+    }
+    
+    @Override
+    public File getCanonicalURIsOutputFile() {
+        return canonicalURIsOutputFile;
+    }
+    
+    /**
+     * Sets file where resolved canonical URIs shall be written. 
+     * @param file file to write canonical URIs to
+     */
+    public void setCanonicalURIsOutputFile(File file) {
+        this.canonicalURIsOutputFile = file;
+    }
+
+    @Override
+    public File getCanonicalURIsInputFile() {
+        return canonicalURIsInputFile;
+    }
+    
+    /**
+     * Sets file with list of preferred canonical URIs. 
+     * @param file file with canonical URIs
+     */
+    public void setCanonicalURIsInputFile(File file) {
+        this.canonicalURIsInputFile = file;
     }
 
     @Override

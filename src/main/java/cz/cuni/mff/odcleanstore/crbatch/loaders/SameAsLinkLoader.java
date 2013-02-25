@@ -1,7 +1,9 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +81,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
     public SameAsLinkLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
         super(connectionFactory, queryConfig);
     }
-
+    
     /**
      * Loads owl:sameAs links from payload graphs matching the named graph constraint given
      * in the constructor and their attached graphs, create mapping to canonical URIs from them
@@ -88,8 +90,20 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * @throws CRBatchException error
      */
     public URIMappingIterable getSameAsMappings() throws CRBatchException {
+        return getSameAsMappings(Collections.<String>emptySet());
+    }
+
+    /**
+     * Loads owl:sameAs links from payload graphs matching the named graph constraint given
+     * in the constructor and their attached graphs, create mapping to canonical URIs from them
+     * and return it.
+     * @param preferredURIs set of URIs preferred as canonical URIs; can be null
+     * @return mapping to canonical URIs created from relevant owl:sameAs links
+     * @throws CRBatchException error
+     */
+    public URIMappingIterable getSameAsMappings(Set<String> preferredURIs) throws CRBatchException {
         long startTime = System.currentTimeMillis();
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl();
+        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
         long linkCount = 0;
         try {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
