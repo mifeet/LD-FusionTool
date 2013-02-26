@@ -61,7 +61,7 @@ import de.fuberlin.wiwiss.ng4j.Quad;
  */
 public class CRBatchExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(CRBatchExecutor.class);
-    
+
     /**
      * Performs the actual CR-batch task according to the given configuration.
      * @param config global configuration
@@ -89,14 +89,14 @@ public class CRBatchExecutor {
 
         // Initialize CR
         ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
-        
+
         // Initialize output writer
         // TODO: writing could be more (esp. memory) efficient by avoiding models and serializing manually
         List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs());
 
+        // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
+        QuadLoader quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
         try {
-            // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
-            QuadLoader quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
             while (subjectsIterator.hasNext()) {
                 Node nextSubject = subjectsIterator.next();
                 String uri;
@@ -129,49 +129,40 @@ public class CRBatchExecutor {
                 for (CloseableRDFWriter writer : rdfWriters) {
                     writer.write(resolvedModel);
                 }
-
-                // Somehow helps Virtuoso release connections.
-                // Without call to Thread.sleep(), application may fail with
-                // "No buffer space available (maximum connections reached?)"
-                // exception for too many named graphs.
-                try {
-                    Thread.sleep(2);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
             }
             // testBNodes(rdfWriters);
         } finally {
+            quadLoader.close();
             for (CloseableRDFWriter writer : rdfWriters) {
                 writer.close();
             }
         }
-        
+
         writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
     }
 
-//    private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
-//        Node b1 = Node.createAnon(new AnonId("anon1"));
-//        Node b2 = Node.createAnon(new AnonId("anon2"));
-//        Node r = Node.createURI("http://example.com");
-//        Node r2 = Node.createURI("http://example2.com");
-//        Model m1 = ModelFactory.createDefaultModel();
-//        m1.add(m1.asStatement(new Triple(r, r, b1)));
-//        m1.add(m1.asStatement(new Triple(r, r2, b2)));
-//        Model m2 = ModelFactory.createDefaultModel();
-//        m2.add(m2.asStatement(new Triple(r, r, r)));
-//        Model m3 = ModelFactory.createDefaultModel();
-//        m3.add(m3.asStatement(new Triple(r, r, b1)));
-//        Model m4 = ModelFactory.createDefaultModel();
-//        m4.add(m4.asStatement(new Triple(r, r2, b2)));
-//
-//        for (CloseableRDFWriter writer : rdfWriters) {
-//            writer.write(m1);
-//            writer.write(m2);
-//            writer.write(m3);
-//            writer.write(m4);
-//        }
-//    }
+    // private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
+    // Node b1 = Node.createAnon(new AnonId("anon1"));
+    // Node b2 = Node.createAnon(new AnonId("anon2"));
+    // Node r = Node.createURI("http://example.com");
+    // Node r2 = Node.createURI("http://example2.com");
+    // Model m1 = ModelFactory.createDefaultModel();
+    // m1.add(m1.asStatement(new Triple(r, r, b1)));
+    // m1.add(m1.asStatement(new Triple(r, r2, b2)));
+    // Model m2 = ModelFactory.createDefaultModel();
+    // m2.add(m2.asStatement(new Triple(r, r, r)));
+    // Model m3 = ModelFactory.createDefaultModel();
+    // m3.add(m3.asStatement(new Triple(r, r, b1)));
+    // Model m4 = ModelFactory.createDefaultModel();
+    // m4.add(m4.asStatement(new Triple(r, r2, b2)));
+    //
+    // for (CloseableRDFWriter writer : rdfWriters) {
+    // writer.write(m1);
+    // writer.write(m2);
+    // writer.write(m3);
+    // writer.write(m4);
+    // }
+    // }
 
     private static Set<String> getPreferredURIs(AggregationSpec aggregationSpec, File canonicalURIsInputFile) throws IOException {
         Set<String> preferredURIs = getSettingsPreferredURIs(aggregationSpec);
@@ -187,7 +178,7 @@ public class CRBatchExecutor {
                 reader.close();
             } else {
                 LOG.error("Cannot read canonical URIs from '{}'", canonicalURIsInputFile.getPath());
-               // Intentionally do not throw an exception
+                // Intentionally do not throw an exception
             }
         }
 
@@ -201,7 +192,7 @@ public class CRBatchExecutor {
         Set<String> multivalueProperties = aggregationSpec.getPropertyMultivalue() == null
                 ? Collections.<String>emptySet()
                 : aggregationSpec.getPropertyMultivalue().keySet();
-                
+
         Set<String> preferredURIs = new HashSet<String>(
                 aggregationProperties.size() + multivalueProperties.size());
         preferredURIs.addAll(aggregationProperties);
@@ -269,7 +260,7 @@ public class CRBatchExecutor {
 
         return conflictResolver;
     }
-    
+
     private static void writeCanonicalURIs(HashSet<String> resolvedCanonicalURIs, File outputFile) throws IOException {
         if (outputFile == null) {
             return;

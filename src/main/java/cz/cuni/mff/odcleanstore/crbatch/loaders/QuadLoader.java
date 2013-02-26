@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
+import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 import cz.cuni.mff.odcleanstore.queryexecution.impl.QueryExecutionHelper;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import de.fuberlin.wiwiss.ng4j.Quad;
@@ -27,7 +29,7 @@ import de.fuberlin.wiwiss.ng4j.Quad;
  * given owl:sameAs alternatives.
  * @author Jan Michelfeit
  */
-public class QuadLoader extends DatabaseLoaderBase {
+public class QuadLoader extends DatabaseLoaderBase implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(QuadLoader.class);
 
     /**
@@ -149,7 +151,6 @@ public class QuadLoader extends DatabaseLoaderBase {
         long startTime = System.currentTimeMillis();
         ArrayList<Quad> result = new ArrayList<Quad>();
         try {
-
             List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
             if (alternativeURIs.size() <= 1) {
                 String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
@@ -175,9 +176,7 @@ public class QuadLoader extends DatabaseLoaderBase {
 
         } catch (DatabaseException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_QUADS, "Database error", e);
-        } finally {
-            closeConnectionQuietly();
-        }
+        } 
 
         LOG.trace("CR-batch: Loaded quads for URI {} in {} ms", uri, System.currentTimeMillis() - startTime);
         return result;
@@ -212,5 +211,10 @@ public class QuadLoader extends DatabaseLoaderBase {
         } finally {
             resultSet.closeQuietly();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        closeConnectionQuietly();
     }
 }
