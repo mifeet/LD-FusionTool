@@ -19,8 +19,8 @@ import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.queryexecution.impl.QueryExecutionHelper;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
+import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
@@ -193,8 +193,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
             }
         }
 
-        Iterable<CharSequence> limitedURIListBuilder =
-                QueryExecutionHelper.getLimitedURIListBuilder(publisherScores.keySet(), MAX_QUERY_LIST_LENGTH);
+        Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(publisherScores.keySet(), MAX_QUERY_LIST_LENGTH);
         for (CharSequence publisherURIList : limitedURIListBuilder) {
             String query = String.format(Locale.ROOT, PUBLISHER_SCORE_QUERY, publisherURIList);
             long queryStartTime = System.currentTimeMillis();

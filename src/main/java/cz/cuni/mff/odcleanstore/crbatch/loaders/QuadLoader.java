@@ -19,7 +19,7 @@ import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
-import cz.cuni.mff.odcleanstore.queryexecution.impl.QueryExecutionHelper;
+import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import de.fuberlin.wiwiss.ng4j.Quad;
 
@@ -161,8 +161,7 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
                         uri);
                 addQuadsFromQuery(query, result);
             } else {
-                Iterable<CharSequence> limitedURIListBuilder = QueryExecutionHelper.getLimitedURIListBuilder(alternativeURIs,
-                        MAX_QUERY_LIST_LENGTH);
+                Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
                 for (CharSequence uriList : limitedURIListBuilder) {
                     String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
                             getPrefixDecl(),
