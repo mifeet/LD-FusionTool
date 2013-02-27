@@ -25,6 +25,7 @@ public interface QueryConfig {
 
     /**
      * Map of namespace prefixes that can be used (e.g. in SPARQL expressions or aggregation settings).
+     * Key is the prefix, value the expanded URI.
      * @return map of namespace prefixes
      */
     Map<String, String> getPrefixes();

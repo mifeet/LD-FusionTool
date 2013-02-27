@@ -25,6 +25,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.xml.PropertyXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.SourceGraphsRestrictionXml;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.crbatch.util.NamespacePrefixExpander;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
@@ -58,6 +59,8 @@ public final class ConfigReader {
         // Prefixes
         if (configXml.getPrefixes() != null) {
             config.setPrefixes(extractPrefixes(configXml.getPrefixes()));
+        } else {
+            config.setPrefixes(new HashMap<String, String>());
         }
 
         // Data source
@@ -92,6 +95,10 @@ public final class ConfigReader {
             outputs.add(extractOutput(outputXml));
         }
         config.setOutputs(outputs);
+        
+        // Expand prefixes in CR settings
+        NamespacePrefixExpander prefixExpander = new NamespacePrefixExpander(config.getPrefixes());
+        config.setAggregationSpec(prefixExpander.expandPropertyNames(config.getAggregationSpec()));
 
         return config;
     }
