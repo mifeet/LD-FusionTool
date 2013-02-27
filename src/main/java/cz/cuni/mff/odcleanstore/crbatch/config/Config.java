@@ -42,9 +42,17 @@ public interface Config extends QueryConfig {
 
     /**
      * Aggregation settings for conflict resolution.
+     * URIs in the settings must have expanded namespace prefixes.
      * @return aggregation settings
      */
     AggregationSpec getAggregationSpec();
+    
+    /**
+     * Indicates whether conflict resolution should be applied to all data at once (false),
+     * or a separate output for each publisher should be created (true).
+     * @return true if processing should be divided by publishers 
+     */
+    Boolean getProcessByPublishers();
 
     /**
      * Database queries timeout.

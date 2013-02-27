@@ -19,6 +19,7 @@
     <Params>
       <Param name="canonicalUriOutputFile" value="canonicalUris.txt" />
       <Param name="canonicalUriInputFile" value="canonicalUris.txt" />
+      <Param name="processByPublishers" value="true" />
     </Params>
     <DefaultAggregation>
       <Param name="defaultMultivalue" value="true"/>
