@@ -87,7 +87,8 @@ public final class CRBatchApplication {
                     + "' given");
         }
         for (Output output : config.getOutputs()) {
-            if (!output.getFileLocation().canWrite()) {
+            if (output.getFileLocation().exists() && !output.getFileLocation().canWrite()) {
+                System.out.println(output.getFileLocation().getAbsolutePath());
                 throw new InvalidInputException("Cannot write to output file " + output.getFileLocation().getPath());
             }
         }
