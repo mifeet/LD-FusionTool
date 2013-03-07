@@ -14,24 +14,26 @@ import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
 import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
 import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * Loads subjects of triples to be processed and gives an iterator over them.
- * The iterator uses an open cursor in the database in the current implementation.
+ * If seed resource restriction is given, only subjects matching this restriction will 
+ * be returned.
+ * In the current implementation, the iterator uses an open cursor in the database.
  * @todo another option would be to load subjects and keep them all in the memory or on the FS.
  * @author Jan Michelfeit
  */
-public class TripleSubjectsLoader extends DatabaseLoaderBase {
-    private static final Logger LOG = LoggerFactory.getLogger(TripleSubjectsLoader.class);
+public class SeedSubjectsLoader extends DatabaseLoaderBase {
+    private static final Logger LOG = LoggerFactory.getLogger(SeedSubjectsLoader.class);
     
     /**
      * Iterator over subjects of relevant triples.
      */
-    public final class SubjectsIterator implements Closeable {
+    private final class SubjectsIteratorImpl implements NodeIterator {
         private WrappedResultSet subjectsResultSet;
         private VirtuosoConnectionWrapper connection;
         private Node next = null;
@@ -43,7 +45,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
          * @param connectionFactory connection factory
          * @throws CRBatchException error
          */
-        /*package*/SubjectsIterator(String query, ConnectionFactory connectionFactory) throws CRBatchException {
+        /*package*/SubjectsIteratorImpl(String query, ConnectionFactory connectionFactory) throws CRBatchException {
             try {
                 this.connection = connectionFactory.createConnection();
                 this.subjectsResultSet = this.connection.executeSelect(query);
@@ -75,6 +77,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
          * Returns {@code true} if the iteration has more elements.
          * @return {@code true} if the iteration has more elements
          */
+        @Override
         public boolean hasNext() {
             return next != null;
         }
@@ -84,6 +87,7 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
          * @return the next element in the iteration
          * @throws CRBatchException error
          */
+        @Override
         public Node next() throws CRBatchException {
             if (subjectsResultSet == null) {
                 throw new IllegalStateException("The iterator has been closed");
@@ -118,54 +122,75 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
      * (4) graph name prefix filter
+     * (5) seed resource restriction pattern
+     * (6) variable representing subject and at the same time seed resource restriction variable
      */
     private static final String SUBJECTS_QUERY = "SPARQL %1$s"
-            + "\n SELECT DISTINCT ?" + VAR_PREFIX + "s"
+            + "\n SELECT DISTINCT ?%6$s"
             + "\n WHERE {"
             + "\n   %2$s"
             + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n   %4$s"
             + "\n   {"
             + "\n     GRAPH ?%3$s {"
-            + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n       ?%6$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
+            + "\n       %5$s"
             + "\n     }"
             + "\n   }"
             + "\n   UNION"
             + "\n   {"
             + "\n     ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
             + "\n     GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n       ?%6$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
+            + "\n       %5$s"
             + "\n     }"
             + "\n   }"
             + "\n }";
-    
 
     /**
      * Creates a new instance.
      * @param connectionFactory factory for database connection
      * @param queryConfig Settings for SPARQL queries  
      */
-    public TripleSubjectsLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
+    public SeedSubjectsLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
         super(connectionFactory, queryConfig);
     }
 
     /**
-     * Returns all subjects of triples in payload graphs matching the given named graph constraint pattern 
+     * Returns all subjects of triples in payload graphs matching the given named graph constraint pattern
      * and in their attached graphs.
      * The iterator should be closed after it is no longer needed.
      * The current implementation returns distinct values.
      * @return iterator over subjects of relevant triples
-     * @throws CRBatchException error
+     * @throws CRBatchException query error or when seed resource restriction variable and named graph restriction variable are
+     *         the same
      */
-    public SubjectsIterator getTripleSubjectIterator() throws CRBatchException {
+    public NodeIterator getTripleSubjectIterator() throws CRBatchException {
         long startTime = System.currentTimeMillis();
+
+        String seedResourceRestriction = "";
+        String subjectVariable = VAR_PREFIX + "s";
+        if (queryConfig.getSeedResourceRestriction() != null) {
+            SparqlRestriction restriction = queryConfig.getSeedResourceRestriction();
+            seedResourceRestriction = restriction.getPattern();
+            subjectVariable = restriction.getVar();
+        }
+
+        if (queryConfig.getNamedGraphRestriction().getVar().equals(subjectVariable)) {
+            throw new CRBatchException(
+                    CRBatchErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
+                    "Source named graph restriction and seed resource restrictions need to use different"
+                            + " variables in SPARQL patterns, both using to ?" + subjectVariable);
+        }
         
         String query = String.format(Locale.ROOT, SUBJECTS_QUERY,
                 getPrefixDecl(),
                 queryConfig.getNamedGraphRestriction().getPattern(),
                 queryConfig.getNamedGraphRestriction().getVar(),
-                getGraphPrefixFilter());
-        SubjectsIterator result = new SubjectsIterator(query, getConnectionFactory());
+                getGraphPrefixFilter(),
+                seedResourceRestriction,
+                subjectVariable);
+        NodeIterator result = new SubjectsIteratorImpl(query, getConnectionFactory());
         LOG.debug("CR-batch: Triple subjects iterator initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;
     }

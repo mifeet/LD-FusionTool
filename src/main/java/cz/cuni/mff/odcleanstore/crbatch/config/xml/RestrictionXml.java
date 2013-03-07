@@ -13,7 +13,8 @@ import org.simpleframework.xml.Text;
 @Root
 public class RestrictionXml {
 
-    @Attribute(required = false)
+    //@Attribute(required = false)
+    @Attribute
     private String var;
 
     @Text

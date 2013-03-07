@@ -18,5 +18,6 @@ public final class CRBatchErrorCodes {
     public static final int QUERY_TRIPLE_SUBJECTS = 12;
     public static final int TRIPLE_SUBJECT_ITERATION = 13;
     public static final int QUERY_QUADS = 14;
+    public static final int SEED_AND_SOURCE_VARIABLE_CONFLICT = 15;
     // CHECKSTYLE:ON
 }

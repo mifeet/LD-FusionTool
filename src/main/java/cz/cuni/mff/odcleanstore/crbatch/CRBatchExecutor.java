@@ -43,10 +43,11 @@ import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalN3Writer;
 import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalRdfXmlWriter;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.NodeIterator;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.QuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.SameAsLinkLoader;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.TripleSubjectsLoader;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.TripleSubjectsLoader.SubjectsIterator;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.SeedSubjectsLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.TransitiveSubjectsIterator;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
@@ -84,8 +85,17 @@ public class CRBatchExecutor {
         HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
 
         // Get iterator over subjects of relevant triples
-        TripleSubjectsLoader tripleSubjectsLoader = new TripleSubjectsLoader(connectionFactory, (QueryConfig) config);
-        SubjectsIterator subjectsIterator = tripleSubjectsLoader.getTripleSubjectIterator();
+        SeedSubjectsLoader tripleSubjectsLoader = new SeedSubjectsLoader(connectionFactory, (QueryConfig) config);
+        NodeIterator subjectsIterator;
+        TransitiveSubjectsIterator transitiveSubjectIterator;
+        if (config.getSeedResourceRestriction() != null) {
+            NodeIterator seedResourceIterator = tripleSubjectsLoader.getTripleSubjectIterator();
+            transitiveSubjectIterator = TransitiveSubjectsIterator.createTransitiveSubjectsIterator(seedResourceIterator);
+            subjectsIterator = transitiveSubjectIterator;
+        } else {
+            transitiveSubjectIterator = null;
+            subjectsIterator = tripleSubjectsLoader.getTripleSubjectIterator();
+        }
 
         // Initialize CR
         ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
@@ -115,12 +125,15 @@ public class CRBatchExecutor {
                 }
                 resolvedCanonicalURIs.add(canonicalURI);
 
-                // Load quads for the given subject
+                // Load quads for the given subject and optionally add new resources for traversing
                 Collection<Quad> quads = quadLoader.getQuadsForURI(canonicalURI);
+                if (transitiveSubjectIterator != null) {
+                    transitiveSubjectIterator.addObjectsFromQuads(quads);
+                }
 
                 // Resolve conflicts
                 Collection<CRQuad> resolvedQuads = conflictResolver.resolveConflicts(quads);
-                // TODO: remove
+
                 LOG.info("Resolved {} quads for URI <{}> resulting in {} quads",
                         new Object[] { quads.size(), canonicalURI, resolvedQuads.size() });
 
