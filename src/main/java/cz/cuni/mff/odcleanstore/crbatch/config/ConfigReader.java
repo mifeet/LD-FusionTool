@@ -73,13 +73,13 @@ public final class ConfigReader {
         // Source dataset restrictions
         if (configXml.getSourceDataset() != null) {
             SourceDatasetXml sourceDatasetXml = configXml.getSourceDataset();
-            config.setNamedGraphRestriction(extractRestriction(sourceDatasetXml.getGraphsRestriction()));
-            config.setOntologyGraphRestriction(extractRestriction(sourceDatasetXml.getOntologyRestriction()));
-            config.setSeedResourceRestriction(extractRestriction(sourceDatasetXml.getSeedResourceRestriction()));
-        } else {
-            config.setNamedGraphRestriction(new SparqlRestrictionImpl());
-            config.setOntologyGraphRestriction(new SparqlRestrictionImpl());
-            config.setSeedResourceRestriction(new SparqlRestrictionImpl());
+            config.setNamedGraphRestriction(extractGraphRestriction(sourceDatasetXml.getGraphsRestriction()));
+            config.setOntologyGraphRestriction(extractGraphRestriction(sourceDatasetXml.getOntologyRestriction()));
+            config.setSeedResourceRestriction(extractResourceRestriction(sourceDatasetXml.getSeedResourceRestriction()));
+        }
+        if (config.getNamedGraphRestriction() == null) {
+            // must not be null
+            config.setNamedGraphRestriction(new SparqlRestrictionImpl("", ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR));
         }
 
         // Conflict resolution settings
@@ -242,15 +242,23 @@ public final class ConfigReader {
         return new OutputImpl(format, fileLocation);
     }
 
-    private SparqlRestriction extractRestriction(RestrictionXml restrictionXml) {
+    private SparqlRestriction extractGraphRestriction(RestrictionXml restrictionXml) {
+        return extractRestriction(restrictionXml, ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
+    }
+    
+    private SparqlRestriction extractResourceRestriction(RestrictionXml restrictionXml) {
+        return extractRestriction(restrictionXml, ConfigConstants.DEFAULT_RESTRICTION_RESOURCE_VAR);
+    }
+    
+    private SparqlRestriction extractRestriction(RestrictionXml restrictionXml, String defaultVarName) {
         if (restrictionXml == null) {
-            return new SparqlRestrictionImpl();
+            return null;
         }
         String pattern = preprocessGroupGraphPattern(restrictionXml.getValue());
         if (ODCSUtils.isNullOrEmpty(pattern)) {
-            return new SparqlRestrictionImpl();
+            return null;
         } else if (restrictionXml.getVar() == null) {
-            return new SparqlRestrictionImpl(pattern);
+            return new SparqlRestrictionImpl(pattern, defaultVarName);
         } else {
             return new SparqlRestrictionImpl(pattern, restrictionXml.getVar());
         }

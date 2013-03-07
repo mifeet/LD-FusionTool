@@ -17,10 +17,16 @@ public final class ConfigConstants {
     }
     
     /**
-     * SPARQL query variable name referring to the restricted entity in a constraint pattern.
-     * @see Config#getNamedGraphRestrictionPattern()
+     * SPARQL query variable name referring to a restricted RDF resource in a constraint pattern.
+     * @see SparqlRestriction
      */
-    public static final String DEFAULT_RESTRICTION_VAR = "x";
+    public static final String DEFAULT_RESTRICTION_RESOURCE_VAR = "s";
+    
+    /**
+     * SPARQL query variable name referring to a restricted named graph in a constraint pattern.
+     * @see SparqlRestriction
+     */
+    public static final String DEFAULT_RESTRICTION_GRAPH_VAR = "g";
     
     /**
      * Default timeout for database queries in seconds.

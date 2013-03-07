@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public interface QueryConfig {
     /**
-     * SPARQL group graph pattern limiting source payload named graphs.
+     * SPARQL group graph pattern limiting source payload named graphs. Must not be null.
      * @return SPARQL group graph pattern
      */
     SparqlRestriction getNamedGraphRestriction();
@@ -22,4 +22,19 @@ public interface QueryConfig {
      * @return map of namespace prefixes
      */
     Map<String, String> getPrefixes();
+    
+    
+    /**
+     * SPARQL restriction on ontology named graphs. 
+     * @return SPARQL restriction (group graph pattern) or null  
+     */
+    SparqlRestriction getOntologyGraphRestriction();
+    
+    /**
+     * SPARQL restriction on URI resources which are initially loaded and processed.
+     * If given, triples having matching resources and triples reachable from them are processed. All data
+     * from matching input graphs are processed otherwise.
+     * @return SPARQL restriction (group graph pattern) or null  
+     */
+    SparqlRestriction getSeedResourceRestriction();
 }

@@ -15,13 +15,13 @@
   </DataSource>
   <SourceDataset>
     <GraphsRestriction var="g">
-      ?g odcs:isLatestUpdate ?x FILTER (?x = 1)   
+      ?g odcs:isLatestUpdate ?a FILTER (?a = 1)   
     </GraphsRestriction>
     <OntologyRestriction var="g">
-	  ?g odcs:generatedGraph ?x FILTER (?x = 1)
+	  ?g odcs:generatedGraph ?a FILTER (?a = 1)
 	</OntologyRestriction>
-	<SeedResourceRestriction var="x">
-	  ?x rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt;
+	<SeedResourceRestriction var="s">
+	  ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
 	</SeedResourceRestriction>
   </SourceDataset>
   <ConflictResolution>
@@ -47,7 +47,7 @@
   </ConflictResolution>
   <Outputs>
     <Output type="file">
-      <Param name="file" value="out2.n3"/>
+      <Param name="file" value="out.n3"/>
       <Param name="format" value="ntriples"/>
       <!--<Param name="resultDataPrefix" value="http://opendata.cz/infrastructure/odcleanstore/query"/> -->
     </Output>

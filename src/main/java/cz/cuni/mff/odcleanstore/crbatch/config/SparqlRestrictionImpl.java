@@ -12,20 +12,6 @@ public class SparqlRestrictionImpl implements SparqlRestriction {
     private final String var;
     
     /**
-     * 
-     */
-    public SparqlRestrictionImpl() {
-        this("", ConfigConstants.DEFAULT_RESTRICTION_VAR);
-    }
-    
-    /**
-     * @param pattern value for {@link #getPattern()}
-     */
-    public SparqlRestrictionImpl(String pattern) {
-        this(pattern, ConfigConstants.DEFAULT_RESTRICTION_VAR);
-    }
-    
-    /**
      * @param pattern value for {@link #getPattern()}
      * @param var value for {@link #getVar()}
      */

@@ -117,6 +117,14 @@ public final class CRBatchApplication {
                     "Variable name specified in seed resources restriction must be a valid SPARQL identifier, '"
                             + config.getSeedResourceRestriction().getVar() + "' given");
         }   
+        if (config.getSeedResourceRestriction() != null
+                && config.getNamedGraphRestriction().getVar().equals(config.getSeedResourceRestriction().getVar())) {
+            String message = "SPARQL variable used in source named graph restriction (<GraphsRestriction var=\"...\" />) "
+                    + "and variable used in seed resource restriction (<SeedResourceRestriction var=\"...\" />)"
+                    + " must be different, but both are set to ?" + config.getNamedGraphRestriction().getVar() + "."
+                    + "\nNote that any other variables used in the two restriction patterns should be also different.";
+            throw new InvalidInputException(message);
+        }
         // intentionally do not check canonical URI files
     }
 
