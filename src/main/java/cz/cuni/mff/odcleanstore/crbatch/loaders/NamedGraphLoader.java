@@ -104,8 +104,8 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     private NamedGraphMetadataMap loadNamedGraphMetadata() throws DatabaseException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
                 getPrefixDecl(),
-                queryConfig.getNamedGraphRestrictionPattern(),
-                queryConfig.getNamedGraphRestrictionVar(),
+                queryConfig.getNamedGraphRestriction().getPattern(),
+                queryConfig.getNamedGraphRestriction().getVar(),
                 getGraphPrefixFilter());
         final int graphIndex = 1;
         final int propertyIndex = 2;

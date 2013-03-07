@@ -12,16 +12,9 @@ import java.util.Map;
 public interface QueryConfig {
     /**
      * SPARQL group graph pattern limiting source payload named graphs.
-     * Value of {@link #getNamedGraphRestrictionVar()} is the name of the SPARQL variable representing the payload graph.
-     * @return SPARQL variable name
+     * @return SPARQL group graph pattern
      */
-    String getNamedGraphRestrictionPattern();
-
-    /**
-     * Variable representing named graphs in source named graph restriction pattern.
-     * @return SPARQL variable name
-     */
-    String getNamedGraphRestrictionVar();
+    SparqlRestriction getNamedGraphRestriction();
 
     /**
      * Map of namespace prefixes that can be used (e.g. in SPARQL expressions or aggregation settings).

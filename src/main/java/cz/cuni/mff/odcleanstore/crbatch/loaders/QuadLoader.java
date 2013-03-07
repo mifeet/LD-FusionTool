@@ -155,8 +155,8 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
             if (alternativeURIs.size() <= 1) {
                 String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
                         getPrefixDecl(),
-                        queryConfig.getNamedGraphRestrictionPattern(),
-                        queryConfig.getNamedGraphRestrictionVar(),
+                        queryConfig.getNamedGraphRestriction().getPattern(),
+                        queryConfig.getNamedGraphRestriction().getVar(),
                         getGraphPrefixFilter(),
                         uri);
                 addQuadsFromQuery(query, result);
@@ -165,8 +165,8 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
                 for (CharSequence uriList : limitedURIListBuilder) {
                     String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
                             getPrefixDecl(),
-                            queryConfig.getNamedGraphRestrictionPattern(),
-                            queryConfig.getNamedGraphRestrictionVar(),
+                            queryConfig.getNamedGraphRestriction().getPattern(),
+                            queryConfig.getNamedGraphRestriction().getVar(),
                             getGraphPrefixFilter(),
                             uriList);
                     addQuadsFromQuery(query, result);

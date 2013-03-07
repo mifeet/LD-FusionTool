@@ -109,7 +109,7 @@ public abstract class DatabaseLoaderBase {
      */
     protected String getGraphPrefixFilter() {
         if (cachedGraphPrefixFilter == null) {
-            cachedGraphPrefixFilter = getGraphPrefixFilter(queryConfig.getNamedGraphRestrictionVar());
+            cachedGraphPrefixFilter = getGraphPrefixFilter(queryConfig.getNamedGraphRestriction().getVar());
         }
         return cachedGraphPrefixFilter;
     }

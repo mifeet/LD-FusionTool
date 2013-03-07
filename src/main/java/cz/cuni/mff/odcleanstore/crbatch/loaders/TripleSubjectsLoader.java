@@ -162,8 +162,8 @@ public class TripleSubjectsLoader extends DatabaseLoaderBase {
         
         String query = String.format(Locale.ROOT, SUBJECTS_QUERY,
                 getPrefixDecl(),
-                queryConfig.getNamedGraphRestrictionPattern(),
-                queryConfig.getNamedGraphRestrictionVar(),
+                queryConfig.getNamedGraphRestriction().getPattern(),
+                queryConfig.getNamedGraphRestriction().getVar(),
                 getGraphPrefixFilter());
         SubjectsIterator result = new SubjectsIterator(query, getConnectionFactory());
         LOG.debug("CR-batch: Triple subjects iterator initialized in {} ms", System.currentTimeMillis() - startTime);

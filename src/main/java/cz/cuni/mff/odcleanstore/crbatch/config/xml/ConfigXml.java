@@ -21,8 +21,8 @@ public class ConfigXml {
     @ElementList(name = "DataSource")
     private List<ParamXml> dataSource;
 
-    @Element(name = "SourceGraphsRestriction", required = false)
-    private SourceGraphsRestrictionXml sourceGraphsRestriction;
+    @Element(name = "SourceDataset", required = false)
+    private SourceDatasetXml sourceDataset;
 
     @Element(name = "ConflictResolution", required = false)
     private ConflictResolutionXml conflictResolution;
@@ -38,8 +38,8 @@ public class ConfigXml {
         return dataSource;
     }
 
-    public SourceGraphsRestrictionXml getSourceGraphsRestriction() {
-        return sourceGraphsRestriction;
+    public SourceDatasetXml getSourceDataset() {
+        return sourceDataset;
     }
 
     public ConflictResolutionXml getConflictResolution() {

@@ -21,8 +21,9 @@ public class ConfigImpl implements Config {
     private String databaseConnectionString;
     private String databaseUsername;
     private String databasePassword;
-    private String namedGraphRestrictionPattern = "";
-    private String namedGraphRestrictionVar = ConfigConstants.DEFAULT_NAMED_GRAPH_RESTRICTION_VAR;
+    private SparqlRestriction namedGraphRestriction;
+    private SparqlRestriction ontologyGraphRestriction;
+    private SparqlRestriction seedResourceRestriction;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
     private Map<String, String> prefixes = new HashMap<String, String>();
@@ -31,7 +32,7 @@ public class ConfigImpl implements Config {
             new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
     private File canonicalURIsInputFile;
     private boolean processByPublishers = false;
-    
+
     @Override
     public String getDatabaseConnectionString() {
         return databaseConnectionString;
@@ -69,30 +70,43 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public String getNamedGraphRestrictionPattern() {
-        return namedGraphRestrictionPattern;
+    public SparqlRestriction getNamedGraphRestriction() {
+        return namedGraphRestriction;
     }
     
     /**
      * Sets SPARQL group graph pattern limiting source payload named graphs.
-     * @param namedGraphRestrictionPattern SPARQL group graph pattern¨
+     * @param restriction SPARQL group graph pattern
      * @see #getNamedGraphRestrictionPattern()
      */
-    public void setNamedGraphRestrictionPattern(String namedGraphRestrictionPattern) {
-        this.namedGraphRestrictionPattern = namedGraphRestrictionPattern;
+    public void setNamedGraphRestriction(SparqlRestriction restriction) {
+        this.namedGraphRestriction = restriction;
     }
-
+    
     @Override
-    public String getNamedGraphRestrictionVar() {
-        return namedGraphRestrictionVar;
+    public SparqlRestriction getOntologyGraphRestriction() {
+        return ontologyGraphRestriction;
     }
     
     /**
-     * Sets name of variable representing named graphs in {@link #getNamedGraphRestrictionPattern()}.
-     * @param varName SPARQL variable name
+     * Sets value for {@link #getOntologyGraphRestrictionPattern()}.
+     * @param restriction SPARQL group graph pattern
      */
-    public void setNamedGraphRestrictionVar(String varName) {
-        this.namedGraphRestrictionVar = varName;
+    public void setOntologyGraphRestriction(SparqlRestriction restriction) {
+        this.ontologyGraphRestriction = restriction;
+    }
+
+    @Override
+    public SparqlRestriction getSeedResourceRestriction() {
+        return seedResourceRestriction;
+    }
+    
+    /**
+     * Sets value for {@link #getSeedResourceRestrictionPattern()}.
+     * @param restriction SPARQL group graph pattern
+     */
+    public void setSeedResourceRestriction(SparqlRestriction restriction) {
+        this.seedResourceRestriction = restriction;
     }
 
     @Override

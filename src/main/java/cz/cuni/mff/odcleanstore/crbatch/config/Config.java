@@ -105,4 +105,18 @@ public interface Config extends QueryConfig {
      * @return file with canonical URIs
      */
     File getCanonicalURIsInputFile();
+    
+    /**
+     * SPARQL restriction on ontology named graphs.
+     * @return SPARQL restriction (group graph pattern)  
+     */
+    SparqlRestriction getOntologyGraphRestriction();
+
+    /**
+     * SPARQL restriction on URI resources which are initially loaded and processed.
+     * If given, triples having matching resources and triples reachable from them are processed. All data
+     * from matching input graphs are processed otherwise.
+     * @return SPARQL restriction (group graph pattern)  
+     */
+    SparqlRestriction getSeedResourceRestriction();
 }

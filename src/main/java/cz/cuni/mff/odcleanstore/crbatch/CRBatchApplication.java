@@ -100,6 +100,23 @@ public final class CRBatchApplication {
                 throw new InvalidInputException("Invalid namespace prefix definition for URI '" + prefixEntry.getValue() + "'");
             }
         }
+        if (!ODCSUtils.isValidSparqlVar(config.getNamedGraphRestriction().getVar())) {
+            throw new InvalidInputException(
+                    "Variable name specified in source graphs restriction must be a valid SPARQL identifier, '"
+                            + config.getNamedGraphRestriction().getVar() + "' given");
+        }
+        if (config.getOntologyGraphRestriction() != null
+                && !ODCSUtils.isValidSparqlVar(config.getOntologyGraphRestriction().getVar())) {
+            throw new InvalidInputException(
+                    "Variable name specified in ontology graphs restriction must be a valid SPARQL identifier, '"
+                            + config.getOntologyGraphRestriction().getVar() + "' given");
+        }
+        if (config.getSeedResourceRestriction() != null
+                && !ODCSUtils.isValidSparqlVar(config.getSeedResourceRestriction().getVar())) {
+            throw new InvalidInputException(
+                    "Variable name specified in seed resources restriction must be a valid SPARQL identifier, '"
+                            + config.getSeedResourceRestriction().getVar() + "' given");
+        }   
         // intentionally do not check canonical URI files
     }
 

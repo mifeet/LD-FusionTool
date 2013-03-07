@@ -3,6 +3,7 @@
   <Prefixes>
     <Prefix id="rdf" namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
     <Prefix id="rdfs" namespace="http://www.w3.org/2000/01/rdf-schema#" />
+    <Prefix id="xsd" namespace="http://www.w3.org/2001/XMLSchema#" />
     <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
   </Prefixes>
@@ -12,9 +13,17 @@
     <Param name="username" value="dba" />
     <Param name="password" value="dba" />
   </DataSource>
-  <SourceGraphsRestriction graphvar="g">
-    ?g odcs:isLatestUpdate ?x FILTER (?x = 1)
-  </SourceGraphsRestriction>
+  <SourceDataset>
+    <GraphsRestriction var="g">
+      ?g odcs:isLatestUpdate ?x FILTER (?x = 1)   
+    </GraphsRestriction>
+    <OntologyRestriction var="g">
+	  ?g odcs:generatedGraph ?x FILTER (?x = 1)
+	</OntologyRestriction>
+	<SeedResourceRestriction var="x">
+	  ?x rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt;
+	</SeedResourceRestriction>
+  </SourceDataset>
   <ConflictResolution>
     <Params>
       <Param name="canonicalUriOutputFile" value="canonicalUris.txt" />
@@ -38,7 +47,7 @@
   </ConflictResolution>
   <Outputs>
     <Output type="file">
-      <Param name="file" value="out.n3"/>
+      <Param name="file" value="out2.n3"/>
       <Param name="format" value="ntriples"/>
       <!--<Param name="resultDataPrefix" value="http://opendata.cz/infrastructure/odcleanstore/query"/> -->
     </Output>

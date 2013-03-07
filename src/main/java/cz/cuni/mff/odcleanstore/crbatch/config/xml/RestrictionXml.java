@@ -10,17 +10,17 @@ import org.simpleframework.xml.Text;
 /**
  * @author Jan Michelfeit
  */
-@Root(name = "SourceGraphsRestriction")
-public class SourceGraphsRestrictionXml {
+@Root
+public class RestrictionXml {
 
     @Attribute(required = false)
-    private String graphvar;
+    private String var;
 
     @Text
     private String value;
 
-    public String getGraphvar() {
-        return graphvar;
+    public String getVar() {
+        return var;
     }
 
     public String getValue() {

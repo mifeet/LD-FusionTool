@@ -22,7 +22,8 @@ import cz.cuni.mff.odcleanstore.crbatch.config.xml.OutputXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.ParamXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.PrefixXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.PropertyXml;
-import cz.cuni.mff.odcleanstore.crbatch.config.xml.SourceGraphsRestrictionXml;
+import cz.cuni.mff.odcleanstore.crbatch.config.xml.RestrictionXml;
+import cz.cuni.mff.odcleanstore.crbatch.config.xml.SourceDatasetXml;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
 import cz.cuni.mff.odcleanstore.crbatch.util.NamespacePrefixExpander;
@@ -69,13 +70,16 @@ public final class ConfigReader {
         config.setDatabaseUsername(extractParamByName(dataSourceParams, "username"));
         config.setDatabasePassword(extractParamByName(dataSourceParams, "password"));
 
-        // Source graphs restriction
-        if (configXml.getSourceGraphsRestriction() != null) {
-            SourceGraphsRestrictionXml restriction = configXml.getSourceGraphsRestriction();
-            if (restriction.getGraphvar() != null) {
-                config.setNamedGraphRestrictionVar(restriction.getGraphvar());
-            }
-            config.setNamedGraphRestrictionPattern(preprocessGroupGraphPattern(restriction.getValue()));
+        // Source dataset restrictions
+        if (configXml.getSourceDataset() != null) {
+            SourceDatasetXml sourceDatasetXml = configXml.getSourceDataset();
+            config.setNamedGraphRestriction(extractRestriction(sourceDatasetXml.getGraphsRestriction()));
+            config.setOntologyGraphRestriction(extractRestriction(sourceDatasetXml.getOntologyRestriction()));
+            config.setSeedResourceRestriction(extractRestriction(sourceDatasetXml.getSeedResourceRestriction()));
+        } else {
+            config.setNamedGraphRestriction(new SparqlRestrictionImpl());
+            config.setOntologyGraphRestriction(new SparqlRestrictionImpl());
+            config.setSeedResourceRestriction(new SparqlRestrictionImpl());
         }
 
         // Conflict resolution settings
@@ -236,6 +240,20 @@ public final class ConfigReader {
         File fileLocation = new File(fileLocationString);
 
         return new OutputImpl(format, fileLocation);
+    }
+
+    private SparqlRestriction extractRestriction(RestrictionXml restrictionXml) {
+        if (restrictionXml == null) {
+            return new SparqlRestrictionImpl();
+        }
+        String pattern = preprocessGroupGraphPattern(restrictionXml.getValue());
+        if (ODCSUtils.isNullOrEmpty(pattern)) {
+            return new SparqlRestrictionImpl();
+        } else if (restrictionXml.getVar() == null) {
+            return new SparqlRestrictionImpl(pattern);
+        } else {
+            return new SparqlRestrictionImpl(pattern, restrictionXml.getVar());
+        }
     }
 
     /**

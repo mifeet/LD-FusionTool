@@ -108,15 +108,15 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
         try {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
                     getPrefixDecl(),
-                    queryConfig.getNamedGraphRestrictionPattern(),
-                    queryConfig.getNamedGraphRestrictionVar(),
+                    queryConfig.getNamedGraphRestriction().getPattern(),
+                    queryConfig.getNamedGraphRestriction().getVar(),
                     getGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
 
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
                     getPrefixDecl(),
-                    queryConfig.getNamedGraphRestrictionPattern(),
-                    queryConfig.getNamedGraphRestrictionVar(),
+                    queryConfig.getNamedGraphRestriction().getPattern(),
+                    queryConfig.getNamedGraphRestriction().getVar(),
                     getGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, attachedQuery);
         } catch (DatabaseException e) {
