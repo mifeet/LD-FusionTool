@@ -18,11 +18,11 @@
       ?g odcs:isLatestUpdate ?a FILTER(?a = 1)
     </GraphsRestriction>
     <OntologyRestriction var="g">
-	  ?g odcs:generatedGraph ?a
-	</OntologyRestriction>
-	<SeedResourceRestriction var="s">
-	  ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
-	</SeedResourceRestriction>
+      ?g odcs:generatedGraph ?a
+    </OntologyRestriction>
+    <SeedResourceRestriction var="s">
+      ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
+    </SeedResourceRestriction>
   </SourceDataset>
   <ConflictResolution>
     <Params>
