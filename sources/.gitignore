@@ -4,3 +4,4 @@ target/
 /.classpath
 /.checkstyle
 /canonicalUris.txt
+/*.n3

@@ -15,7 +15,7 @@
   </DataSource>
   <SourceDataset>
     <GraphsRestriction var="g">
-      ?g odcs:isLatestUpdate ?a   
+      ?g odcs:isLatestUpdate ?a FILTER(?a = 1)
     </GraphsRestriction>
     <OntologyRestriction var="g">
 	  ?g odcs:generatedGraph ?a
