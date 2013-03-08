@@ -8,6 +8,8 @@ import java.util.List;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 
+// CHECKSTYLE:OFF
+
 /**
  * @author Jan Michelfeit
  */
@@ -15,7 +17,7 @@ import org.simpleframework.xml.Root;
 public class ConflictResolutionXml {
     @ElementList(name = "Params", required = false)
     private List<ParamXml> params;
-    
+
     @ElementList(name = "DefaultAggregation", required = false)
     private List<ParamXml> defaultAggregation;
 
@@ -25,7 +27,7 @@ public class ConflictResolutionXml {
     public List<ParamXml> getParams() {
         return params;
     }
-    
+
     public List<ParamXml> getDefaultAggregation() {
         return defaultAggregation;
     }

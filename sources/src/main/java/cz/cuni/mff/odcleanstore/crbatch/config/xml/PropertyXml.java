@@ -6,6 +6,8 @@ package cz.cuni.mff.odcleanstore.crbatch.config.xml;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Root;
 
+// CHECKSTYLE:OFF
+
 /**
  * @author Jan Michelfeit
  */
@@ -13,7 +15,7 @@ import org.simpleframework.xml.Root;
 public class PropertyXml {
     @Attribute
     private String id;
-    
+
     public String getId() {
         return id;
     }

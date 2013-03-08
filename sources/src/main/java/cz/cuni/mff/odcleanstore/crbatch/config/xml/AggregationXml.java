@@ -11,6 +11,8 @@ import org.simpleframework.xml.Root;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationType;
 
+// CHECKSTYLE:OFF
+
 /**
  * @author Jan Michelfeit
  */
