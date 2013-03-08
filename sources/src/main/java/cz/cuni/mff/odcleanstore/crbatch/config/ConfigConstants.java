@@ -6,10 +6,9 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
- * Temporary class with configuration constants.
- * 
+ * Global configuration constants.
+ * Contains default values and values which cannot be currently set via the configuration file. 
  * @author Jan Michelfeit
- * @todo replace
  */ 
 public final class ConfigConstants {
     /** Disable constructor for a utility class. */
@@ -32,7 +31,7 @@ public final class ConfigConstants {
      * Default timeout for database queries in seconds.
      * Zero means no timeout.
      */
-    public static final int DEFAULT_QUERY_TIMEOUT = 120;
+    public static final int DEFAULT_QUERY_TIMEOUT = 1200;
     
     /**
      * Default prefix of named graphs and URIs where query results and metadata in the output are placed.

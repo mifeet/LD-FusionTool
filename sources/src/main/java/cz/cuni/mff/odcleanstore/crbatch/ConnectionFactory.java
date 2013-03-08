@@ -13,6 +13,7 @@ public class ConnectionFactory {
     private final String connectionString;
     private final String username;
     private final String password;
+    private final Integer queryTimeout;
 
     /**
      * Creates a new instance.
@@ -22,6 +23,7 @@ public class ConnectionFactory {
         this.connectionString = config.getDatabaseConnectionString();
         this.username = config.getDatabaseUsername();
         this.password = config.getDatabasePassword();
+        this.queryTimeout = config.getQueryTimeout();
     }
 
     /**
@@ -31,6 +33,10 @@ public class ConnectionFactory {
      */
     public VirtuosoConnectionWrapper createConnection() throws ConnectionException {
         JDBCConnectionCredentials credentials = new JDBCConnectionCredentials(connectionString, username, password);
-        return VirtuosoConnectionWrapper.createConnection(credentials);
+        VirtuosoConnectionWrapper connection = VirtuosoConnectionWrapper.createConnection(credentials);
+        if (queryTimeout != null) {
+            connection.setQueryTimeout(queryTimeout);
+        }
+        return connection;
     }
 }
