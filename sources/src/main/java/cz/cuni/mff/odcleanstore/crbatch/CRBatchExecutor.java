@@ -125,17 +125,18 @@ public class CRBatchExecutor {
                 }
                 resolvedCanonicalURIs.add(canonicalURI);
 
-                // Load quads for the given subject and optionally add new resources for traversing
+                // Load quads for the given subject
                 Collection<Quad> quads = quadLoader.getQuadsForURI(canonicalURI);
-                if (transitiveSubjectIterator != null) {
-                    transitiveSubjectIterator.addObjectsFromQuads(quads);
-                }
 
                 // Resolve conflicts
                 Collection<CRQuad> resolvedQuads = conflictResolver.resolveConflicts(quads);
-
                 LOG.info("Resolved {} quads for URI <{}> resulting in {} quads",
                         new Object[] { quads.size(), canonicalURI, resolvedQuads.size() });
+                
+                // Add objects filtered by CR for traversal
+                if (transitiveSubjectIterator != null) {
+                    transitiveSubjectIterator.addObjectsFromCRQuads(resolvedQuads);
+                }
 
                 // Write result to output
                 Model resolvedModel = crQuadsAsModel(resolvedQuads);

@@ -7,9 +7,9 @@ import java.util.Queue;
 
 import com.hp.hpl.jena.graph.Node;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
-import de.fuberlin.wiwiss.ng4j.Quad;
 
 /**
  * Iterator over triple subjects discovered during traversing of triples.
@@ -43,9 +43,9 @@ public class TransitiveSubjectsIterator implements NodeIterator, Closeable {
      * Adds all objects from the given quads to the iteration queue.
      * @param quads quads whose objects are added
      */
-    public void addObjectsFromQuads(Collection<Quad> quads) {
-        for (Quad quad : quads) {
-            tryAddNode(quad.getObject());
+    public void addObjectsFromCRQuads(Collection<CRQuad> quads) {
+        for (CRQuad quad : quads) {
+            tryAddNode(quad.getQuad().getObject());
         }
     }
 
