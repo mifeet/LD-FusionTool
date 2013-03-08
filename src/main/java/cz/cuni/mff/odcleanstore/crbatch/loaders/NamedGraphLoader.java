@@ -106,7 +106,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
                 getPrefixDecl(),
                 queryConfig.getNamedGraphRestriction().getPattern(),
                 queryConfig.getNamedGraphRestriction().getVar(),
-                getGraphPrefixFilter());
+                getSourceNamedGraphPrefixFilter());
         final int graphIndex = 1;
         final int propertyIndex = 2;
         final int valueIndex = 3;

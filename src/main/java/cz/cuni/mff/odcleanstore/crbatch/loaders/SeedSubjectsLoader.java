@@ -187,7 +187,7 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
                 getPrefixDecl(),
                 queryConfig.getNamedGraphRestriction().getPattern(),
                 queryConfig.getNamedGraphRestriction().getVar(),
-                getGraphPrefixFilter(),
+                getSourceNamedGraphPrefixFilter(),
                 seedResourceRestriction,
                 subjectVariable);
         NodeIterator result = new SubjectsIteratorImpl(query, getConnectionFactory());

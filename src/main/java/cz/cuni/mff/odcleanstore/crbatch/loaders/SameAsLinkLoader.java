@@ -72,6 +72,28 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
             + "\n   }"
             + "\n   %4$s"
             + "\n }";
+    
+    /**
+     * SPARQL query that gets owl:sameAs links from ontology graphs. 
+     * Contents of these graphs is not part of the output but the contained owl:sameAs links are used
+     * in conflict resolution.
+     * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
+     *
+     * Must be formatted with arguments:
+     * (1) namespace prefixes declaration
+     * (2) ontology graph restriction patter
+     * (3) ontology graph restriction variable
+     * (4) ontology graph name prefix filter
+     */
+    private static final String ONTOLOGY_SAMEAS_QUERY = "SPARQL %1$s"
+            + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
+            + "\n WHERE {"
+            + "\n   %2$s"
+            + "\n   GRAPH ?%3$s {"
+            + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
+            + "\n   }"
+            + "\n   %4$s"
+            + "\n }";
 
     /**
      * Creates a new instance.
@@ -110,15 +132,24 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
                     getPrefixDecl(),
                     queryConfig.getNamedGraphRestriction().getPattern(),
                     queryConfig.getNamedGraphRestriction().getVar(),
-                    getGraphPrefixFilter());
+                    getSourceNamedGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
 
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
                     getPrefixDecl(),
                     queryConfig.getNamedGraphRestriction().getPattern(),
                     queryConfig.getNamedGraphRestriction().getVar(),
-                    getGraphPrefixFilter());
+                    getSourceNamedGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, attachedQuery);
+
+            if (queryConfig.getOntologyGraphRestriction() != null) {
+                String ontologyQuery = String.format(Locale.ROOT, ONTOLOGY_SAMEAS_QUERY,
+                        getPrefixDecl(),
+                        queryConfig.getOntologyGraphRestriction().getPattern(),
+                        queryConfig.getOntologyGraphRestriction().getVar(),
+                        getGraphPrefixFilter(queryConfig.getOntologyGraphRestriction().getVar()));
+                linkCount += loadSameAsLinks(uriMapping, ontologyQuery);
+            }
         } catch (DatabaseException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Database error", e);
         } finally {

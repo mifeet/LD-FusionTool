@@ -63,7 +63,7 @@ public abstract class DatabaseLoaderBase {
     /** Settings for SPARQL queries. */
     protected final QueryConfig queryConfig;
     
-    /** Cached value returned by {@link #getGraphPrefixFilter()}. */
+    /** Cached value returned by {@link #getSourceNamedGraphPrefixFilter()}. */
     private String cachedGraphPrefixFilter;
     
     /** Cached value returned by {@link #getPrefixDecl()}. */
@@ -107,7 +107,7 @@ public abstract class DatabaseLoaderBase {
      * @see #GRAPH_PREFIX_FILTER
      * @return SPARQL query snippet
      */
-    protected String getGraphPrefixFilter() {
+    protected String getSourceNamedGraphPrefixFilter() {
         if (cachedGraphPrefixFilter == null) {
             cachedGraphPrefixFilter = getGraphPrefixFilter(queryConfig.getNamedGraphRestriction().getVar());
         }
@@ -121,7 +121,7 @@ public abstract class DatabaseLoaderBase {
      * @param graphVariable SPARQL variable name
      * @return SPARQL query snippet
      */
-    private static String getGraphPrefixFilter(String graphVariable) {
+    protected static String getGraphPrefixFilter(String graphVariable) {
         String result = String.format(Locale.ROOT, PREFIX_FILTER_CLAUSE_NEGATIVE, graphVariable, ENGINE_TEMP_GRAPH_PREFIX);
         if (GRAPH_PREFIX_FILTER != null) {
             result += String.format(Locale.ROOT, PREFIX_FILTER_CLAUSE, graphVariable, GRAPH_PREFIX_FILTER);

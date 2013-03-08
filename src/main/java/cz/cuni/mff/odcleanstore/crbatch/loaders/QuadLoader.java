@@ -157,7 +157,7 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
                         getPrefixDecl(),
                         queryConfig.getNamedGraphRestriction().getPattern(),
                         queryConfig.getNamedGraphRestriction().getVar(),
-                        getGraphPrefixFilter(),
+                        getSourceNamedGraphPrefixFilter(),
                         uri);
                 addQuadsFromQuery(query, result);
             } else {
@@ -167,7 +167,7 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
                             getPrefixDecl(),
                             queryConfig.getNamedGraphRestriction().getPattern(),
                             queryConfig.getNamedGraphRestriction().getVar(),
-                            getGraphPrefixFilter(),
+                            getSourceNamedGraphPrefixFilter(),
                             uriList);
                     addQuadsFromQuery(query, result);
                 }
