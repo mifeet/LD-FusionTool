@@ -31,7 +31,6 @@ public class ConfigImpl implements Config {
     private File canonicalURIsOutputFile = 
             new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
     private File canonicalURIsInputFile;
-    private boolean processByPublishers = false;
 
     @Override
     public String getDatabaseConnectionString() {
@@ -159,19 +158,6 @@ public class ConfigImpl implements Config {
      */
     public void setAggregationSpec(AggregationSpec aggregationSpec) {
         this.aggregationSpec = aggregationSpec;
-    }
-    
-    @Override
-    public boolean getProcessByPublishers() {
-        return this.processByPublishers;
-    }
-    
-    /**
-     * Setter for {@link #getProcessByPublishers()}.
-     * @param processByPublishers value of {@link #getProcessByPublishers()} to set
-     */
-    public void setProcessByPublishers(boolean processByPublishers) {
-        this.processByPublishers = processByPublishers;
     }
     
     @Override

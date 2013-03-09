@@ -210,9 +210,6 @@ public final class ConfigReader {
                 } else {
                     config.setCanonicalURIsInputFile(null);
                 }
-            } else if ("processByPublishers".equalsIgnoreCase(param.getName())) {
-                boolean value = Boolean.parseBoolean(param.getValue());
-                config.setProcessByPublishers(value);
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");
