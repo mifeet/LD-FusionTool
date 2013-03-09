@@ -83,6 +83,7 @@ public final class CRBatchApplication {
                 LOG.info("Identified {} publishers", publishers.size());
                 int i = 0;
                 for (String publisher : publishers) {
+                    System.out.println("Executing for publisher <" + publisher + ">");
                     Config publisherConfig = getConfigForPublisher(publisher, ++i, config);
                     execute(publisherConfig);
                 }
@@ -176,7 +177,7 @@ public final class CRBatchApplication {
         publisherConfig.setNamedGraphRestriction(newRestriction);
         
         // Adjust outputs for the given publisher
-        String outputSuffix = "publisher" + publisherIndex;
+        String outputSuffix = Integer.toString(publisherIndex);
         int namespaceIndex = Util.splitNamespace(publisher);
         if (namespaceIndex < publisher.length()) {
             outputSuffix += "-" + publisher.substring(namespaceIndex).replace('.', '_');
