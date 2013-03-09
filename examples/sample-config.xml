@@ -71,13 +71,13 @@
     
     <!-- Default aggregation settings (optional) -->
     <DefaultAggregation>
-      <!-- Default value of the multivalue parameter (optional) -->
+      <!-- Default value of the multivalue parameter; optional (defaults to true) -->
       <Param name="defaultMultivalue" value="true"/>
       
-      <!-- Default aggregation method (optional) -->
+      <!-- Default aggregation method; optional (defaults to ALL) -->
       <Param name="defaultAggregation" value="ALL" />
       
-      <!-- Default aggregation error strategy (optional) -->
+      <!-- Default aggregation error strategy; possible values are 'IGNORE' and 'RETURN_ALL'; optional (defaults to RETURN_ALL) -->
       <Param name="aggregationErrorStrategy" value="RETURN_ALL" />
     </DefaultAggregation>
     
