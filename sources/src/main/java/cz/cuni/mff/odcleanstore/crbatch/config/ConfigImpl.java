@@ -15,7 +15,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
  * Container of configuration values.
  * @author Jan Michelfeit
  */
-public class ConfigImpl implements Config {
+public class ConfigImpl implements Config, Cloneable {
     private static final DateFormat CANONICAL_FILE_SUFFIS_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss");
     
     private String databaseConnectionString;
@@ -228,5 +228,15 @@ public class ConfigImpl implements Config {
     @Override
     public Long getMaxDateDifference() {
         return ConfigConstants.MAX_DATE_DIFFERENCE;
+    }
+
+    @Override
+    public Config shallowClone() {
+        try {
+            return (Config) this.clone();
+        } catch (CloneNotSupportedException e) {
+            // Cannot happen
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -11,6 +11,12 @@ import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
  */
 public interface Config extends QueryConfig {
     /**
+     * Crates a shallow copy of this object.
+     * @return shallow copy of this
+     */
+    Config shallowClone();
+    
+    /**
      * Virtuoso database connection string.
      * @return database connection string
      */

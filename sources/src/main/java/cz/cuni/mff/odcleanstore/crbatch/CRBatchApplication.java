@@ -2,23 +2,44 @@ package cz.cuni.mff.odcleanstore.crbatch;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.simpleframework.xml.core.PersistenceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.rdf.model.impl.Util;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadata;
+import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
+import cz.cuni.mff.odcleanstore.crbatch.config.ConfigImpl;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
+import cz.cuni.mff.odcleanstore.crbatch.config.OutputImpl;
+import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
+import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * The main entry point of the application.
  * @author Jan Michelfeit
  */
 public final class CRBatchApplication {
+    private static final Logger LOG = LoggerFactory.getLogger(CRBatchApplication.class);
+    
+    private static final String SUFFIX_SEPARATOR = "-";
+    
     private static String getUsage() {
         return "Usage:\n java -jar odcs-cr-batch-<version>.jar <config file>.xml";
     }
@@ -57,8 +78,17 @@ public final class CRBatchApplication {
         System.out.println("Starting conflict resolution batch, this may take a while... \n");
 
         try {
-            CRBatchExecutor crBatchExecutor = new CRBatchExecutor();
-            crBatchExecutor.runCRBatch(config);
+            if (config.getProcessByPublishers()) {
+                Set<String> publishers = listPublishers(config);
+                LOG.info("Identified {} publishers", publishers.size());
+                int i = 0;
+                for (String publisher : publishers) {
+                    Config publisherConfig = getConfigForPublisher(publisher, ++i, config);
+                    execute(publisherConfig);
+                }
+            } else {
+                execute(config);
+            }
         } catch (CRBatchException e) {
             System.err.println("Error:");
             System.err.println("  " + e.getMessage());
@@ -79,6 +109,11 @@ public final class CRBatchApplication {
         System.out.println("----------------------------");
         System.out.printf("CR-batch executed in %.3f s\n",
                 (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
+    }
+
+    private static void execute(Config config) throws CRBatchException, ConflictResolutionException, IOException {
+        CRBatchExecutor crBatchExecutor = new CRBatchExecutor();
+        crBatchExecutor.runCRBatch(config);
     }
 
     private static void checkValidInput(Config config) throws InvalidInputException {
@@ -126,6 +161,70 @@ public final class CRBatchApplication {
             throw new InvalidInputException(message);
         }
         // intentionally do not check canonical URI files
+    }
+
+    // This is a little hacked together; probably to be removed in future versions
+    private static Config getConfigForPublisher(String publisher, int publisherIndex, Config config) {
+        ConfigImpl publisherConfig = (ConfigImpl) config.shallowClone();
+        
+        // Limit named graph restriction pattern to the given publisher
+        SparqlRestriction oldRestriction = config.getNamedGraphRestriction();
+        String publisherTriplePattern = "?" + oldRestriction.getVar() + " <" + ODCS.publishedBy + "> <" + publisher + ">.";
+        SparqlRestriction newRestriction = new SparqlRestrictionImpl(
+                publisherTriplePattern + "\n" + oldRestriction.getPattern(),
+                oldRestriction.getVar());
+        publisherConfig.setNamedGraphRestriction(newRestriction);
+        
+        // Adjust outputs for the given publisher
+        String outputSuffix = "publisher" + publisherIndex;
+        int namespaceIndex = Util.splitNamespace(publisher);
+        if (namespaceIndex < publisher.length()) {
+            outputSuffix += "-" + publisher.substring(namespaceIndex).replace('.', '_');
+        }
+        List<Output> oldOutputs = config.getOutputs();
+        List<Output> newOutputs = new LinkedList<Output>();
+        for (Output output : oldOutputs) {
+            switch (output.getFormat()) {
+            case N3:
+            case RDF_XML:
+                newOutputs.add(new OutputImpl(output.getFormat(), addFileNameSuffix(output.getFileLocation(), outputSuffix)));
+                break;
+            default:
+                newOutputs.add(output);
+                break;
+            }
+        }
+        publisherConfig.setOutputs(newOutputs);
+        
+        return publisherConfig;
+    }
+
+    private static File addFileNameSuffix(File file, String suffix) {
+        String originalName = file.getName();
+        String newName;
+        int dotIndex = originalName.lastIndexOf('.');
+        if (dotIndex < 0) {
+            newName = originalName + SUFFIX_SEPARATOR + suffix;
+        } else {
+            newName = originalName.substring(0, dotIndex) + SUFFIX_SEPARATOR + suffix + originalName.substring(dotIndex);
+        }
+        return new File(file.getParentFile(), newName);
+    }
+
+    private static Set<String> listPublishers(Config config) throws CRBatchException {
+        ConnectionFactory connectionFactory = new ConnectionFactory(config);
+
+        // Load source named graphs metadata
+        NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, (QueryConfig) config);
+        NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
+        
+        Set<String> publishers = new HashSet<String>();
+        for (NamedGraphMetadata metadata : namedGraphsMetadata.listMetadata()) {
+            for (String publisher : metadata.getPublishers()) {
+                publishers.add(publisher);
+            }
+        }
+        return publishers;
     }
 
     /** Disable constructor. */
