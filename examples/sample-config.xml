@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Config>
+  <!-- Definitions of namespace prefixes which can be used in SPARQL patterns and conflict resolution settings (optional) -->
   <Prefixes>
     <Prefix id="rdf" namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
     <Prefix id="rdfs" namespace="http://www.w3.org/2000/01/rdf-schema#" />
@@ -7,35 +8,79 @@
     <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
   </Prefixes>
+  
+  <!-- Definition of data source (required) -->
   <DataSource>
+    <!-- Hostname of the SPARQL endpoint -->
     <Param name="host" value="localhost" />
+    
+    <!-- Port of the SPARQL endpoint -->
     <Param name="port" value="1111" />
+    
+    <!-- Username for the endpoint -->
     <Param name="username" value="dba" />
+    
+    <!-- Password for the endpoint -->
     <Param name="password" value="dba" />
   </DataSource>
+  
+  <!-- Definitions of which data to process (optional) -->
   <SourceDataset>
+    <!-- SPARQL group graph pattern which limits payload named graphs from which data to process are obtained;
+	     data are loaded also from the related attached graphs;
+	     attribute var specifies which variable in the pattern represents the payload graph;
+		 optional (if not given, all payload & attached graphs are processed) -->
     <GraphsRestriction var="g">
       ?g odcs:isLatestUpdate ?a FILTER(?a = 1)
     </GraphsRestriction>
+    
+    <!-- SPARQL group graph pattern which specifies additional named graphs from which owl:sameAs links are loaded;
+	     owl:sameAs links are considered in conflict resolution but contents are not included in the output;
+	     attribute var specifies which variable in the pattern represents the named graph;
+		optional -->
     <OntologyRestriction var="g">
       ?g odcs:generatedGraph ?a
     </OntologyRestriction>
+    
+    <!-- SPARQL group graph pattern giving seed resources for transitive traversal of triples;
+	     the output will include triples having matching resources as their subjects and
+		 triples transitively reachable from there;
+		 attribute var specifies which variable in the pattern represents the seed resource;
+		 optional (if not given, all triples from source graphs are processed) -->
     <SeedResourceRestriction var="s">
       ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
     </SeedResourceRestriction>
   </SourceDataset>
+  
+  <!-- Definition of conflict resolution settings (optional) -->
   <ConflictResolution>
+    <!-- General parameters (optional) -->
     <Params>
+      <!-- Path to file where all canonical URIs after conflict resolution are written, one URI per line (optional) -->
       <Param name="canonicalUriOutputFile" value="canonicalUris.txt" />
+      
+      <!-- Path to file which contains URIs preferred for canonical URIs, one URI per line (optional) -->
       <Param name="canonicalUriInputFile" value="canonicalUris.txt" />
       <Param name="processByPublishers" value="true" />
     </Params>
+    
+    <!-- Default aggregation settings (optional) -->
     <DefaultAggregation>
+      <!-- Default value of the multivalue parameter (optional) -->
       <Param name="defaultMultivalue" value="true"/>
+      
+      <!-- Default aggregation method (optional) -->
       <Param name="defaultAggregation" value="ALL" />
+      
+      <!-- Default aggregation error strategy (optional) -->
       <Param name="aggregationErrorStrategy" value="RETURN_ALL" />
     </DefaultAggregation>
+    
+    <!-- Per-property aggregation settings (optional) -->
     <PropertyAggregations>
+      <!-- <Aggregation> elements specify an aggregation policy, where 'type' attribute defines the aggregation method,
+           'multivalue' attribute defines the multivalue parameter (both attributes are optional);
+           <Property id="..."> subelements define the properties to which the policy applies -->
       <Aggregation type="BEST">
         <Property id="rdfs:label"/>
       </Aggregation>
@@ -45,11 +90,19 @@
       </Aggregation>
     </PropertyAggregations>
   </ConflictResolution>
+  
+  <!-- Definition of where the output shall be written (required) -->
   <Outputs>
+    <!-- Definition of output to a file (currently the only supported output type) -->
     <Output type="file">
+      <!-- Path to the output file (required) -->
       <Param name="file" value="out.n3"/>
+      
+      <!-- Format of the output file; accepted values are 'ntriples' and 'rdf/xml'; (required) -->
       <Param name="format" value="ntriples"/>
-      <!--<Param name="resultDataPrefix" value="http://opendata.cz/infrastructure/odcleanstore/query"/> -->
+      
+      <!-- Path to file where owl:sameAs links used in conflict resolution shall be written (optional) -->
+      <Param name="sameAsFile" value="sameAsLinks.n3"/>
     </Output>
   </Outputs>
 </Config>
