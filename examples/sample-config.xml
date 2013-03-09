@@ -28,6 +28,7 @@
     <Params>
       <Param name="canonicalUriOutputFile" value="canonicalUris.txt" />
       <Param name="canonicalUriInputFile" value="canonicalUris.txt" />
+      <Param name="processByPublishers" value="true" />
     </Params>
     <DefaultAggregation>
       <Param name="defaultMultivalue" value="true"/>
@@ -47,8 +48,8 @@
   <Outputs>
     <Output type="file">
       <Param name="file" value="out.n3"/>
-      <Param name="sameAsFile" value="sameAsLinks.n3"/>
       <Param name="format" value="ntriples"/>
+      <!--<Param name="resultDataPrefix" value="http://opendata.cz/infrastructure/odcleanstore/query"/> -->
     </Output>
   </Outputs>
 </Config>

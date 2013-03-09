@@ -48,6 +48,13 @@ public interface Config extends QueryConfig {
     AggregationSpec getAggregationSpec();
     
     /**
+     * Indicates whether conflict resolution should be applied to all data at once (false),
+     * or a separate output for each publisher should be created (true).
+     * @return true if processing should be divided by publishers 
+     */
+    boolean getProcessByPublishers();
+
+    /**
      * Database queries timeout.
      * @return query timeout; zero means no timeout
      */
