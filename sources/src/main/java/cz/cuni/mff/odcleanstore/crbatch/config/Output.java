@@ -23,4 +23,10 @@ public interface Output {
      * @return output file
      */
     File getFileLocation();
+    
+    /** 
+     * Returns file where the used owl:sameAs links should be written.
+     * @return output file or null when the sameAs links shall not be written
+     */
+    File getSameAsFileLocation();
 }

@@ -52,7 +52,7 @@ public interface Config extends QueryConfig {
      * or a separate output for each publisher should be created (true).
      * @return true if processing should be divided by publishers 
      */
-    Boolean getProcessByPublishers();
+    boolean getProcessByPublishers();
 
     /**
      * Database queries timeout.

@@ -162,7 +162,7 @@ public class ConfigImpl implements Config {
     }
     
     @Override
-    public Boolean getProcessByPublishers() {
+    public boolean getProcessByPublishers() {
         return this.processByPublishers;
     }
     

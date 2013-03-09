@@ -226,7 +226,8 @@ public final class ConfigReader {
         if ("ntriples".equalsIgnoreCase(formatString) || "n3".equalsIgnoreCase(formatString)) {
             format = EnumOutputFormat.N3;
         } else if ("rdf/xml".equalsIgnoreCase(formatString) || "rdfxml".equalsIgnoreCase(formatString)) {
-            format = EnumOutputFormat.RDF_XML;
+            throw new InvalidInputException("RDF/XML format is not fully implemented yet");
+            //format = EnumOutputFormat.RDF_XML;
         } else if (formatString == null) {
             throw new InvalidInputException("Output format must be specified");
         } else {
@@ -238,8 +239,17 @@ public final class ConfigReader {
             throw new InvalidInputException("Name of the output file must be specified");
         }
         File fileLocation = new File(fileLocationString);
+        
+        // Create result object
+        OutputImpl output = new OutputImpl(format, fileLocation);
+        
+        // Add optional parameters
+        String sameAsLocationString = extractParamByName(outputXml.getParams(), "sameAsFile");
+        if (sameAsLocationString != null) {
+            output.setSameAsFileLocation(new File(sameAsLocationString));
+        }
 
-        return new OutputImpl(format, fileLocation);
+        return output;
     }
 
     private SparqlRestriction extractGraphRestriction(RestrictionXml restrictionXml) {

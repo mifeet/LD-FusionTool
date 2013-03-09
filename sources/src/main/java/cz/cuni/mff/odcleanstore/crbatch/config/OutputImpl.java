@@ -15,6 +15,7 @@ public class OutputImpl implements Output {
 
     private final EnumOutputFormat format;
     private final File fileLocation;
+    private File sameAsFileLocation;
     
     /**
      * @param format output format
@@ -33,5 +34,18 @@ public class OutputImpl implements Output {
     @Override
     public File getFileLocation() {
         return fileLocation;
+    }
+    
+    @Override
+    public File getSameAsFileLocation() {
+        return sameAsFileLocation;
+    }
+    
+    /**
+     * Sets value for {@link #getSameAsFileLocation()}.
+     * @param sameAsFileLocation output file for owl:sameAs links
+     */
+    public void setSameAsFileLocation(File sameAsFileLocation) {
+        this.sameAsFileLocation = sameAsFileLocation;
     }
 }
