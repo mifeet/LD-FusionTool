@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Config>
+  <!-- Definition of data source (required) -->
   <DataSource>
     <Param name="host" value="localhost" />
     <Param name="port" value="1111" />
     <Param name="username" value="dba" />
     <Param name="password" value="dba" />
   </DataSource>
+  
+  <!-- Definition of where the output shall be written (required) -->
   <Outputs>
     <Output type="file">
       <Param name="file" value="out.n3"/>
