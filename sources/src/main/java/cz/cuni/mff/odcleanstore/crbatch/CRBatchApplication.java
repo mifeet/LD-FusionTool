@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.simpleframework.xml.core.PersistenceException;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
@@ -19,8 +21,27 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
  * @author Jan Michelfeit
  */
 public final class CRBatchApplication {
+    /** Parsed command line arguments representation. */
+    private static class ApplicationArgs {
+        private final boolean isVerbose;
+        private final String configFilePath;
+        
+        public ApplicationArgs(boolean isVerbose, String configFilePath) {
+            this.isVerbose = isVerbose;
+            this.configFilePath = configFilePath;
+        }
+        
+        public boolean isVerbose() {
+            return isVerbose;
+        }
+        
+        public String getConfigFilePath() {
+            return configFilePath;
+        }
+    }
+    
     private static String getUsage() {
-        return "Usage:\n java -jar odcs-cr-batch-<version>.jar <config file>.xml";
+        return "Usage:\n java -jar odcs-cr-batch-<version>.jar [--verbose] <config file>.xml";
     }
 
     /**
@@ -28,11 +49,19 @@ public final class CRBatchApplication {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        if (args == null || args.length < 1) {
+        ApplicationArgs parsedArgs;
+        try {
+            parsedArgs = parseArgs(args);
+        } catch (InvalidInputException e) {
             System.err.println(getUsage());
             return;
         }
-        File configFile = new File(args[0]);
+        
+        if (!parsedArgs.isVerbose()) {
+            LogManager.getLogger(CRBatchApplication.class.getPackage().getName()).setLevel(Level.ERROR);
+        }
+        
+        File configFile = new File(parsedArgs.getConfigFilePath());
         if (!configFile.isFile() || !configFile.canRead()) {
             System.err.println("Cannot read the given config file.\n");
             System.err.println(getUsage());
@@ -79,6 +108,23 @@ public final class CRBatchApplication {
         System.out.println("----------------------------");
         System.out.printf("CR-batch executed in %.3f s\n",
                 (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
+    }
+    
+    private static ApplicationArgs parseArgs(String[] args) throws InvalidInputException {
+        if (args == null) {
+            throw new InvalidInputException("Missing command line arguments");
+        }
+        
+        boolean verbose = false;
+        int configFilePathPosition = 0;
+        if (configFilePathPosition < args.length && "--verbose".equals(args[configFilePathPosition])) {
+            verbose = true;
+            configFilePathPosition++;
+        }
+        if (configFilePathPosition >= args.length) {
+            throw new InvalidInputException("Missing config file argument");
+        }
+        return new ApplicationArgs(verbose, args[configFilePathPosition]);
     }
 
     private static void checkValidInput(Config config) throws InvalidInputException {
