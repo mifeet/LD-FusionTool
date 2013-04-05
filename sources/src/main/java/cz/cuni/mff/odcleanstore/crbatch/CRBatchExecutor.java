@@ -300,8 +300,9 @@ public class CRBatchExecutor {
     }
 
     private void writeSameAsLinks(URIMappingIterable uriMapping, List<Output> outputs) throws IOException {
-        // Create output writers
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
+        try {
+        // Create output writers
         for (Output output : outputs) {
             if (output.getSameAsFileLocation() == null) {
                 continue;
@@ -328,6 +329,11 @@ public class CRBatchExecutor {
             }
             for (CloseableRDFWriter writer : writers) {
                 writer.write(model);
+                }
+            }
+        } finally {
+            for (CloseableRDFWriter writer : writers) {
+                writer.close();
             }
         }
     }
