@@ -142,7 +142,6 @@ public class CRBatchExecutor {
                     writer.write(resolvedTriplesIterator);
                 }
             }
-            // testBNodes(rdfWriters);
         } finally {
             quadLoader.close();
             for (CloseableRDFWriter writer : rdfWriters) {
@@ -153,29 +152,6 @@ public class CRBatchExecutor {
         writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
         writeSameAsLinks(uriMapping, config.getOutputs());
     }
-
-    // private static void testBNodes(List<CloseableRDFWriter> rdfWriters) {
-    // Node b1 = Node.createAnon(new AnonId("anon1"));
-    // Node b2 = Node.createAnon(new AnonId("anon2"));
-    // Node r = Node.createURI("http://example.com");
-    // Node r2 = Node.createURI("http://example2.com");
-    // Model m1 = ModelFactory.createDefaultModel();
-    // m1.add(m1.asStatement(new Triple(r, r, b1)));
-    // m1.add(m1.asStatement(new Triple(r, r2, b2)));
-    // Model m2 = ModelFactory.createDefaultModel();
-    // m2.add(m2.asStatement(new Triple(r, r, r)));
-    // Model m3 = ModelFactory.createDefaultModel();
-    // m3.add(m3.asStatement(new Triple(r, r, b1)));
-    // Model m4 = ModelFactory.createDefaultModel();
-    // m4.add(m4.asStatement(new Triple(r, r2, b2)));
-    //
-    // for (CloseableRDFWriter writer : rdfWriters) {
-    // writer.write(m1);
-    // writer.write(m2);
-    // writer.write(m3);
-    // writer.write(m4);
-    // }
-    // }
 
     private String getNodeURI(Node node) {
         if (node.isURI()) {
