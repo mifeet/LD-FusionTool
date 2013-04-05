@@ -16,6 +16,7 @@ public class OutputImpl implements Output {
     private final EnumOutputFormat format;
     private final File fileLocation;
     private File sameAsFileLocation;
+    private Long splitByBytes;
     
     /**
      * @param format output format
@@ -47,5 +48,18 @@ public class OutputImpl implements Output {
      */
     public void setSameAsFileLocation(File sameAsFileLocation) {
         this.sameAsFileLocation = sameAsFileLocation;
+    }
+
+    @Override
+    public Long getSplitByBytes() {
+        return splitByBytes; 
+    }
+    
+    /**
+     * Sets value for {@link #getSplitByBytes()}.
+     * @param splitByBytes maximum size of one output file in bytes
+     */
+    public void setSplitByBytes(Long splitByBytes) {
+        this.splitByBytes = splitByBytes;
     }
 }
