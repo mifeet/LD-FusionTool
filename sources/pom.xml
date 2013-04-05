@@ -53,6 +53,11 @@
 			<id>odcleanstore-thirdpary</id>
 			<url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/thirdparty/</url>
 		</repository>
+		<repository>
+			<id>aduna</id>
+			<name>Aduna Software</name>
+			<url>http://repo.aduna-software.org/maven2/releases/</url>
+		</repository>
 	</repositories>
 
 	<distributionManagement>
@@ -99,11 +104,23 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- Dependency for XML configuration parser -->
 		<dependency>
 			<groupId>org.simpleframework</groupId>
 			<artifactId>simple-xml</artifactId>
 			<version>2.7</version>
 		</dependency>
+		<!-- Dependencies for RDF serializers from Sesame -->
+		<dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-rio-rdfxml</artifactId>
+            <version>2.6.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-rio-n3</artifactId>
+            <version>2.6.10</version>
+        </dependency>
 	</dependencies>
 
 	<build>

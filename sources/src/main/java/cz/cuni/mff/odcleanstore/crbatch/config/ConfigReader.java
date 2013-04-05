@@ -223,8 +223,7 @@ public final class ConfigReader {
         if ("ntriples".equalsIgnoreCase(formatString) || "n3".equalsIgnoreCase(formatString)) {
             format = EnumOutputFormat.N3;
         } else if ("rdf/xml".equalsIgnoreCase(formatString) || "rdfxml".equalsIgnoreCase(formatString)) {
-            throw new InvalidInputException("RDF/XML format is not fully implemented yet");
-            //format = EnumOutputFormat.RDF_XML;
+            format = EnumOutputFormat.RDF_XML;
         } else if (formatString == null) {
             throw new InvalidInputException("Output format must be specified");
         } else {

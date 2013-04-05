@@ -26,9 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.graph.Triple;
 
 import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfig;
 import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
@@ -53,6 +51,8 @@ import cz.cuni.mff.odcleanstore.crbatch.loaders.SeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.TransitiveSubjectsIterator;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.crbatch.util.ConvertingIterator;
+import cz.cuni.mff.odcleanstore.crbatch.util.GenericConverter;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
@@ -139,9 +139,9 @@ public class CRBatchExecutor {
                 }
 
                 // Write result to output
-                Model resolvedModel = crQuadsAsModel(resolvedQuads);
                 for (CloseableRDFWriter writer : rdfWriters) {
-                    writer.write(resolvedModel);
+                    Iterator<Triple> resolvedTriplesIterator = crQuadsAsTriples(resolvedQuads.iterator());
+                    writer.write(resolvedTriplesIterator);
                 }
             }
             // testBNodes(rdfWriters);
@@ -239,25 +239,20 @@ public class CRBatchExecutor {
         Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
         switch (outputFormat) {
         case RDF_XML:
-            IncrementalRdfXmlWriter rdfXmlWriter = new IncrementalRdfXmlWriter(outputWriter);
-            // Settings making writing faster
-            rdfXmlWriter.setProperty("allowBadURIs", "true");
-            rdfXmlWriter.setProperty("relativeURIs", "");
-            // rdfXmlWriter.setProperty("tab", "0");
-            // TODO: rdfXmlWriter doesn't work properly yet
-            return rdfXmlWriter;
+            return new IncrementalRdfXmlWriter(outputWriter);
         case N3:
         default:
             return new IncrementalN3Writer(outputWriter);
         }
     }
 
-    private static Model crQuadsAsModel(Collection<CRQuad> crQuads) {
-        Model model = ModelFactory.createDefaultModel();
-        for (CRQuad crQuad : crQuads) {
-            model.add(model.asStatement(crQuad.getQuad().getTriple()));
-        }
-        return model;
+    private static Iterator<Triple> crQuadsAsTriples(Iterator<CRQuad> crQuads) {
+        return ConvertingIterator.decorate(crQuads, new GenericConverter<CRQuad, Triple>() {
+            @Override
+            public Triple convert(CRQuad object) {
+                return object.getQuad().getTriple();
+            }
+        });
     }
 
     private static ConflictResolver createConflictResolver(
@@ -289,46 +284,72 @@ public class CRBatchExecutor {
         }
         if (!outputFile.exists() || outputFile.canWrite()) {
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
-            for (String uri : resolvedCanonicalURIs) {
-                writer.println(uri);
+            try {
+                for (String uri : resolvedCanonicalURIs) {
+                    writer.println(uri);
+                }
+            } finally {
+                writer.close();
             }
-            writer.close();
         } else {
             LOG.error("Cannot write canonical URIs to '{}'", outputFile.getPath());
             // Intentionally do not throw an exception
         }
     }
 
-    private void writeSameAsLinks(URIMappingIterable uriMapping, List<Output> outputs) throws IOException {
+    private void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs) throws IOException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         try {
-        // Create output writers
-        for (Output output : outputs) {
-            if (output.getSameAsFileLocation() == null) {
-                continue;
+            // Create output writers
+            for (Output output : outputs) {
+                if (output.getSameAsFileLocation() == null) {
+                    continue;
+                }
+                CloseableRDFWriter writer = createOutputWriter(output.getSameAsFileLocation(), output.getFormat());
+                writers.add(writer);
+                writer.addNamespace("owl", OWL.getURI());
             }
-            CloseableRDFWriter writer = createOutputWriter(output.getSameAsFileLocation(), output.getFormat());
-            writers.add(writer);
-        }
-        if (writers.isEmpty()) {
-            return;
-        }
-        
-        Iterator<String> uriIterator = uriMapping.iterator();
-        while (uriIterator.hasNext()) {
-            Model model = ModelFactory.createDefaultModel();
-            Property sameAs = model.createProperty(OWL.sameAs);
-            for (int i = 0; i < BATCH_WRITE_TRIPLE_COUNT && uriIterator.hasNext(); i++) {
-                String uri = uriIterator.next();
-                String canonicalUri = uriMapping.getCanonicalURI(uri);
-                model.add(
-                        model.createResource(uri),
-                        sameAs,
-                        model.createResource(canonicalUri)
-                        );
+            if (writers.isEmpty()) {
+                return;
             }
-            for (CloseableRDFWriter writer : writers) {
-                writer.write(model);
+
+            final Iterator<String> uriIterator = uriMapping.iterator();
+            
+            
+            
+            
+            final Node sameAs = Node.createURI(OWL.sameAs);
+            while (uriIterator.hasNext()) {
+                // Iterator which iterates over uriMappings and returns respective sameAs triples
+                // but at most BATCH_WRITE_TRIPLE_COUNT triples
+                Iterator<Triple> sameAsTripleIterator = new Iterator<Triple>() {
+                    private int i = 0;
+
+                    @Override
+                    public boolean hasNext() {
+                        return uriIterator.hasNext() && i < BATCH_WRITE_TRIPLE_COUNT;
+                    }
+
+                    @Override
+                    public Triple next() {
+                        i++;
+                        String uri = uriIterator.next();
+                        String canonicalUri = uriMapping.getCanonicalURI(uri);
+                        return new Triple(
+                                Node.createURI(uri),
+                                sameAs,
+                                Node.createURI(canonicalUri));
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                };
+
+                for (CloseableRDFWriter writer : writers) {
+                    writer.write(sameAsTripleIterator);
                 }
             }
         } finally {
