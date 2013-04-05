@@ -4,7 +4,7 @@
 package cz.cuni.mff.odcleanstore.crbatch.io;
 
 import java.io.IOException;
-import java.io.Writer;
+import java.io.OutputStream;
 
 import org.openrdf.rio.RDFWriterFactory;
 import org.openrdf.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
@@ -13,16 +13,16 @@ import org.openrdf.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
  * Implementation of {@link CloseableRDFWriter} for RDF/XML output format.
  * @author Jan Michelfeit
  */
-public class IncrementalRdfXmlWriter extends SesameCloseableWriterBase {
+public class RdfXmlCloseableRDFWriter extends SesameCloseableRDFWriterBase {
     private static final RDFWriterFactory WRITER_FACTORY = new RDFXMLPrettyWriterFactory();
     //private static final RDFWriterFactory WRITER_FACTORY = new RDFXMLWriterFactory();
     
     
     /**
-     * @param outputWriter writer to which result is written
+     * @param outputStream stream to which result is written
      * @throws IOException  I/O error
      */
-    public IncrementalRdfXmlWriter(Writer outputWriter) throws IOException {
-        super(outputWriter, WRITER_FACTORY);
+    public RdfXmlCloseableRDFWriter(OutputStream outputStream) throws IOException {
+        super(outputStream, WRITER_FACTORY);
     }
 }

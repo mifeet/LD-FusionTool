@@ -3,7 +3,10 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch.io;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Iterator;
 
@@ -20,19 +23,18 @@ import cz.cuni.mff.odcleanstore.crbatch.util.JenaToSesameConverter;
 /**
  * @author Jan Michelfeit
  */
-public abstract class SesameCloseableWriterBase implements CloseableRDFWriter {
+public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter {
     private final RDFWriter rdfWriter;
     private final Writer outputWriter;
     
-    
     /**
      * Create a new instance.
-     * @param outputWriter output writer
+     * @param outputStream output stream
      * @param writerFactory factory for RDFWriter to be used for serialization
      * @throws IOException  I/O error
      */
-    protected SesameCloseableWriterBase(Writer outputWriter, RDFWriterFactory writerFactory) throws IOException {
-        this.outputWriter = outputWriter;
+    protected SesameCloseableRDFWriterBase(OutputStream outputStream, RDFWriterFactory writerFactory) throws IOException {
+        this.outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
         this.rdfWriter = writerFactory.getWriter(outputWriter);
         try {
             this.rdfWriter.startRDF();

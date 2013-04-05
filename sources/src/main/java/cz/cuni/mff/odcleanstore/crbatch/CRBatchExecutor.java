@@ -4,16 +4,13 @@
 package cz.cuni.mff.odcleanstore.crbatch;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -41,9 +38,8 @@ import cz.cuni.mff.odcleanstore.crbatch.config.Output;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
+import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
-import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalN3Writer;
-import cz.cuni.mff.odcleanstore.crbatch.io.IncrementalRdfXmlWriter;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NodeIterator;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.QuadLoader;
@@ -67,6 +63,8 @@ import de.fuberlin.wiwiss.ng4j.Quad;
  */
 public class CRBatchExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(CRBatchExecutor.class);
+    
+    private static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory(); 
 
     /**
      * Performs the actual CR-batch task according to the given configuration.
@@ -204,22 +202,23 @@ public class CRBatchExecutor {
             throws IOException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         for (Output output : outputs) {
-            CloseableRDFWriter writer = createOutputWriter(output.getFileLocation(), output.getFormat());
+            CloseableRDFWriter writer = createOutputWriter(
+                    output.getFileLocation(), 
+                    output.getFormat(), 
+                    output.getSplitByBytes());
             writers.add(writer);
             writeNamespaceDeclarations(writer, nsPrefixes);
         }
         return writers;
     }
 
-    private static CloseableRDFWriter createOutputWriter(File file, EnumOutputFormat outputFormat) throws IOException {
-        OutputStream outputStream = new FileOutputStream(file);
-        Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-        switch (outputFormat) {
-        case RDF_XML:
-            return new IncrementalRdfXmlWriter(outputWriter);
-        case N3:
-        default:
-            return new IncrementalN3Writer(outputWriter);
+    private static CloseableRDFWriter createOutputWriter(File file, EnumOutputFormat outputFormat, Long splitByBytes)
+            throws IOException {
+        
+        if (splitByBytes == null) {
+            return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, new FileOutputStream(file));
+        } else {
+            return RDF_WRITER_FACTORY.createSplittingRDFWriter(outputFormat, file, splitByBytes);
         }
     }
 
@@ -290,7 +289,10 @@ public class CRBatchExecutor {
                 if (output.getSameAsFileLocation() == null) {
                     continue;
                 }
-                CloseableRDFWriter writer = createOutputWriter(output.getSameAsFileLocation(), output.getFormat());
+                CloseableRDFWriter writer = createOutputWriter(
+                        output.getSameAsFileLocation(),
+                        output.getFormat(),
+                        output.getSplitByBytes());
                 writers.add(writer);
                 writer.addNamespace("owl", OWL.getURI());
                 writeNamespaceDeclarations(writer, nsPrefixes);
@@ -301,7 +303,6 @@ public class CRBatchExecutor {
 
             GenericConverter<String, Triple> uriToTripleConverter = new GenericConverter<String, Triple>() {
                 private final Node sameAs = Node.createURI(OWL.sameAs);
-
                 @Override
                 public Triple convert(String uri) {
                     String canonicalUri = uriMapping.getCanonicalURI(uri);
