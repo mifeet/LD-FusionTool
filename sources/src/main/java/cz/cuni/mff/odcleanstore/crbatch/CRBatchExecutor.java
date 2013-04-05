@@ -67,8 +67,6 @@ import de.fuberlin.wiwiss.ng4j.Quad;
 public class CRBatchExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(CRBatchExecutor.class);
 
-    private static final int BATCH_WRITE_TRIPLE_COUNT = 3000;
-
     /**
      * Performs the actual CR-batch task according to the given configuration.
      * @param config global configuration
@@ -313,44 +311,23 @@ public class CRBatchExecutor {
                 return;
             }
 
-            final Iterator<String> uriIterator = uriMapping.iterator();
-            
-            
-            
-            
-            final Node sameAs = Node.createURI(OWL.sameAs);
-            while (uriIterator.hasNext()) {
-                // Iterator which iterates over uriMappings and returns respective sameAs triples
-                // but at most BATCH_WRITE_TRIPLE_COUNT triples
-                Iterator<Triple> sameAsTripleIterator = new Iterator<Triple>() {
-                    private int i = 0;
+            GenericConverter<String, Triple> uriToTripleConverter = new GenericConverter<String, Triple>() {
+                private final Node sameAs = Node.createURI(OWL.sameAs);
 
-                    @Override
-                    public boolean hasNext() {
-                        return uriIterator.hasNext() && i < BATCH_WRITE_TRIPLE_COUNT;
-                    }
-
-                    @Override
-                    public Triple next() {
-                        i++;
-                        String uri = uriIterator.next();
-                        String canonicalUri = uriMapping.getCanonicalURI(uri);
-                        return new Triple(
-                                Node.createURI(uri),
-                                sameAs,
-                                Node.createURI(canonicalUri));
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-
-                };
-
-                for (CloseableRDFWriter writer : writers) {
-                    writer.write(sameAsTripleIterator);
+                @Override
+                public Triple convert(String uri) {
+                    String canonicalUri = uriMapping.getCanonicalURI(uri);
+                    return new Triple(
+                            Node.createURI(uri),
+                            sameAs,
+                            Node.createURI(canonicalUri));
                 }
+            };
+            
+            for (CloseableRDFWriter writer : writers) {
+                Iterator<String> uriIterator = uriMapping.iterator();
+                Iterator<Triple> sameAsTripleIterator = ConvertingIterator.decorate(uriIterator, uriToTripleConverter);
+                writer.write(sameAsTripleIterator);
             }
         } finally {
             for (CloseableRDFWriter writer : writers) {
