@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -87,7 +88,7 @@ public class CRBatchExecutor {
         URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings(preferredURIs);
         AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
         HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
-
+        
         // Get iterator over subjects of relevant triples
         SeedSubjectsLoader tripleSubjectsLoader = new SeedSubjectsLoader(connectionFactory, (QueryConfig) config);
         NodeIterator subjectsIterator;
@@ -106,7 +107,7 @@ public class CRBatchExecutor {
 
         // Initialize output writer
         // TODO: writing could be more (esp. memory) efficient by avoiding models and serializing manually
-        List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs());
+        List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs(), config.getPrefixes());
 
         // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
         QuadLoader quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
@@ -150,7 +151,7 @@ public class CRBatchExecutor {
         }
 
         writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
-        writeSameAsLinks(uriMapping, config.getOutputs());
+        writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes());
     }
 
     private String getNodeURI(Node node) {
@@ -199,11 +200,13 @@ public class CRBatchExecutor {
         return preferredURIs;
     }
 
-    private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs) throws IOException {
+    private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs, Map<String, String> nsPrefixes)
+            throws IOException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         for (Output output : outputs) {
             CloseableRDFWriter writer = createOutputWriter(output.getFileLocation(), output.getFormat());
             writers.add(writer);
+            writeNamespaceDeclarations(writer, nsPrefixes);
         }
         return writers;
     }
@@ -217,6 +220,12 @@ public class CRBatchExecutor {
         case N3:
         default:
             return new IncrementalN3Writer(outputWriter);
+        }
+    }
+
+    private static void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
+        for (Map.Entry<String, String> entry : nsPrefixes.entrySet()) {
+            writer.addNamespace(entry.getKey(), entry.getValue());
         }
     }
 
@@ -271,7 +280,9 @@ public class CRBatchExecutor {
         }
     }
 
-    private void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs) throws IOException {
+    private void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs, Map<String, String> nsPrefixes)
+            throws IOException {
+        
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         try {
             // Create output writers
@@ -282,6 +293,7 @@ public class CRBatchExecutor {
                 CloseableRDFWriter writer = createOutputWriter(output.getSameAsFileLocation(), output.getFormat());
                 writers.add(writer);
                 writer.addNamespace("owl", OWL.getURI());
+                writeNamespaceDeclarations(writer, nsPrefixes);
             }
             if (writers.isEmpty()) {
                 return;

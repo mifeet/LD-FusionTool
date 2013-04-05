@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Config>
   <!-- Definitions of namespace prefixes which can be used in SPARQL patterns and conflict resolution settings (optional) -->
+  <!-- Prefix definitions are also used in output files. It is recommended to define namespace prefixes here in order to reduce their size. -->
   <Prefixes>
     <Prefix id="rdf" namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
     <Prefix id="rdfs" namespace="http://www.w3.org/2000/01/rdf-schema#" />
