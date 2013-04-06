@@ -40,17 +40,17 @@ import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.BufferSubjectsCollection;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.NodeIterator;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.QuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.SameAsLinkLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.SeedSubjectsLoader;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.TransitiveSubjectsIterator;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.UriCollection;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.crbatch.util.ConvertingIterator;
 import cz.cuni.mff.odcleanstore.crbatch.util.GenericConverter;
-import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 import de.fuberlin.wiwiss.ng4j.Quad;
@@ -85,37 +85,36 @@ public class CRBatchExecutor {
         Set<String> preferredURIs = getPreferredURIs(config.getAggregationSpec(), config.getCanonicalURIsInputFile());
         URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings(preferredURIs);
         AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
-        HashSet<String> resolvedCanonicalURIs = new HashSet<String>();
+        Set<String> resolvedCanonicalURIs = new HashSet<String>();
         
         // Get iterator over subjects of relevant triples
         SeedSubjectsLoader tripleSubjectsLoader = new SeedSubjectsLoader(connectionFactory, (QueryConfig) config);
-        NodeIterator subjectsIterator;
-        TransitiveSubjectsIterator transitiveSubjectIterator;
-        if (config.getSeedResourceRestriction() != null) {
-            NodeIterator seedResourceIterator = tripleSubjectsLoader.getTripleSubjectIterator();
-            transitiveSubjectIterator = TransitiveSubjectsIterator.createTransitiveSubjectsIterator(seedResourceIterator);
-            subjectsIterator = transitiveSubjectIterator;
+        UriCollection seedSubjects = tripleSubjectsLoader.getTripleSubjectsCollection();
+        UriCollection queuedSubjects;
+        final boolean isTransitive = config.getSeedResourceRestriction() != null;
+        if (isTransitive) {
+            queuedSubjects = new BufferSubjectsCollection();
+            while (seedSubjects.hasNext()) {
+                String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());
+                queuedSubjects.add(canonicalURI); // only store canonical URIs to save space
+            }
         } else {
-            transitiveSubjectIterator = null;
-            subjectsIterator = tripleSubjectsLoader.getTripleSubjectIterator();
+            queuedSubjects = seedSubjects;
         }
 
         // Initialize CR
         ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
 
         // Initialize output writer
-        // TODO: writing could be more (esp. memory) efficient by avoiding models and serializing manually
         List<CloseableRDFWriter> rdfWriters = createRDFWriters(config.getOutputs(), config.getPrefixes());
 
         // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
         QuadLoader quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
         try {
-            while (subjectsIterator.hasNext()) {
-                String uri = getNodeURI(subjectsIterator.next());
-                if (uri == null) {
-                    continue;
-                }
+            while (queuedSubjects.hasNext()) {
+                String uri = queuedSubjects.next();
                 String canonicalURI = uriMapping.getCanonicalURI(uri);
+                
                 if (resolvedCanonicalURIs.contains(canonicalURI)) {
                     // avoid processing a URI multiple times
                     continue;
@@ -131,8 +130,8 @@ public class CRBatchExecutor {
                         new Object[] { quads.size(), canonicalURI, resolvedQuads.size() });
 
                 // Add objects filtered by CR for traversal
-                if (transitiveSubjectIterator != null) {
-                    transitiveSubjectIterator.addObjectsFromCRQuads(resolvedQuads);
+                if (isTransitive) {
+                    addDiscoveredObjects(queuedSubjects, resolvedQuads, uriMapping, resolvedCanonicalURIs);
                 }
 
                 // Write result to output
@@ -143,6 +142,7 @@ public class CRBatchExecutor {
             }
         } finally {
             quadLoader.close();
+            queuedSubjects.close();
             for (CloseableRDFWriter writer : rdfWriters) {
                 writer.close();
             }
@@ -152,13 +152,20 @@ public class CRBatchExecutor {
         writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes());
     }
 
-    private String getNodeURI(Node node) {
-        if (node.isURI()) {
-            return node.getURI();
-        } else if (node.isBlank()) {
-            return ODCSUtils.getVirtuosoURIForBlankNode(node);
-        } else {
-            return null;
+    private void addDiscoveredObjects(UriCollection queuedSubjects, Collection<CRQuad> resolvedQuads,
+            URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
+        for (CRQuad crQuad : resolvedQuads) {
+            String uri = CRBatchUtils.getNodeURI(crQuad.getQuad().getObject());
+            if (uri == null) {
+                // a literal or something, skip it
+                continue;
+            }
+            // only add canonical URIs to save space
+            String canonicalURI = uriMapping.getCanonicalURI(uri);
+            if (!resolvedCanonicalURIs.contains(canonicalURI)) {
+                // only add new URIs
+                queuedSubjects.add(canonicalURI);
+            }
         }
     }
 
@@ -260,7 +267,7 @@ public class CRBatchExecutor {
         return conflictResolver;
     }
 
-    private static void writeCanonicalURIs(HashSet<String> resolvedCanonicalURIs, File outputFile) throws IOException {
+    private static void writeCanonicalURIs(Set<String> resolvedCanonicalURIs, File outputFile) throws IOException {
         if (outputFile == null) {
             return;
         }
