@@ -34,7 +34,8 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
  * @author Jan Michelfeit
  */
 public final class ConfigReader {
-
+    private static final long MB_BYTES = 1024 * 1024;
+    
     /**
      * Parses the given configuration file and produces returns the contained configuration as an {@link Config} instance.
      * @param configFile configuration XMl file
@@ -226,8 +227,7 @@ public final class ConfigReader {
         if ("ntriples".equalsIgnoreCase(formatString) || "n3".equalsIgnoreCase(formatString)) {
             format = EnumOutputFormat.N3;
         } else if ("rdf/xml".equalsIgnoreCase(formatString) || "rdfxml".equalsIgnoreCase(formatString)) {
-            throw new InvalidInputException("RDF/XML format is not fully implemented yet");
-            //format = EnumOutputFormat.RDF_XML;
+            format = EnumOutputFormat.RDF_XML;
         } else if (formatString == null) {
             throw new InvalidInputException("Output format must be specified");
         } else {
@@ -248,8 +248,26 @@ public final class ConfigReader {
         if (sameAsLocationString != null) {
             output.setSameAsFileLocation(new File(sameAsLocationString));
         }
+        
+        String splitByMB = extractParamByName(outputXml.getParams(), "splitByMB");
+        if (splitByMB != null) {
+            final String errorMessage = "Value of splitByMB for output is not a valid number";
+            long value = convertToULong(splitByMB, errorMessage);
+            if (value <= 0) {
+                throw new InvalidInputException(errorMessage);
+            }
+            output.setSplitByBytes(value * MB_BYTES);
+        }
 
         return output;
+    }
+
+    private long convertToULong(String str, String errorMessage) throws InvalidInputException {
+        try {
+            return Long.parseLong(str);
+        } catch (NumberFormatException e) {
+            throw new InvalidInputException(errorMessage, e);
+        }
     }
 
     private SparqlRestriction extractGraphRestriction(RestrictionXml restrictionXml) {
