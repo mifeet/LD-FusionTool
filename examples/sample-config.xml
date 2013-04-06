@@ -64,7 +64,7 @@
       <Param name="canonicalUriInputFile" value="canonicalUris.txt" />
       
       <!-- If set to true, data will be processed one publisher by one;
-	       a separate output file will be created for each publisher;
+	       a separate output file will be created for each publisher with suffix -<n>-<publisher>;
 		   if set to false, all data are processed together;
 		   optional (defaults to false) -->
       <Param name="processByPublishers" value="true" />
