@@ -14,7 +14,7 @@ import java.io.OutputStream;
 public class CloseableRDFWriterFactory {
     /**
      * Creates a new {@link CloseableRDFWriter} serializing RDF to the given format.
-     * @param format output format
+     * @param format serialization format
      * @param outputStream stream to write
      * @return RDF writer
      * @throws IOException I/O error
@@ -31,11 +31,14 @@ public class CloseableRDFWriterFactory {
     }
 
     /**
-     * @param outputFormat
-     * @param countingOutputStream
-     * @param splitByBytes
-     * @return
-     * @throws IOException
+     * Returns a new {@link CloseableRDFWriter} which splits output across several files with approximate
+     * maximum size given in splitByBytes. 
+     * @param format serialization format
+     * @param outputFile base file path for output files; n-th file will have suffix -n
+     * @param splitByBytes approximate maximum size of each output file in bytes 
+     *      (the size is approximate, because after the limit is exceeded, some data may be written to close the file properly) 
+     * @return RDF writer
+     * @throws IOException I/O error
      */
     public CloseableRDFWriter createSplittingRDFWriter(EnumOutputFormat format, File outputFile, long splitByBytes)
             throws IOException {
