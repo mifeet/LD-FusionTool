@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.simpleframework.xml.core.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
+import cz.cuni.mff.odcleanstore.crbatch.io.SplitFileNameGenerator;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
@@ -38,10 +41,27 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 public final class CRBatchApplication {
     private static final Logger LOG = LoggerFactory.getLogger(CRBatchApplication.class);
     
-    private static final String SUFFIX_SEPARATOR = "-";
+    /** Parsed command line arguments representation. */
+    private static class ApplicationArgs {
+        private final boolean isVerbose;
+        private final String configFilePath;
+        
+        public ApplicationArgs(boolean isVerbose, String configFilePath) {
+            this.isVerbose = isVerbose;
+            this.configFilePath = configFilePath;
+        }
+        
+        public boolean isVerbose() {
+            return isVerbose;
+        }
+        
+        public String getConfigFilePath() {
+            return configFilePath;
+        }
+    }
     
     private static String getUsage() {
-        return "Usage:\n java -jar odcs-cr-batch-<version>.jar <config file>.xml";
+        return "Usage:\n java -jar odcs-cr-batch-<version>.jar [--verbose] <config file>.xml";
     }
 
     /**
@@ -49,11 +69,19 @@ public final class CRBatchApplication {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        if (args == null || args.length < 1) {
+        ApplicationArgs parsedArgs;
+        try {
+            parsedArgs = parseArgs(args);
+        } catch (InvalidInputException e) {
             System.err.println(getUsage());
             return;
         }
-        File configFile = new File(args[0]);
+        
+        if (!parsedArgs.isVerbose()) {
+            LogManager.getLogger(CRBatchApplication.class.getPackage().getName()).setLevel(Level.ERROR);
+        }
+        
+        File configFile = new File(parsedArgs.getConfigFilePath());
         if (!configFile.isFile() || !configFile.canRead()) {
             System.err.println("Cannot read the given config file.\n");
             System.err.println(getUsage());
@@ -115,6 +143,23 @@ public final class CRBatchApplication {
     private static void execute(Config config) throws CRBatchException, ConflictResolutionException, IOException {
         CRBatchExecutor crBatchExecutor = new CRBatchExecutor();
         crBatchExecutor.runCRBatch(config);
+    }
+    
+    private static ApplicationArgs parseArgs(String[] args) throws InvalidInputException {
+        if (args == null) {
+            throw new InvalidInputException("Missing command line arguments");
+        }
+        
+        boolean verbose = false;
+        int configFilePathPosition = 0;
+        if (configFilePathPosition < args.length && "--verbose".equals(args[configFilePathPosition])) {
+            verbose = true;
+            configFilePathPosition++;
+        }
+        if (configFilePathPosition >= args.length) {
+            throw new InvalidInputException("Missing config file argument");
+        }
+        return new ApplicationArgs(verbose, args[configFilePathPosition]);
     }
 
     private static void checkValidInput(Config config) throws InvalidInputException {
@@ -184,32 +229,28 @@ public final class CRBatchApplication {
         }
         List<Output> oldOutputs = config.getOutputs();
         List<Output> newOutputs = new LinkedList<Output>();
-        for (Output output : oldOutputs) {
-            switch (output.getFormat()) {
+        for (Output oldOutput : oldOutputs) {
+            switch (oldOutput.getFormat()) {
             case N3:
             case RDF_XML:
-                newOutputs.add(new OutputImpl(output.getFormat(), addFileNameSuffix(output.getFileLocation(), outputSuffix)));
+                SplitFileNameGenerator outputFileNameGenerator = new SplitFileNameGenerator(oldOutput.getFileLocation());
+                OutputImpl newOutput = new OutputImpl(oldOutput.getFormat(), outputFileNameGenerator.nextFile(outputSuffix));
+                newOutput.setSplitByBytes(oldOutput.getSplitByBytes());
+                if (oldOutput.getSameAsFileLocation() != null) {
+                    SplitFileNameGenerator sameAsFileNameGenerator =
+                            new SplitFileNameGenerator(oldOutput.getSameAsFileLocation());
+                    newOutput.setSameAsFileLocation(sameAsFileNameGenerator.nextFile(outputSuffix));
+                }
+                newOutputs.add(newOutput);
                 break;
             default:
-                newOutputs.add(output);
+                newOutputs.add(oldOutput);
                 break;
             }
         }
         publisherConfig.setOutputs(newOutputs);
         
         return publisherConfig;
-    }
-
-    private static File addFileNameSuffix(File file, String suffix) {
-        String originalName = file.getName();
-        String newName;
-        int dotIndex = originalName.lastIndexOf('.');
-        if (dotIndex < 0) {
-            newName = originalName + SUFFIX_SEPARATOR + suffix;
-        } else {
-            newName = originalName.substring(0, dotIndex) + SUFFIX_SEPARATOR + suffix + originalName.substring(dotIndex);
-        }
-        return new File(file.getParentFile(), newName);
     }
 
     private static Set<String> listPublishers(Config config) throws CRBatchException {

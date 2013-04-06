@@ -28,10 +28,6 @@ public class URIMappingIterableImpl extends URIMappingImpl implements URIMapping
         super(preferredURIs);
     }
     
-    /**
-     * Returns iterator over URIs for which a mapping is explicitly defined.
-     * @return iterator over contained URIs
-     */
     @Override
     public Iterator<String> iterator() {
         return getUriDFUParent().keySet().iterator();

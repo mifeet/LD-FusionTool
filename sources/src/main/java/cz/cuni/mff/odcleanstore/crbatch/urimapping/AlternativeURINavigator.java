@@ -3,9 +3,9 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch.urimapping;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -59,7 +59,7 @@ public class AlternativeURINavigator {
             String canonicalURI = uriMapping.getCanonicalURI(mappedURI);
             List<String> alternativeURIs = alternativeURIMap.get(canonicalURI);
             if (alternativeURIs == null) {
-                alternativeURIs = new LinkedList<String>();
+                alternativeURIs = new ArrayList<String>();
                 alternativeURIMap.put(canonicalURI, alternativeURIs);
             }
             alternativeURIs.add(mappedURI);

@@ -17,16 +17,22 @@ public interface Output {
      * @return output format
      */
     EnumOutputFormat getFormat();
-    
+
     /**
      * Returns file where the output should be written.
      * @return output file
      */
     File getFileLocation();
-    
-    /** 
+
+    /**
      * Returns file where the used owl:sameAs links should be written.
      * @return output file or null when the sameAs links shall not be written
      */
     File getSameAsFileLocation();
+
+    /**
+     * Returns the maximum size of output files in bytes. Larger files should by split into multiple files.
+     * @return maximum size of one output file in bytes; null means do not split the file
+     */
+    Long getSplitByBytes();
 }
