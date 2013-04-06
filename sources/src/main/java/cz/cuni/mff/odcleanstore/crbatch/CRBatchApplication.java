@@ -29,6 +29,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
+import cz.cuni.mff.odcleanstore.crbatch.io.SplitFileNameGenerator;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
@@ -40,8 +41,6 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 public final class CRBatchApplication {
     private static final Logger LOG = LoggerFactory.getLogger(CRBatchApplication.class);
     
-    private static final String SUFFIX_SEPARATOR = "-";
-
     /** Parsed command line arguments representation. */
     private static class ApplicationArgs {
         private final boolean isVerbose;
@@ -230,32 +229,28 @@ public final class CRBatchApplication {
         }
         List<Output> oldOutputs = config.getOutputs();
         List<Output> newOutputs = new LinkedList<Output>();
-        for (Output output : oldOutputs) {
-            switch (output.getFormat()) {
+        for (Output oldOutput : oldOutputs) {
+            switch (oldOutput.getFormat()) {
             case N3:
             case RDF_XML:
-                newOutputs.add(new OutputImpl(output.getFormat(), addFileNameSuffix(output.getFileLocation(), outputSuffix)));
+                SplitFileNameGenerator outputFileNameGenerator = new SplitFileNameGenerator(oldOutput.getFileLocation());
+                OutputImpl newOutput = new OutputImpl(oldOutput.getFormat(), outputFileNameGenerator.nextFile(outputSuffix));
+                newOutput.setSplitByBytes(oldOutput.getSplitByBytes());
+                if (oldOutput.getSameAsFileLocation() != null) {
+                    SplitFileNameGenerator sameAsFileNameGenerator =
+                            new SplitFileNameGenerator(oldOutput.getSameAsFileLocation());
+                    newOutput.setSameAsFileLocation(sameAsFileNameGenerator.nextFile(outputSuffix));
+                }
+                newOutputs.add(newOutput);
                 break;
             default:
-                newOutputs.add(output);
+                newOutputs.add(oldOutput);
                 break;
             }
         }
         publisherConfig.setOutputs(newOutputs);
         
         return publisherConfig;
-    }
-
-    private static File addFileNameSuffix(File file, String suffix) {
-        String originalName = file.getName();
-        String newName;
-        int dotIndex = originalName.lastIndexOf('.');
-        if (dotIndex < 0) {
-            newName = originalName + SUFFIX_SEPARATOR + suffix;
-        } else {
-            newName = originalName.substring(0, dotIndex) + SUFFIX_SEPARATOR + suffix + originalName.substring(dotIndex);
-        }
-        return new File(file.getParentFile(), newName);
     }
 
     private static Set<String> listPublishers(Config config) throws CRBatchException {
