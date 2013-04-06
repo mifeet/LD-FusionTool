@@ -107,7 +107,7 @@
       <!-- Format of the output file; accepted values are 'ntriples' and 'rdf/xml'; (required) -->
       <Param name="format" value="ntriples"/>
       
-      <!-- If set, output will be split into files with the given maximum size in megabytes; (optional) -->
+      <!-- If set, output will be split into files with the given maximum size in megabytes; n-th file will have suffix -n; (optional) -->
       <Param name="splitByMB" value="200"/>
       
       <!-- Path to file where owl:sameAs links used in conflict resolution shall be written (optional) -->
