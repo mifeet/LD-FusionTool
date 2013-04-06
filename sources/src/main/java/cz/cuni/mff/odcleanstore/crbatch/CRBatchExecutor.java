@@ -39,6 +39,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriterFactory;
+import cz.cuni.mff.odcleanstore.crbatch.io.CountingOutputStream;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.BufferSubjectsCollection;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
@@ -272,7 +273,8 @@ public class CRBatchExecutor {
             return;
         }
         if (!outputFile.exists() || outputFile.canWrite()) {
-            PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+            CountingOutputStream outputStream = new CountingOutputStream(new FileOutputStream(outputFile));
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"));
             try {
                 for (String uri : resolvedCanonicalURIs) {
                     writer.println(uri);
@@ -280,6 +282,9 @@ public class CRBatchExecutor {
             } finally {
                 writer.close();
             }
+            LOG.info("Written {} canonical URIs (total size {})", 
+                    resolvedCanonicalURIs.size(),
+                    CRBatchUtils.humanReadableSize(outputStream.getByteCount()));
         } else {
             LOG.error("Cannot write canonical URIs to '{}'", outputFile.getPath());
             // Intentionally do not throw an exception

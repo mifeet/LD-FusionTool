@@ -11,7 +11,16 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
  */
 public final class CRBatchUtils {
     /** Time unit 60. */
-    public static final long TIME_UNIT_60 = 60;
+    public static final int TIME_UNIT_60 = 60;
+    
+    /** Number of bytes in a kilobyte. */
+    public static final int KB_BYTES = 1024;
+    
+    /** Number of bytes in a megabyte. */
+    public static final long MB_BYTES = 1024 * 1024;
+    
+    /** Number of bytes in a gigabyte. */
+    public static final long GB_BYTES = 1024 * 1024 * 1024;
 
     /**
      * Returns an URI representing the given node or null if it is not a resource.
@@ -27,6 +36,25 @@ public final class CRBatchUtils {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Returns a human-readable (memory, file, ...) size.
+     * @param byteCount the number of bytes
+     * @return a human-readable size with units
+     */
+    public static String humanReadableSize(long byteCount) {
+        String result;
+        if (byteCount / GB_BYTES > 0) {
+            result = Long.toString(byteCount / GB_BYTES) + " GB";
+        } else if (byteCount / MB_BYTES > 0) {
+            result = Long.toString(byteCount / MB_BYTES) + " MB";
+        } else if (byteCount / KB_BYTES > 0) {
+            result = Long.toString(byteCount / KB_BYTES) + " kB";
+        } else {
+            result = Long.toString(byteCount) + " B";
+        }
+        return result;
     }
 
     /** Disable constructor for a utility class. */
