@@ -111,4 +111,11 @@ public interface Config extends QueryConfig {
      * @return file with canonical URIs
      */
     File getCanonicalURIsInputFile();
+    
+    /**
+     * Indicates whether disable (true) or enable (false) file cache for objects that needed by CR algorithm
+     * that may not fit into the memory.
+     * @return whether to disable algorithm file cache
+     */
+    boolean getEnableFileCache();
 }
