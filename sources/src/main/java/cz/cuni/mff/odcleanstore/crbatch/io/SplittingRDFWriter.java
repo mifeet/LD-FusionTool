@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * TODO
+ * {@link CloseableRDFWriter} implementation which splits output across several files with the given maximum size.
  * @author Jan Michelfeit
  */
 public class SplittingRDFWriter implements CloseableRDFWriter {
@@ -31,7 +31,6 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
             this.uri = uri;
         }
     }
-
     // CHECKSTYLE:ON
 
     private final CloseableRDFWriterFactory writerFactory;
@@ -42,7 +41,17 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     private CloseableRDFWriter currentRDFWriter;
     private CountingOutputStream currentOutputStream;
 
-    protected SplittingRDFWriter(EnumOutputFormat outputFormat, File outputFile, long splitByBytes,
+    /**
+     * Creates a new RDF writer which splits output across several files with approximate
+     * maximum size given in splitByBytes. 
+     * @param outputFormat serialization format
+     * @param outputFile base file path for output files; n-th file will have suffix -n
+     * @param splitByBytes approximate maximum size of each output file in bytes 
+     *      (the size is approximate, because after the limit is exceeded, some data may be written to close the file properly)
+     * @param writerFactory factory for underlying RDF writers used to do the actual serialization 
+     * @throws IOException I/O error
+     */
+    public SplittingRDFWriter(EnumOutputFormat outputFormat, File outputFile, long splitByBytes,
             CloseableRDFWriterFactory writerFactory)
             throws IOException {
         this.writerFactory = writerFactory;
@@ -103,5 +112,4 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
             currentOutputStream = null;
         }
     }
-
 }

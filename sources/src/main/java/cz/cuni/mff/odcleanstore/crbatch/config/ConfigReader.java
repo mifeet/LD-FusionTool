@@ -26,6 +26,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.xml.RestrictionXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.SourceDatasetXml;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.crbatch.util.NamespacePrefixExpander;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
@@ -34,8 +35,6 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
  * @author Jan Michelfeit
  */
 public final class ConfigReader {
-    private static final long MB_BYTES = 1024 * 1024;
-    
     /**
      * Parses the given configuration file and produces returns the contained configuration as an {@link Config} instance.
      * @param configFile configuration XMl file
@@ -211,9 +210,10 @@ public final class ConfigReader {
                 } else {
                     config.setCanonicalURIsInputFile(null);
                 }
+            } else if ("enableFileCache".equalsIgnoreCase(param.getName())) {
+                config.setEnableFileCache(Boolean.parseBoolean(param.getValue()));                
             } else if ("processByPublishers".equalsIgnoreCase(param.getName())) {
-                boolean value = Boolean.parseBoolean(param.getValue());
-                config.setProcessByPublishers(value);
+                config.setProcessByPublishers(Boolean.parseBoolean(param.getValue()));
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");
@@ -256,7 +256,7 @@ public final class ConfigReader {
             if (value <= 0) {
                 throw new InvalidInputException(errorMessage);
             }
-            output.setSplitByBytes(value * MB_BYTES);
+            output.setSplitByBytes(value * CRBatchUtils.MB_BYTES);
         }
 
         return output;

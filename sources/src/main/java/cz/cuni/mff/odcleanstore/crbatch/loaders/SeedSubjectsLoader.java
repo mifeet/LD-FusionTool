@@ -17,13 +17,14 @@ import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
- * Loads subjects of triples to be processed and gives an iterator over them.
+ * Loads subjects of triples to be processed and returns them in a collection.
  * If seed resource restriction is given, only subjects matching this restriction will 
  * be returned.
- * In the current implementation, the iterator uses an open cursor in the database.
+ * In the current implementation, the collection uses an open cursor in the database.
  * @todo another option would be to load subjects and keep them all in the memory or on the FS.
  * @author Jan Michelfeit
  */
@@ -31,12 +32,12 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SeedSubjectsLoader.class);
     
     /**
-     * Iterator over subjects of relevant triples.
+     * Collection of subjects of relevant triples.
      */
-    private final class SubjectsIteratorImpl implements NodeIterator {
+    private final class UriCollectionImpl implements UriCollection {
         private WrappedResultSet subjectsResultSet;
         private VirtuosoConnectionWrapper connection;
-        private Node next = null;
+        private String next = null;
 
         /**
          * Creates a new instance.
@@ -45,7 +46,7 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
          * @param connectionFactory connection factory
          * @throws CRBatchException error
          */
-        /*package*/SubjectsIteratorImpl(String query, ConnectionFactory connectionFactory) throws CRBatchException {
+        /*package*/UriCollectionImpl(String query, ConnectionFactory connectionFactory) throws CRBatchException {
             try {
                 this.connection = connectionFactory.createConnection();
                 this.subjectsResultSet = this.connection.executeSelect(query);
@@ -55,27 +56,28 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
             
             next = getNextResult();
         }
-
-        private Node getNextResult() throws CRBatchException {
+        
+        private String getNextResult() throws CRBatchException {
             final int subjectVarIndex = 1;
-            Node result;
             try {
-                if (subjectsResultSet.next()) {
-                    result = subjectsResultSet.getNode(subjectVarIndex);
-                } else {
-                    result = null;
-                    close();
+                while (subjectsResultSet.next()) {
+                    Node subjectNode = subjectsResultSet.getNode(subjectVarIndex);
+                    String uri = CRBatchUtils.getNodeURI(subjectNode);
+                    if (uri != null) {
+                        return uri;
+                    }
                 }
+                close();
+                return null;
             } catch (SQLException e) {
                 throw new CRBatchException(CRBatchErrorCodes.TRIPLE_SUBJECT_ITERATION,
                         "Database error while iterating over triple subjects.", e);
             }
-            return result;
         }
-
+        
         /**
-         * Returns {@code true} if the iteration has more elements.
-         * @return {@code true} if the iteration has more elements
+         * Returns {@code true} if the collection has more elements.
+         * @return {@code true} if the collection has more elements
          */
         @Override
         public boolean hasNext() {
@@ -83,19 +85,19 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
         }
 
         /**
-         * Returns the next element in the iteration.
-         * @return the next element in the iteration
+         * Returns an element from the collection and removes it from the collection.
+         * @return the removed element
          * @throws CRBatchException error
          */
         @Override
-        public Node next() throws CRBatchException {
+        public String next() throws CRBatchException {
             if (subjectsResultSet == null) {
-                throw new IllegalStateException("The iterator has been closed");
+                throw new IllegalStateException("The collection is empty");
             }
             if (next == null) {
                 throw new NoSuchElementException();
             }
-            Node result = next;
+            String result = next;
             next = getNextResult();
             return result;
         }
@@ -110,6 +112,14 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
                 connection.closeQuietly();
                 connection = null;
             }
+        }
+
+        /**
+         * Does nothing.
+         */
+        @Override
+        public void add(String node) {
+            // do nothing
         }
     }
     
@@ -159,13 +169,13 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
     /**
      * Returns all subjects of triples in payload graphs matching the given named graph constraint pattern
      * and in their attached graphs.
-     * The iterator should be closed after it is no longer needed.
+     * The collection should be closed after it is no longer needed.
      * The current implementation returns distinct values.
-     * @return iterator over subjects of relevant triples
+     * @return collection of subjects of relevant triples
      * @throws CRBatchException query error or when seed resource restriction variable and named graph restriction variable are
      *         the same
      */
-    public NodeIterator getTripleSubjectIterator() throws CRBatchException {
+    public UriCollection getTripleSubjectsCollection() throws CRBatchException {
         long startTime = System.currentTimeMillis();
 
         String seedResourceRestriction = "";
@@ -190,8 +200,8 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
                 getSourceNamedGraphPrefixFilter(),
                 seedResourceRestriction,
                 subjectVariable);
-        NodeIterator result = new SubjectsIteratorImpl(query, getConnectionFactory());
-        LOG.debug("CR-batch: Triple subjects iterator initialized in {} ms", System.currentTimeMillis() - startTime);
+        UriCollection result = new UriCollectionImpl(query, getConnectionFactory());
+        LOG.debug("CR-batch: Triple subjects collection initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;
     }
 }
