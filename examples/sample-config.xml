@@ -58,10 +58,10 @@
     <!-- General parameters (optional) -->
     <Params>
       <!-- Path to file where all canonical URIs after conflict resolution are written, one URI per line (optional) -->
-      <Param name="canonicalUriOutputFile" value="canonicalUris.txt" />
+      <Param name="canonicalUriOutputFile" value="output/canonicalUris.txt" />
       
       <!-- Path to file which contains URIs preferred for canonical URIs, one URI per line (optional) -->
-      <Param name="canonicalUriInputFile" value="canonicalUris.txt" />
+      <Param name="canonicalUriInputFile" value="output/canonicalUris.txt" />
       
       <!-- If set to true, enables file cache for objects needed by the algorithm that may not fit in the memory;
            disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to true) -->
@@ -100,7 +100,7 @@
     <!-- Definition of output to a file (currently the only supported output type) -->
     <Output type="file">
       <!-- Path to the output file (required) -->
-      <Param name="file" value="out.n3"/>
+      <Param name="file" value="output/out.n3"/>
       
       <!-- Format of the output file; accepted values are 'ntriples' and 'rdf/xml'; (required) -->
       <Param name="format" value="ntriples"/>
@@ -109,7 +109,7 @@
       <Param name="splitByMB" value="200"/>
       
       <!-- Path to file where owl:sameAs links used in conflict resolution shall be written (optional) -->
-      <Param name="sameAsFile" value="sameAsLinks.n3"/>
+      <Param name="sameAsFile" value="output/sameAsLinks.n3"/>
     </Output>
   </Outputs>
 </Config>
