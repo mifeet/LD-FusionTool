@@ -1,5 +1,7 @@
 package cz.cuni.mff.odcleanstore.crbatch.util;
 
+import java.io.File;
+
 import com.hp.hpl.jena.graph.Node;
 
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
@@ -55,6 +57,14 @@ public final class CRBatchUtils {
             result = Long.toString(byteCount) + " B";
         }
         return result;
+    }
+    
+    /**
+     * Creates parent directories for the given file if they don't exist already.
+     * @param file file whose parent directories will be created
+     */
+    public static void ensureParentsExists(File file) {
+        file.getParentFile().mkdirs();
     }
 
     /** Disable constructor for a utility class. */

@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Triple;
 
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
+
 /**
  * {@link CloseableRDFWriter} implementation which splits output across several files with the given maximum size.
  * @author Jan Michelfeit
@@ -65,6 +67,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
             File file = fileNameGenrator.nextFile();
             LOG.info("Creating a new output file: {}", file.getName());
             
+            CRBatchUtils.ensureParentsExists(file);
             currentOutputStream = new CountingOutputStream(new FileOutputStream(file));
             currentRDFWriter = writerFactory.createRDFWriter(outputFormat, currentOutputStream);
 

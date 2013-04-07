@@ -258,6 +258,7 @@ public class CRBatchExecutor {
     private static CloseableRDFWriter createOutputWriter(File file, EnumOutputFormat outputFormat, Long splitByBytes)
             throws IOException {
         
+        CRBatchUtils.ensureParentsExists(file);
         if (splitByBytes == null) {
             return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, new FileOutputStream(file));
         } else {
@@ -308,6 +309,7 @@ public class CRBatchExecutor {
             return;
         }
         if (!outputFile.exists() || outputFile.canWrite()) {
+            CRBatchUtils.ensureParentsExists(outputFile);
             CountingOutputStream outputStream = new CountingOutputStream(new FileOutputStream(outputFile));
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"));
             try {
