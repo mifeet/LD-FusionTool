@@ -210,6 +210,8 @@ public final class ConfigReader {
                 } else {
                     config.setCanonicalURIsInputFile(null);
                 }
+            } else if ("enableFileCache".equalsIgnoreCase(param.getName())) {
+                config.setEnableFileCache(Boolean.parseBoolean(param.getValue()));                
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");

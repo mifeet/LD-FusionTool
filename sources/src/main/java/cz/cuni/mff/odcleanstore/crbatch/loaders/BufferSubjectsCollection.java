@@ -2,6 +2,7 @@ package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Collection over triple subjects discovered during traversing of triples.
@@ -11,7 +12,22 @@ import java.util.Iterator;
  * @author Jan Michelfeit
  */
 public class BufferSubjectsCollection implements UriCollection {
-    private final HashSet<String> uriQueue = new HashSet<String>();
+    private final Set<String> uriQueue;
+
+    /**
+     * Creates a new instance.
+     */
+    public BufferSubjectsCollection() {
+        uriQueue = new HashSet<String>();
+    }
+    
+    /**
+     * Creates a new instance using the given set as buffer for subjects to be processed.
+     * @param buffer buffer for subjects to be processed
+     */
+    public BufferSubjectsCollection(Set<String> buffer) {
+        this.uriQueue = buffer;
+    }
 
     @Override
     public boolean hasNext() {

@@ -31,6 +31,7 @@ public class ConfigImpl implements Config {
     private File canonicalURIsOutputFile = 
             new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
     private File canonicalURIsInputFile;
+    private boolean enableFileCache = true;
 
     @Override
     public String getDatabaseConnectionString() {
@@ -184,6 +185,19 @@ public class ConfigImpl implements Config {
      */
     public void setCanonicalURIsInputFile(File file) {
         this.canonicalURIsInputFile = file;
+    }
+    
+    @Override
+    public boolean getEnableFileCache() {
+        return enableFileCache;
+    }
+    
+    /**
+     * Sets value for {@link #getEnableFileCache()}.
+     * @param enableFileCache see {@link #getEnableFileCache()}
+     */
+    public void setEnableFileCache(boolean enableFileCache) {
+        this.enableFileCache = enableFileCache;
     }
 
     @Override
