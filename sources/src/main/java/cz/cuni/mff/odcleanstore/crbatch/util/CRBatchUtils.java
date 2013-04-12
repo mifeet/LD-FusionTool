@@ -64,7 +64,7 @@ public final class CRBatchUtils {
      * @param file file whose parent directories will be created
      */
     public static void ensureParentsExists(File file) {
-        file.getParentFile().mkdirs();
+        file.getAbsoluteFile().getParentFile().mkdirs();
     }
 
     /** Disable constructor for a utility class. */
