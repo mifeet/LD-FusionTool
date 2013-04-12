@@ -156,7 +156,8 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
             closeConnectionQuietly();
         }
 
-        LOG.debug("CR-batch: loaded & resolved {} owl:sameAs links in {} ms", linkCount, System.currentTimeMillis() - startTime);
+        LOG.debug(String.format("CR-batch: loaded & resolved %,d owl:sameAs links in %d ms", 
+                linkCount, System.currentTimeMillis() - startTime));
         return uriMapping;
     }
     

@@ -159,7 +159,7 @@ public class CRBatchExecutor {
                     writer.write(resolvedTriplesIterator);
                 }
             }
-            LOG.info("Written {} resolved quads", outputTriples);
+            LOG.info(String.format("Written %,d resolved quads", outputTriples));
             
             writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
             writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes());
@@ -331,9 +331,9 @@ public class CRBatchExecutor {
             } finally {
                 writer.close();
             }
-            LOG.info("Written {} canonical URIs (total size {})", 
+            LOG.info(String.format("Written %,d canonical URIs (total size %s)", 
                     resolvedCanonicalURIs.size(),
-                    CRBatchUtils.humanReadableSize(outputStream.getByteCount()));
+                    CRBatchUtils.humanReadableSize(outputStream.getByteCount())));
         } else {
             LOG.error("Cannot write canonical URIs to '{}'", outputFile.getPath());
             // Intentionally do not throw an exception
