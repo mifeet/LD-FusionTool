@@ -212,6 +212,9 @@ public final class ConfigReader {
                 }
             } else if ("enableFileCache".equalsIgnoreCase(param.getName())) {
                 config.setEnableFileCache(Boolean.parseBoolean(param.getValue()));                
+            } else if ("maxOutputTriples".equalsIgnoreCase(param.getName())) {
+                long value = convertToLong(param.getValue(), "Value of maxOutputTriples is not a valid number");
+                config.setMaxOutputTriples(value);
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");
@@ -250,7 +253,7 @@ public final class ConfigReader {
         String splitByMB = extractParamByName(outputXml.getParams(), "splitByMB");
         if (splitByMB != null) {
             final String errorMessage = "Value of splitByMB for output is not a valid number";
-            long value = convertToULong(splitByMB, errorMessage);
+            long value = convertToLong(splitByMB, errorMessage);
             if (value <= 0) {
                 throw new InvalidInputException(errorMessage);
             }
@@ -260,7 +263,7 @@ public final class ConfigReader {
         return output;
     }
 
-    private long convertToULong(String str, String errorMessage) throws InvalidInputException {
+    private long convertToLong(String str, String errorMessage) throws InvalidInputException {
         try {
             return Long.parseLong(str);
         } catch (NumberFormatException e) {

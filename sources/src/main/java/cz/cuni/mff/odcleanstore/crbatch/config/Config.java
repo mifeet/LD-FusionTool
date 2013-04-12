@@ -105,4 +105,12 @@ public interface Config extends QueryConfig {
      * @return whether to disable algorithm file cache
      */
     boolean getEnableFileCache();
+    
+    /**
+     * Returns maximum number of triples allowed in the result.
+     * Conflict Resolution should stop after the given number of triples is reached.
+     * If null or less than zero, the output is unlimited.
+     * @return maximum number of triples in the result or null for no limit
+     */
+    Long getMaxOutputTriples();
 }

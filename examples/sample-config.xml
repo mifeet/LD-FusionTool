@@ -66,6 +66,10 @@
       <!-- If set to true, enables file cache for objects needed by the algorithm that may not fit in the memory;
            disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
       <Param name="enableFileCache" value="false" />
+      
+      <!-- Maximum number of triples in the result; Conflict Resolution will stop after the given number 
+           of triples is reached (useful e.g. when you just need to test your CR settings); (optional) -->
+      <!--<Param name="maxOutputTriples" value="1000" />-->
     </Params>
     
     <!-- Default aggregation settings; (optional) -->

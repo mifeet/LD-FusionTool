@@ -117,6 +117,11 @@ public class CRBatchExecutor {
             // Initialize output writer
             rdfWriters = createRDFWriters(config.getOutputs(), config.getPrefixes());
     
+            // Initialize triple counter
+            boolean checkMaxOutputTriples = config.getMaxOutputTriples() != null && config.getMaxOutputTriples() >= 0;
+            long maxOutputTriples = checkMaxOutputTriples ? config.getMaxOutputTriples() : -1; 
+            long outputTriples = 0;
+            
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
             quadLoader = new QuadLoader(connectionFactory, config, alternativeURINavigator);
             while (queuedSubjects.hasNext()) {
@@ -137,6 +142,12 @@ public class CRBatchExecutor {
                 LOG.info("Resolved {} quads for URI <{}> resulting in {} quads",
                         new Object[] { quads.size(), canonicalURI, resolvedQuads.size() });
 
+                // Check if we have reached the limit on output triples
+                if (checkMaxOutputTriples && outputTriples + resolvedQuads.size() > maxOutputTriples) {
+                    break;
+                }
+                outputTriples += resolvedQuads.size();
+                
                 // Add objects filtered by CR for traversal
                 if (isTransitive) {
                     addDiscoveredObjects(queuedSubjects, resolvedQuads, uriMapping, resolvedCanonicalURIs);
@@ -148,6 +159,7 @@ public class CRBatchExecutor {
                     writer.write(resolvedTriplesIterator);
                 }
             }
+            LOG.info("Written {} resolved quads", outputTriples);
             
             writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
             writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes());
@@ -367,6 +379,8 @@ public class CRBatchExecutor {
                 Iterator<Triple> sameAsTripleIterator = ConvertingIterator.decorate(uriIterator, uriToTripleConverter);
                 writer.write(sameAsTripleIterator);
             }
+            
+            LOG.info("Written owl:sameAs links");
         } finally {
             for (CloseableRDFWriter writer : writers) {
                 writer.close();

@@ -32,6 +32,7 @@ public class ConfigImpl implements Config {
             new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
     private File canonicalURIsInputFile;
     private boolean enableFileCache = false;
+    private Long maxOutputTriples = null;
 
     @Override
     public String getDatabaseConnectionString() {
@@ -198,6 +199,19 @@ public class ConfigImpl implements Config {
      */
     public void setEnableFileCache(boolean enableFileCache) {
         this.enableFileCache = enableFileCache;
+    }
+    
+    @Override
+    public Long getMaxOutputTriples() {
+        return maxOutputTriples;
+    }
+    
+    /**
+     * Sets value for {@link #getMaxOutputTriples()}.
+     * @param maxOutputTriples see {@link #getMaxOutputTriples()}
+     */
+    public void setMaxOutputTriples(Long maxOutputTriples) {
+        this.maxOutputTriples = maxOutputTriples;
     }
 
     @Override
