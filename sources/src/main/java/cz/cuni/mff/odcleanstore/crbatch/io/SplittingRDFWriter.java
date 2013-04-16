@@ -9,10 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.openrdf.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Triple;
 
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 
@@ -93,14 +92,15 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     }
 
     @Override
-    public void write(Iterator<Triple> triples) throws IOException {
-        getRDFWriter().write(triples);
-        checkSizeExceeded();
+    public void write(Iterator<Statement> statements) throws IOException {
+        while (statements.hasNext()) {
+            write(statements.next());
+        }
     }
 
     @Override
-    public void write(Triple triple) throws IOException {
-        getRDFWriter().write(triple);
+    public void write(Statement statement) throws IOException {
+        getRDFWriter().write(statement);
         checkSizeExceeded();
     }
 

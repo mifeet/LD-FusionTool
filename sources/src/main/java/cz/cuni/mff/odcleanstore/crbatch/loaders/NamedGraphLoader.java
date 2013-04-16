@@ -1,21 +1,26 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.openrdf.OpenRDFException;
+import org.openrdf.model.Literal;
+import org.openrdf.model.Resource;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
+import org.openrdf.query.BindingSet;
+import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQueryResult;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadata;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
-import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
-import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
-import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
-import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -28,7 +33,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
  * Only payload graphs are included.
  * @author Jan Michelfeit
  */
-public class NamedGraphLoader extends DatabaseLoaderBase {
+public class NamedGraphLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(NamedGraphLoader.class);
     
     /**
@@ -45,7 +50,7 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
      * 
      * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
-    private static final String METADATA_QUERY = "SPARQL %1$s"
+    private static final String METADATA_QUERY = "%1$s"
             + "\n SELECT DISTINCT ?%3$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
             + "\n WHERE {"
             + "\n   %2$s"
@@ -62,8 +67,8 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
      *
      * Must be formatted with arguments: (1) non-empty comma separated list of publisher URIs.
      */
-    private static final String PUBLISHER_SCORE_QUERY = "SPARQL"
-            + "\n SELECT"
+    private static final String PUBLISHER_SCORE_QUERY = 
+            "SELECT"
             + "\n   ?publishedBy ?score"
             + "\n WHERE {"
             + "\n   ?publishedBy <" + ODCS.publisherScore + "> ?score."
@@ -72,11 +77,11 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param repository an initialized RDF repository
      * @param queryConfig Settings for SPARQL queries  
      */
-    public NamedGraphLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
-        super(connectionFactory, queryConfig);
+    public NamedGraphLoader(Repository repository, QueryConfig queryConfig) {
+        super(repository, queryConfig);
     }
     
     /**
@@ -90,10 +95,8 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
         try {
             metadata = loadNamedGraphMetadata();
             addPublisherScores(metadata);
-        } catch (DatabaseException e) {
+        } catch (OpenRDFException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_NG_METADATA, "Database error", e);
-        } finally {
-            closeConnectionQuietly();
         }
         
         LOG.debug("CR-batch: Metadata loaded in {} ms", System.currentTimeMillis() - startTime);
@@ -101,70 +104,72 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
     }
     
     
-    private NamedGraphMetadataMap loadNamedGraphMetadata() throws DatabaseException {
+    private NamedGraphMetadataMap loadNamedGraphMetadata() throws OpenRDFException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
                 getPrefixDecl(),
                 queryConfig.getNamedGraphRestriction().getPattern(),
                 queryConfig.getNamedGraphRestriction().getVar(),
                 getSourceNamedGraphPrefixFilter());
-        final int graphIndex = 1;
-        final int propertyIndex = 2;
-        final int valueIndex = 3;
-        
-        long startTime = System.currentTimeMillis();
-        WrappedResultSet resultSet = getConnection().executeSelect(query);
-        LOG.debug("CR-batch: Metadata query took {} ms", System.currentTimeMillis() - startTime);
+        final String graphVar = queryConfig.getNamedGraphRestriction().getVar();
+        final String propertyVar = VAR_PREFIX + "gp";
+        final String objectVar = VAR_PREFIX + "go";
 
-        // Build the result
         NamedGraphMetadataMap metadata = new NamedGraphMetadataMap();
+        long startTime = System.currentTimeMillis();
+        RepositoryConnection connection = getRepository().getConnection();
+        TupleQueryResult resultSet = null;
         try {
-            while (resultSet.next()) {
-                String namedGraphURI = resultSet.getString(graphIndex);
+            resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
+            LOG.debug("CR-batch: Metadata query took {} ms", System.currentTimeMillis() - startTime);
+            
+            // Build the result
+            while (resultSet.hasNext()) {
+                BindingSet bindings = resultSet.next();
+                Resource namedGraphURI = (Resource) bindings.getValue(graphVar);
                 NamedGraphMetadata graphMetadata = metadata.getMetadata(namedGraphURI);
                 if (graphMetadata == null) {
-                    graphMetadata = new NamedGraphMetadata(namedGraphURI);
+                    graphMetadata = new NamedGraphMetadata(namedGraphURI.stringValue());
                     metadata.addMetadata(graphMetadata);
                 }
 
                 try {
-                    String property = resultSet.getString(propertyIndex);
+                    String property = ((URI) bindings.getValue(propertyVar)).stringValue();
 
+                    Value object = bindings.getValue(objectVar);
                     if (ODCS.source.equals(property)) {
-                        String object = resultSet.getString(valueIndex);
-                        graphMetadata.setSources(ODCSUtils.addToSetNullProof(object, graphMetadata.getSources()));
-                    } else if (ODCS.score.equals(property)) {
-                        Double score = resultSet.getDouble(valueIndex);
+                        graphMetadata.setSources(ODCSUtils.addToSetNullProof(object.stringValue(), graphMetadata.getSources()));
+                    } else if (ODCS.score.equals(property) && object instanceof Literal) {
+                        double score = ((Literal) object).doubleValue();
                         graphMetadata.setScore(score);
-                    } else if (ODCS.insertedAt.equals(property)) {
-                        Date insertedAt = resultSet.getJavaDate(valueIndex);
+                    } else if (ODCS.insertedAt.equals(property) && object instanceof Literal) {
+                        Date insertedAt = ((Literal) object).calendarValue().toGregorianCalendar().getTime();
                         graphMetadata.setInsertedAt(insertedAt);
                     } else if (ODCS.insertedBy.equals(property)) {
-                        String insertedBy = resultSet.getString(valueIndex);
-                        graphMetadata.setInsertedBy(insertedBy);
+                        graphMetadata.setInsertedBy(object.stringValue());
                     } else if (ODCS.publishedBy.equals(property)) {
-                        String object = resultSet.getString(valueIndex);
-                        graphMetadata.setPublishers(ODCSUtils.addToListNullProof(object, graphMetadata.getPublishers()));
+                        graphMetadata.setPublishers(ODCSUtils.addToListNullProof(
+                                object.stringValue(), graphMetadata.getPublishers()));
                     } else if (ODCS.license.equals(property)) {
-                        String object = resultSet.getString(valueIndex);
-                        graphMetadata.setLicences(ODCSUtils.addToListNullProof(object, graphMetadata.getLicences()));
+                        graphMetadata.setLicences(ODCSUtils.addToListNullProof(
+                                object.stringValue(), graphMetadata.getLicences()));
                     } else if (ODCS.updateTag.equals(property)) {
-                        String updateTag = resultSet.getString(valueIndex);
-                        graphMetadata.setUpdateTag(updateTag);
+                        graphMetadata.setUpdateTag(object.stringValue());
                     }
-                } catch (SQLException e) {
+                } catch (IllegalArgumentException e) {
                     LOG.warn("Invalid metadata for graph {}", namedGraphURI);
                 }
             }
-        } catch (SQLException e) {
-            throw new QueryException(e);
         } finally {
-            resultSet.closeQuietly();
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            connection.close();
         }
-        
+
         return metadata;
     }
-        
-    private void addPublisherScores(NamedGraphMetadataMap metadata) throws DatabaseException {
+
+    private void addPublisherScores(NamedGraphMetadataMap metadata) throws OpenRDFException {
         Map<String, Double> publisherScores = getPublisherScores(metadata);
         for (NamedGraphMetadata ngMetadata : metadata.listMetadata()) {
             Double publisherScore = calculatePublisherScore(ngMetadata, publisherScores);
@@ -176,12 +181,12 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
      * Retrieve scores of publishers for all publishers occurring in given metadata.
      * @param metadata metadata retrieved for a query
      * @return map of publishers' scores
-     * @throws DatabaseException database error
+     * @throws OpenRDFException repositorys error
      */
     protected Map<String, Double> getPublisherScores(NamedGraphMetadataMap metadata)
-            throws DatabaseException {
-        final int publisherIndex = 1;
-        final int scoreIndex = 2;
+            throws OpenRDFException {
+        final String publisherVar = "publishedBy";
+        final String scoreVar = "score";
 
         Map<String, Double> publisherScores = new HashMap<String, Double>();
         for (NamedGraphMetadata ngMetadata : metadata.listMetadata()) {
@@ -197,24 +202,31 @@ public class NamedGraphLoader extends DatabaseLoaderBase {
         for (CharSequence publisherURIList : limitedURIListBuilder) {
             String query = String.format(Locale.ROOT, PUBLISHER_SCORE_QUERY, publisherURIList);
             long queryStartTime = System.currentTimeMillis();
-            WrappedResultSet resultSet = getConnection().executeSelect(query);
-            LOG.debug("CR-batch: getPublisherScores() query took {} ms", System.currentTimeMillis() - queryStartTime);
-
+            RepositoryConnection connection = getRepository().getConnection();
+            TupleQueryResult resultSet = null;
             try {
-                while (resultSet.next()) {
+                resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
+                LOG.debug("CR-batch: getPublisherScores() query took {} ms", System.currentTimeMillis() - queryStartTime);
+
+                while (resultSet.hasNext()) {
+                    BindingSet bindings = resultSet.next();
+                    
                     String publisher = "";
                     try {
-                        publisher = resultSet.getString(publisherIndex);
-                        Double score = resultSet.getDouble(scoreIndex);
+                        publisher = ((URI) bindings.getValue(publisherVar)).stringValue();
+                        Double score = ((Literal) bindings.getValue(scoreVar)).doubleValue();
                         publisherScores.put(publisher, score);
-                    } catch (SQLException e) {
+                    } catch (IllegalArgumentException e) {
+                        LOG.warn("Query Execution: invalid publisher score for {}", publisher);
+                    } catch (ClassCastException e) {
                         LOG.warn("Query Execution: invalid publisher score for {}", publisher);
                     }
                 }
-            } catch (SQLException e) {
-                throw new QueryException(e);
             } finally {
-                resultSet.closeQuietly();
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                connection.close();
             }
         }
 

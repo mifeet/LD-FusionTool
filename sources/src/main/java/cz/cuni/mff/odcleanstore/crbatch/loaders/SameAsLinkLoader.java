@@ -1,17 +1,18 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 
+import org.openrdf.OpenRDFException;
+import org.openrdf.query.BindingSet;
+import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQueryResult;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
-import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
-import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
-import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -25,7 +26,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.OWL;
  * The result is returned as an instance of {@link URIMappingIterable}.
  * @author Jan Michelfeit
  */
-public class SameAsLinkLoader extends DatabaseLoaderBase {
+public class SameAsLinkLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkLoader.class);
     
     /**
@@ -39,7 +40,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * (3) named graph restriction variable
      * (4) graph name prefix filter
      */
-    private static final String PAYLOAD_SAMEAS_QUERY = "SPARQL %1$s"
+    private static final String PAYLOAD_SAMEAS_QUERY = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %2$s"
@@ -61,7 +62,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * (3) named graph restriction variable
      * (4) graph name prefix filter
      */
-    private static final String ATTACHED_SAMEAS_QUERY = "SPARQL %1$s"
+    private static final String ATTACHED_SAMEAS_QUERY = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %2$s"
@@ -85,7 +86,7 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
      * (3) ontology graph restriction variable
      * (4) ontology graph name prefix filter
      */
-    private static final String ONTOLOGY_SAMEAS_QUERY = "SPARQL %1$s"
+    private static final String ONTOLOGY_SAMEAS_QUERY = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %2$s"
@@ -97,11 +98,11 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param repository an initialized RDF repository
      * @param queryConfig Settings for SPARQL queries  
      */
-    public SameAsLinkLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
-        super(connectionFactory, queryConfig);
+    public SameAsLinkLoader(Repository repository, QueryConfig queryConfig) {
+        super(repository, queryConfig);
     }
     
     /**
@@ -150,36 +151,40 @@ public class SameAsLinkLoader extends DatabaseLoaderBase {
                         getGraphPrefixFilter(queryConfig.getOntologyGraphRestriction().getVar()));
                 linkCount += loadSameAsLinks(uriMapping, ontologyQuery);
             }
-        } catch (DatabaseException e) {
+        } catch (OpenRDFException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Database error", e);
-        } finally {
-            closeConnectionQuietly();
         }
 
-        LOG.debug("CR-batch: loaded & resolved {} owl:sameAs links in {} ms", linkCount, System.currentTimeMillis() - startTime);
+        LOG.debug(String.format("CR-batch: loaded & resolved %,d owl:sameAs links in %d ms", 
+                linkCount, System.currentTimeMillis() - startTime));
         return uriMapping;
     }
-    
-    private long loadSameAsLinks(URIMappingIterableImpl uriMapping, String query) throws DatabaseException {
-        final int resource1Index = 1;
-        final int resource2Index = 2;
+
+    private long loadSameAsLinks(URIMappingIterableImpl uriMapping, String query) throws OpenRDFException {
+        final String var1 = VAR_PREFIX + "r1";
+        final String var2 = VAR_PREFIX + "r2";
+
         long linkCount = 0;
         long startTime = System.currentTimeMillis();
-        WrappedResultSet resultSet = getConnection().executeSelect(query);
-        LOG.debug("CR-batch: Query for owl:sameAs links took {} ms", System.currentTimeMillis() - startTime);
+        RepositoryConnection connection = getRepository().getConnection();
+        TupleQueryResult resultSet = null;
         try {
-            while (resultSet.next()) {
-                String uri1 = resultSet.getString(resource1Index);
-                String uri2 = resultSet.getString(resource2Index);
+            resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
+            LOG.debug("CR-batch: Query for owl:sameAs links took {} ms", System.currentTimeMillis() - startTime);
+            while (resultSet.hasNext()) {
+                BindingSet bindings = resultSet.next();
+                String uri1 = bindings.getValue(var1).stringValue();
+                String uri2 = bindings.getValue(var2).stringValue();
                 uriMapping.addLink(uri1, uri2);
                 linkCount++;
             }
-        } catch (SQLException e) {
-            throw new QueryException(e);
         } finally {
-            resultSet.closeQuietly();
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            connection.close();
         }
-        
+
         return linkCount;
     }
 }

@@ -31,7 +31,8 @@ public class ConfigImpl implements Config, Cloneable {
     private File canonicalURIsOutputFile = 
             new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
     private File canonicalURIsInputFile;
-    private boolean enableFileCache = true;
+    private boolean enableFileCache = false;
+    private Long maxOutputTriples = null;
     private boolean processByPublishers = false;
 
     @Override
@@ -212,6 +213,19 @@ public class ConfigImpl implements Config, Cloneable {
      */
     public void setEnableFileCache(boolean enableFileCache) {
         this.enableFileCache = enableFileCache;
+    }
+    
+    @Override
+    public Long getMaxOutputTriples() {
+        return maxOutputTriples;
+    }
+    
+    /**
+     * Sets value for {@link #getMaxOutputTriples()}.
+     * @param maxOutputTriples see {@link #getMaxOutputTriples()}
+     */
+    public void setMaxOutputTriples(Long maxOutputTriples) {
+        this.maxOutputTriples = maxOutputTriples;
     }
 
     @Override

@@ -1,19 +1,25 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
+import org.openrdf.OpenRDFException;
+import org.openrdf.model.Resource;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.query.BindingSet;
+import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQueryResult;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
-import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
-import cz.cuni.mff.odcleanstore.connection.exceptions.QueryException;
-import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -21,7 +27,6 @@ import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import de.fuberlin.wiwiss.ng4j.Quad;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject)
@@ -29,9 +34,9 @@ import de.fuberlin.wiwiss.ng4j.Quad;
  * given owl:sameAs alternatives.
  * @author Jan Michelfeit
  */
-public class QuadLoader extends DatabaseLoaderBase implements Closeable {
+public class QuadLoader extends RepositoryLoaderBase implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(QuadLoader.class);
-
+    
     /**
      * SPARQL query that gets all quads having the given uri as their subject from
      * from relevant payload graph and attached graphs.
@@ -45,7 +50,7 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
      * (4) graph name prefix filter
      * (5) searched uri
      */
-    private static final String QUADS_QUERY_SIMPLE = "SPARQL %1$s"
+    private static final String QUADS_QUERY_SIMPLE = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "g  <%5$s> AS ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n WHERE {"
             + "\n   {"
@@ -90,7 +95,7 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
      * (4) graph name prefix filter
      * (5) list of searched URIs (e.g. "<uri1>,<uri2>,<uri3>")
      */
-    private static final String QUADS_QUERY_ALTERNATIVE = "SPARQL %1$s"
+    private static final String QUADS_QUERY_ALTERNATIVE = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "g ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n WHERE {"
             + "\n   {"
@@ -126,16 +131,16 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
             + "\n }";
 
     private final AlternativeURINavigator alternativeURINavigator;
+    private RepositoryConnection connection;
 
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param repository an initialized RDF repository
      * @param queryConfig Settings for SPARQL queries
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      */
-    public QuadLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig,
-            AlternativeURINavigator alternativeURINavigator) {
-        super(connectionFactory, queryConfig);
+    public QuadLoader(Repository repository, QueryConfig queryConfig, AlternativeURINavigator alternativeURINavigator) {
+        super(repository, queryConfig);
         this.alternativeURINavigator = alternativeURINavigator;
     }
 
@@ -147,9 +152,9 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
      * @return collection of quads having uri as their subject
      * @throws CRBatchException error
      */
-    public Collection<Quad> getQuadsForURI(String uri) throws CRBatchException {
+    public Collection<Statement> getQuadsForURI(String uri) throws CRBatchException {
         long startTime = System.currentTimeMillis();
-        ArrayList<Quad> result = new ArrayList<Quad>();
+        List<Statement> result = new ArrayList<Statement>();
         try {
             List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
             if (alternativeURIs.size() <= 1) {
@@ -173,7 +178,7 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
                 }
             }
 
-        } catch (DatabaseException e) {
+        } catch (OpenRDFException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_QUADS, "Database error", e);
         } 
 
@@ -188,32 +193,52 @@ public class QuadLoader extends DatabaseLoaderBase implements Closeable {
      * @param sparqlQuery a SPARQL SELECT query with four variables in the result: named graph, subject,
      *        property, object (exactly in this order).
      * @param quads collection where the retrieved quads are added
-     * @throws DatabaseException database error
+     * @throws OpenRDFException repository error
      */
-    private void addQuadsFromQuery(String sparqlQuery, Collection<Quad> quads) throws DatabaseException {
+    private void addQuadsFromQuery(String sparqlQuery, Collection<Statement> quads) throws OpenRDFException {
+        final String subjectVar = VAR_PREFIX + "s";
+        final String propertyVar = VAR_PREFIX + "p";
+        final String objectVar = VAR_PREFIX + "o";
+        final String graphVar = VAR_PREFIX + "g";
+
         long startTime = System.currentTimeMillis();
-        WrappedResultSet resultSet = getConnection().executeSelect(sparqlQuery);
-        LOG.trace("CR-batch: Quads query took {} ms", System.currentTimeMillis() - startTime);
+        RepositoryConnection connection = getConnection();
+        TupleQueryResult resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery).evaluate();
         try {
-            while (resultSet.next()) {
-                // CHECKSTYLE:OFF
-                Quad quad = new Quad(
-                        resultSet.getNode(1),
-                        resultSet.getNode(2),
-                        resultSet.getNode(3),
-                        resultSet.getNode(4));
+            LOG.trace("CR-batch: Quads query took {} ms", System.currentTimeMillis() - startTime);
+
+            ValueFactory valueFactory = getRepository().getValueFactory();
+            while (resultSet.hasNext()) {
+                BindingSet bindings = resultSet.next();
+                Statement quad = valueFactory.createStatement(
+                        (Resource) bindings.getValue(subjectVar),
+                        (URI) bindings.getValue(propertyVar),
+                        bindings.getValue(objectVar),
+                        (Resource) bindings.getValue(graphVar));
                 quads.add(quad);
-                // CHECKSTYLE:ON
             }
-        } catch (SQLException e) {
-            throw new QueryException(e);
         } finally {
-            resultSet.closeQuietly();
+            resultSet.close();
         }
     }
-
+    
+    private RepositoryConnection getConnection() throws RepositoryException {
+        if (connection == null) {
+            connection = getRepository().getConnection();
+        }
+        return connection;
+    }
+    
     @Override
     public void close() throws IOException {
-        closeConnectionQuietly();
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (RepositoryException e) {
+                throw new IOException(e);
+            } finally {
+                connection = null;
+            }
+        }
     }
 }

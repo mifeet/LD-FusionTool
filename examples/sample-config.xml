@@ -28,26 +28,26 @@
   <!-- Definitions of which data to process (optional) -->
   <SourceDataset>
     <!-- SPARQL group graph pattern which limits payload named graphs from which data to process are obtained;
-	     data are loaded also from the related attached graphs;
-	     attribute var specifies which variable in the pattern represents the payload graph;
-		 optional (if not given, all payload & attached graphs are processed) -->
+         data are loaded also from the related attached graphs;
+         attribute var specifies which variable in the pattern represents the payload graph;
+         optional (if not given, all payload & attached graphs are processed) -->
     <GraphsRestriction var="g">
       ?g odcs:isLatestUpdate ?a FILTER(?a = 1)
     </GraphsRestriction>
     
     <!-- SPARQL group graph pattern which specifies additional named graphs from which owl:sameAs links are loaded;
-	     owl:sameAs links are considered in conflict resolution but contents are not included in the output;
-	     attribute var specifies which variable in the pattern represents the named graph;
-		optional -->
+         owl:sameAs links are considered in conflict resolution but contents are not included in the output;
+         attribute var specifies which variable in the pattern represents the named graph;
+        optional -->
     <OntologyRestriction var="g">
       ?g odcs:generatedGraph ?a
     </OntologyRestriction>
     
     <!-- SPARQL group graph pattern giving seed resources for transitive traversal of triples;
-	     the output will include triples having matching resources as their subjects and
-		 triples transitively reachable from there;
-		 attribute var specifies which variable in the pattern represents the seed resource;
-		 optional (if not given, all triples from source graphs are processed) -->
+         the output will include triples having matching resources as their subjects and
+         triples transitively reachable from there;
+         attribute var specifies which variable in the pattern represents the seed resource;
+         optional (if not given, all triples from source graphs are processed) -->
     <SeedResourceRestriction var="s">
       ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
     </SeedResourceRestriction>
@@ -64,8 +64,12 @@
       <Param name="canonicalUriInputFile" value="output/canonicalUris.txt" />
       
       <!-- If set to true, enables file cache for objects needed by the algorithm that may not fit in the memory;
-           disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to true) -->
-      <Param name="enableFileCache" value="true" />
+           disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
+      <Param name="enableFileCache" value="false" />
+      
+      <!-- Maximum number of triples in the result; Conflict Resolution will stop after the given number 
+           of triples is reached (useful e.g. when you just need to test your CR settings); (optional) -->
+      <!--<Param name="maxOutputTriples" value="1000" />-->
 
       <!-- If set to true, data will be processed one publisher by one;
 	       a separate output file will be created for each publisher with suffix -<n>-<publisher>;
