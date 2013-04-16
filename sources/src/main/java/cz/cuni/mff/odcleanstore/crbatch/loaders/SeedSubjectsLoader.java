@@ -1,18 +1,20 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
-import java.sql.SQLException;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 
+import org.openrdf.OpenRDFException;
+import org.openrdf.model.Value;
+import org.openrdf.query.BindingSet;
+import org.openrdf.query.QueryEvaluationException;
+import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQueryResult;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
-
-import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
-import cz.cuni.mff.odcleanstore.connection.WrappedResultSet;
-import cz.cuni.mff.odcleanstore.connection.exceptions.DatabaseException;
-import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
@@ -28,48 +30,52 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
  * @todo another option would be to load subjects and keep them all in the memory or on the FS.
  * @author Jan Michelfeit
  */
-public class SeedSubjectsLoader extends DatabaseLoaderBase {
+public class SeedSubjectsLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SeedSubjectsLoader.class);
     
     /**
      * Collection of subjects of relevant triples.
      */
     private final class UriCollectionImpl implements UriCollection {
-        private WrappedResultSet subjectsResultSet;
-        private VirtuosoConnectionWrapper connection;
+        private TupleQueryResult subjectsResultSet;
+        private RepositoryConnection connection;
         private String next = null;
 
         /**
          * Creates a new instance.
          * @param query query that retrieves subjects from the database; the query must return
-         *      the subjects as the first variable in the results
-         * @param connectionFactory connection factory
+         *        the subjects as the first variable in the results
+         * @param repository an initialized RDF repository
          * @throws CRBatchException error
          */
-        /*package*/UriCollectionImpl(String query, ConnectionFactory connectionFactory) throws CRBatchException {
+        /*package*/UriCollectionImpl(String query, Repository repository) throws CRBatchException {
             try {
-                this.connection = connectionFactory.createConnection();
-                this.subjectsResultSet = this.connection.executeSelect(query);
-            } catch (DatabaseException e) {
+                this.connection = repository.getConnection();
+                this.subjectsResultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
+            } catch (OpenRDFException e) {
+                close();
                 throw new CRBatchException(CRBatchErrorCodes.QUERY_TRIPLE_SUBJECTS, "Database error", e);
             }
-            
+
             next = getNextResult();
         }
         
         private String getNextResult() throws CRBatchException {
-            final int subjectVarIndex = 1;
             try {
-                while (subjectsResultSet.next()) {
-                    Node subjectNode = subjectsResultSet.getNode(subjectVarIndex);
-                    String uri = CRBatchUtils.getNodeURI(subjectNode);
+                String subjectVar = subjectsResultSet.getBindingNames().get(0);
+                while (subjectsResultSet.hasNext()) {
+                    BindingSet bindings = subjectsResultSet.next();
+                    
+                    Value subject = bindings.getValue(subjectVar);
+                    String uri = CRBatchUtils.getNodeURI(subject);
                     if (uri != null) {
                         return uri;
                     }
                 }
                 close();
                 return null;
-            } catch (SQLException e) {
+            } catch (OpenRDFException e) {
+                close();
                 throw new CRBatchException(CRBatchErrorCodes.TRIPLE_SUBJECT_ITERATION,
                         "Database error while iterating over triple subjects.", e);
             }
@@ -105,11 +111,19 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
         @Override
         public void close() {
             if (subjectsResultSet != null) {
-                subjectsResultSet.closeQuietly();
+                try {
+                    subjectsResultSet.close();
+                } catch (QueryEvaluationException e) {
+                    // ignore
+                }
                 subjectsResultSet = null;
             }
             if (connection != null) {
-                connection.closeQuietly();
+                try {
+                    connection.close();
+                } catch (RepositoryException e) {
+                    // ignore
+                }
                 connection = null;
             }
         }
@@ -135,7 +149,7 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
      * (5) seed resource restriction pattern
      * (6) variable representing subject and at the same time seed resource restriction variable
      */
-    private static final String SUBJECTS_QUERY = "SPARQL %1$s"
+    private static final String SUBJECTS_QUERY = "%1$s"
             + "\n SELECT DISTINCT ?%6$s"
             + "\n WHERE {"
             + "\n   %2$s"
@@ -159,11 +173,11 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param repository an initialized RDF repository
      * @param queryConfig Settings for SPARQL queries  
      */
-    public SeedSubjectsLoader(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
-        super(connectionFactory, queryConfig);
+    public SeedSubjectsLoader(Repository repository, QueryConfig queryConfig) {
+        super(repository, queryConfig);
     }
 
     /**
@@ -200,7 +214,7 @@ public class SeedSubjectsLoader extends DatabaseLoaderBase {
                 getSourceNamedGraphPrefixFilter(),
                 seedResourceRestriction,
                 subjectVariable);
-        UriCollection result = new UriCollectionImpl(query, getConnectionFactory());
+        UriCollection result = new UriCollectionImpl(query, getRepository());
         LOG.debug("CR-batch: Triple subjects collection initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;
     }

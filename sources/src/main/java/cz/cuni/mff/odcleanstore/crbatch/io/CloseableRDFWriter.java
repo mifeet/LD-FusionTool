@@ -6,7 +6,7 @@ package cz.cuni.mff.odcleanstore.crbatch.io;
 import java.io.IOException;
 import java.util.Iterator;
 
-import com.hp.hpl.jena.graph.Triple;
+import org.openrdf.model.Statement;
 
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 
@@ -18,17 +18,17 @@ import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 public interface CloseableRDFWriter extends Closeable {
     /**
      * Write RDF data.
-     * @param triples triples to write
+     * @param statements statements to write
      * @throws IOException I/O error
      */
-    void write(Iterator<Triple> triples) throws IOException;
+    void write(Iterator<Statement> statements) throws IOException;
     
     /**
-     * Write a single RDF triple.
-     * @param triple triple to write
+     * Write a single RDF statement.
+     * @param statement statement to write
      * @throws IOException I/O error
      */
-    void write(Triple triple) throws IOException;
+    void write(Statement statement) throws IOException;
 
     /**
      * Add a namespace prefix.
