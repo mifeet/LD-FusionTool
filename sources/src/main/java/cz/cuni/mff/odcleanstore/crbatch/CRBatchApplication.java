@@ -10,10 +10,14 @@ import java.util.Set;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.openrdf.model.util.URIUtil;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryException;
 import org.simpleframework.xml.core.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import virtuoso.sesame2.driver.VirtuosoRepository;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadata;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
@@ -25,6 +29,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.OutputImpl;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
+import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.SplitFileNameGenerator;
@@ -225,10 +230,7 @@ public final class CRBatchApplication {
         
         // Adjust outputs for the given publisher
         String outputSuffix = Integer.toString(publisherIndex);
-        int namespaceIndex = Util.splitNamespace(publisher);
-        if (namespaceIndex < publisher.length()) {
-            outputSuffix += "-" + publisher.substring(namespaceIndex).replace('.', '_');
-        }
+        outputSuffix += getPublisherSuffix(publisher);
         List<Output> oldOutputs = config.getOutputs();
         List<Output> newOutputs = new LinkedList<Output>();
         for (Output oldOutput : oldOutputs) {
@@ -255,20 +257,45 @@ public final class CRBatchApplication {
         return publisherConfig;
     }
 
-    private static Set<String> listPublishers(Config config) throws CRBatchException {
-        ConnectionFactory connectionFactory = new ConnectionFactory(config);
+    private static String getPublisherSuffix(String publisher) {
+        try {
+            int namespaceIndex = URIUtil.getLocalNameIndex(publisher);
+            if (namespaceIndex < publisher.length()) {
+                return "-" + publisher.substring(namespaceIndex).replace('.', '_');
+            }
+        } catch (IllegalArgumentException e) {
+            // ignore
+        }
+        return "";
+    }
 
-        // Load source named graphs metadata
-        NamedGraphLoader graphLoader = new NamedGraphLoader(connectionFactory, (QueryConfig) config);
-        NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
-        
-        Set<String> publishers = new HashSet<String>();
-        for (NamedGraphMetadata metadata : namedGraphsMetadata.listMetadata()) {
-            for (String publisher : metadata.getPublishers()) {
-                publishers.add(publisher);
+    private static Set<String> listPublishers(Config config) throws CRBatchException {
+        Repository repository = new VirtuosoRepository(
+                config.getDatabaseConnectionString(),
+                config.getDatabaseUsername(),
+                config.getDatabasePassword());
+        try {
+            repository.initialize();
+            // Load source named graphs metadata
+            NamedGraphLoader graphLoader = new NamedGraphLoader(repository, (QueryConfig) config);
+            NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
+
+            Set<String> publishers = new HashSet<String>();
+            for (NamedGraphMetadata metadata : namedGraphsMetadata.listMetadata()) {
+                for (String publisher : metadata.getPublishers()) {
+                    publishers.add(publisher);
+                }
+            }
+            return publishers;
+        } catch (RepositoryException e) {
+            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT, "Error when initializing repository", e);
+        } finally {
+            try {
+                repository.shutDown();
+            } catch (RepositoryException e) {
+                // ignore
             }
         }
-        return publishers;
     }
 
     /** Disable constructor. */
