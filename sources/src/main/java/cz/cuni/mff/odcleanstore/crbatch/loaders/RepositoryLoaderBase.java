@@ -6,9 +6,8 @@ package cz.cuni.mff.odcleanstore.crbatch.loaders;
 import java.util.Locale;
 import java.util.Map;
 
-import cz.cuni.mff.odcleanstore.connection.VirtuosoConnectionWrapper;
-import cz.cuni.mff.odcleanstore.connection.exceptions.ConnectionException;
-import cz.cuni.mff.odcleanstore.crbatch.ConnectionFactory;
+import org.openrdf.repository.Repository;
+
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
@@ -16,7 +15,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 /**
  * @author Jan Michelfeit
  */
-public abstract class DatabaseLoaderBase {
+public abstract class RepositoryLoaderBase {
 
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
@@ -54,11 +53,8 @@ public abstract class DatabaseLoaderBase {
      */
     private static final String PREFIX_FILTER_CLAUSE_NEGATIVE = " FILTER (!bif:starts_with(str(?%s), '%s')) ";
 
-    /** Database connection. */
-    private VirtuosoConnectionWrapper connection;
-    
-    /** Database connection factory. */
-    private final ConnectionFactory connectionFactory;
+    /** RDF repository. */
+    private final Repository repository;
     
     /** Settings for SPARQL queries. */
     protected final QueryConfig queryConfig;
@@ -71,33 +67,20 @@ public abstract class DatabaseLoaderBase {
     
     /**
      * Creates a new instance.
-     * @param connectionFactory factory for database connection
+     * @param repository an initialized RDF repository
      * @param queryConfig Settings for SPARQL queries  
      */
-    protected DatabaseLoaderBase(ConnectionFactory connectionFactory, QueryConfig queryConfig) {
-        this.connectionFactory = connectionFactory;
+    protected RepositoryLoaderBase(Repository repository, QueryConfig queryConfig) {
+        this.repository = repository;
         this.queryConfig = queryConfig;
     }
     
     /**
-     * Returns database connection factory.
-     * @return database connection factory
+     * Returns repository containing the relevant RDF data.
+     * @return RDF repository
      */
-    protected ConnectionFactory getConnectionFactory() {
-        return connectionFactory;
-    }
-    
-    /**
-     * Returns a database connection.
-     * The connection is shared within this instance until it is closed.
-     * @return database connection
-     * @throws ConnectionException database connection error
-     */
-    protected VirtuosoConnectionWrapper getConnection() throws ConnectionException {
-        if (connection == null) {
-            connection = connectionFactory.createConnection();
-        }
-        return connection;
+    protected Repository getRepository() {
+        return repository;
     }
     
     /**
@@ -158,19 +141,5 @@ public abstract class DatabaseLoaderBase {
                 .append("> ");
         }
         return result.toString();
-    }
-
-    /**
-     * Closes an opened database connection, if any.
-     */
-    protected void closeConnectionQuietly() {
-        if (connection != null) {
-            try {
-                connection.close();
-                connection = null;
-            } catch (ConnectionException e) {
-                // do nothing
-            }
-        }
     }
 }

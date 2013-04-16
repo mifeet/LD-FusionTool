@@ -49,6 +49,10 @@ public final class CRBatchApplication {
      * @param args command line arguments
      */
     public static void main(String[] args) {
+            //Repository myRepository = new SailRepository(new MemoryStore());
+            //Repository myRepository = new SPARQLRepository("http://localhost:8890/sparql");
+            //con.add(file, baseURI, RDFFormat.RDFXML);
+        
         ApplicationArgs parsedArgs;
         try {
             parsedArgs = parseArgs(args);

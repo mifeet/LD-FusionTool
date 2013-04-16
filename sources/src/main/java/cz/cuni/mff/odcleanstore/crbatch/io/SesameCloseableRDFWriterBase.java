@@ -10,14 +10,10 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Iterator;
 
+import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFWriter;
 import org.openrdf.rio.RDFWriterFactory;
-
-import com.hp.hpl.jena.graph.Triple;
-
-import cz.cuni.mff.odcleanstore.crbatch.util.ConversionException;
-import cz.cuni.mff.odcleanstore.crbatch.util.JenaToSesameConverter;
 
 
 /**
@@ -53,19 +49,17 @@ public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter
     }
     
     @Override
-    public void write(Iterator<Triple> triples) throws IOException {
-        while (triples.hasNext()) {
-            write(triples.next());
+    public void write(Iterator<Statement> statements) throws IOException {
+        while (statements.hasNext()) {
+            write(statements.next());
         }
     }
 
     @Override
-    public void write(Triple triple) throws IOException {
+    public void write(Statement statement) throws IOException {
         try {
-            rdfWriter.handleStatement(JenaToSesameConverter.convertTriple(triple));
+            rdfWriter.handleStatement(statement);
         } catch (RDFHandlerException e) {
-            throw new IOException(e);
-        } catch (ConversionException e) {
             throw new IOException(e);
         }
     }
