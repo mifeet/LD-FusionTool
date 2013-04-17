@@ -6,10 +6,8 @@ package cz.cuni.mff.odcleanstore.crbatch.loaders;
 import java.util.Locale;
 import java.util.Map;
 
-import org.openrdf.repository.Repository;
-
+import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigConstants;
-import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 
 /**
@@ -53,11 +51,8 @@ public abstract class RepositoryLoaderBase {
      */
     private static final String PREFIX_FILTER_CLAUSE_NEGATIVE = " FILTER (!bif:starts_with(str(?%s), '%s')) ";
 
-    /** RDF repository. */
-    private final Repository repository;
-    
-    /** Settings for SPARQL queries. */
-    protected final QueryConfig queryConfig;
+    /** RDF data source. */
+    protected final DataSource dataSource;
     
     /** Cached value returned by {@link #getSourceNamedGraphPrefixFilter()}. */
     private String cachedGraphPrefixFilter;
@@ -67,20 +62,10 @@ public abstract class RepositoryLoaderBase {
     
     /**
      * Creates a new instance.
-     * @param repository an initialized RDF repository
-     * @param queryConfig Settings for SPARQL queries  
+     * @param dataSource an initialized data source
      */
-    protected RepositoryLoaderBase(Repository repository, QueryConfig queryConfig) {
-        this.repository = repository;
-        this.queryConfig = queryConfig;
-    }
-    
-    /**
-     * Returns repository containing the relevant RDF data.
-     * @return RDF repository
-     */
-    protected Repository getRepository() {
-        return repository;
+    protected RepositoryLoaderBase(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
     
     /**
@@ -92,7 +77,7 @@ public abstract class RepositoryLoaderBase {
      */
     protected String getSourceNamedGraphPrefixFilter() {
         if (cachedGraphPrefixFilter == null) {
-            cachedGraphPrefixFilter = getGraphPrefixFilter(queryConfig.getNamedGraphRestriction().getVar());
+            cachedGraphPrefixFilter = getGraphPrefixFilter(dataSource.getNamedGraphRestriction().getVar());
         }
         return cachedGraphPrefixFilter;
     }
@@ -118,7 +103,7 @@ public abstract class RepositoryLoaderBase {
      */
     protected String getPrefixDecl() {
         if (cachedPrefixDecl == null) {
-            cachedPrefixDecl = buildPrefixDecl(queryConfig.getPrefixes());
+            cachedPrefixDecl = buildPrefixDecl(dataSource.getPrefixes());
         }
         return cachedPrefixDecl;
     }

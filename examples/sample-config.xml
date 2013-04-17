@@ -10,38 +10,57 @@
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
   </Prefixes>
   
-  <!-- Definition of data source (required) -->
-  <DataSource>
-    <!-- Hostname of the SPARQL endpoint -->
-    <Param name="host" value="localhost" />
+  <!-- Definitions of data sources; multiple <DataSource> children can be given; (required) -->
+  <DataSources>
+    <!-- Definition of a data source of type "virtuoso"; connects to an Openlink Virtuoso
+	     database instance using JDBC -->
+    <DataSource type="virtuoso" name="virtuoso_local">
+      <!-- Hostname for the Virtuoso database instance; (required) -->
+      <Param name="host" value="localhost" />
     
-    <!-- Port of the SPARQL endpoint -->
-    <Param name="port" value="1111" />
+      <!-- Connection port; (required) -->
+      <Param name="port" value="1111" />
     
-    <!-- Username for the endpoint -->
-    <Param name="username" value="dba" />
+      <!-- Connection username; (required) -->
+      <Param name="username" value="dba" />
     
-    <!-- Password for the endpoint -->
-    <Param name="password" value="dba" />
-  </DataSource>
+      <!-- Connection password; (required) -->
+      <Param name="password" value="dba" />
+      
+      <!-- SPARQL group graph pattern which limits named graphs from which data to process are obtained;
+           attribute var specifies which variable represents the named graph in the pattern;
+           optional (if not given, data are processed) -->
+      <GraphRestriction var="g">
+        {select ?g where {?g odcs:metadataGraph ?m}}
+		 UNION {select ?g where {?a odcs:attachedGraph ?g}}
+      </GraphRestriction>
+    
+      <!-- SPARQL group graph pattern which specifies additional named graphs from which metadata and 
+	       owl:sameAs links are loaded; contents of these graphs are considered in conflict resolution
+		   (e.g. owl:sameAs links for identity resolution) but contents are not included in the output;
+           attribute var specifies which variable represents the named graph in the pattern;
+          optional -->
+      <MetadataGraphRestriction var="g">
+        ?g odcs:generatedGraph ?a
+      </MetadataGraphRestriction>
+    </DataSource>
+  </DataSources>
   
-  <!-- Definitions of which data to process (optional) -->
-  <SourceDataset>
-    <!-- SPARQL group graph pattern which limits payload named graphs from which data to process are obtained;
-         data are loaded also from the related attached graphs;
-         attribute var specifies which variable in the pattern represents the payload graph;
-         optional (if not given, all payload & attached graphs are processed) -->
-    <GraphsRestriction var="g">
-      ?g odcs:isLatestUpdate ?a FILTER(?a = 1)
-    </GraphsRestriction>
-    
-    <!-- SPARQL group graph pattern which specifies additional named graphs from which owl:sameAs links are loaded;
-         owl:sameAs links are considered in conflict resolution but contents are not included in the output;
-         attribute var specifies which variable in the pattern represents the named graph;
-        optional -->
-    <OntologyRestriction var="g">
-      ?g odcs:generatedGraph ?a
-    </OntologyRestriction>
+  <!-- Definition of data processing settings (optional) -->
+  <DataProcessing>
+    <!-- Path to file where all canonical URIs after conflict resolution are written, one URI per line (optional) -->
+    <Param name="canonicalUriOutputFile" value="output/canonicalUris.txt" />
+      
+    <!-- Path to file which contains URIs preferred for canonical URIs, one URI per line (optional) -->
+    <Param name="canonicalUriInputFile" value="output/canonicalUris.txt" />
+      
+    <!-- Maximum number of triples in the result; Conflict Resolution will stop after the given number 
+         of triples is reached (useful e.g. when you just need to test your CR settings); (optional) -->
+    <!--<Param name="maxOutputTriples" value="1000" />-->
+      
+    <!-- If set to true, enables file cache for objects needed by the algorithm that may not fit in the memory;
+           disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
+    <Param name="enableFileCache" value="false" />
     
     <!-- SPARQL group graph pattern giving seed resources for transitive traversal of triples;
          the output will include triples having matching resources as their subjects and
@@ -51,27 +70,10 @@
     <SeedResourceRestriction var="s">
       ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
     </SeedResourceRestriction>
-  </SourceDataset>
+  </DataProcessing>      
   
   <!-- Definition of conflict resolution settings (optional) -->
   <ConflictResolution>
-    <!-- General parameters (optional) -->
-    <Params>
-      <!-- Path to file where all canonical URIs after conflict resolution are written, one URI per line (optional) -->
-      <Param name="canonicalUriOutputFile" value="output/canonicalUris.txt" />
-      
-      <!-- Path to file which contains URIs preferred for canonical URIs, one URI per line (optional) -->
-      <Param name="canonicalUriInputFile" value="output/canonicalUris.txt" />
-      
-      <!-- If set to true, enables file cache for objects needed by the algorithm that may not fit in the memory;
-           disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
-      <Param name="enableFileCache" value="false" />
-      
-      <!-- Maximum number of triples in the result; Conflict Resolution will stop after the given number 
-           of triples is reached (useful e.g. when you just need to test your CR settings); (optional) -->
-      <!--<Param name="maxOutputTriples" value="1000" />-->
-    </Params>
-    
     <!-- Default aggregation settings; (optional) -->
     <DefaultAggregation>
       <!-- Default value of the multivalue parameter; (optional, defaults to true) -->
@@ -99,7 +101,7 @@
     </PropertyAggregations>
   </ConflictResolution>
   
-  <!-- Definition of where the output shall be written (required) -->
+  <!-- Definitions of where the output shall be written; multiple <Output> children may be given; (required) -->
   <Outputs>
     <!-- Definition of output to a file (currently the only supported output type) -->
     <Output type="file">

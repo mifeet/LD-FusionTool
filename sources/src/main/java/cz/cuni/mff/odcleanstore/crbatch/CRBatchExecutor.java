@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -22,12 +23,11 @@ import java.util.Set;
 
 import org.openrdf.model.Statement;
 import org.openrdf.model.ValueFactory;
-import org.openrdf.repository.Repository;
+import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import virtuoso.sesame2.driver.VirtuosoRepository;
 import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfig;
 import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
 import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
@@ -36,8 +36,9 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
+import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
-import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
@@ -47,13 +48,14 @@ import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
 import cz.cuni.mff.odcleanstore.crbatch.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.BufferSubjectsCollection;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphLoader;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.QuadLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.FederatedQuadLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.FederatedSeedSubjectsLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphMetadataLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.SameAsLinkLoader;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.SeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.UriCollection;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.crbatch.util.ConvertingIterator;
 import cz.cuni.mff.odcleanstore.crbatch.util.GenericConverter;
@@ -68,9 +70,9 @@ import cz.cuni.mff.odcleanstore.vocabulary.OWL;
  */
 public class CRBatchExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(CRBatchExecutor.class);
-    
+
     private static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory();
-    
+
     /**
      * Performs the actual CR-batch task according to the given configuration.
      * @param config global configuration
@@ -79,37 +81,22 @@ public class CRBatchExecutor {
      * @throws ConflictResolutionException conflict resolution error
      */
     public void runCRBatch(Config config) throws CRBatchException, IOException, ConflictResolutionException {
-        Repository repository = new VirtuosoRepository(
-                config.getDatabaseConnectionString(),
-                config.getDatabaseUsername(),
-                config.getDatabasePassword());
-        try {
-            repository.initialize();
-        } catch (RepositoryException e) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT, "Error when initializing repository", e);
-        }
-        
         LargeCollectionFactory collectionFactory = createLargeCollectionFactory(config);
-
-        QuadLoader quadLoader = null;
+        FederatedQuadLoader quadLoader = null;
         UriCollection queuedSubjects = null;
         List<CloseableRDFWriter> rdfWriters = null;
-        
+        Collection<DataSource> dataSources = initializeDataSources(config.getDataSources(), config.getPrefixes());
         try {
             // Load source named graphs metadata
-            NamedGraphLoader graphLoader = new NamedGraphLoader(repository, (QueryConfig) config);
-            NamedGraphMetadataMap namedGraphsMetadata = graphLoader.getNamedGraphs();
-    
+            NamedGraphMetadataMap namedGraphsMetadata = getMetadata(dataSources);
+
             // Load & resolve owl:sameAs links
-            SameAsLinkLoader sameAsLoader = new SameAsLinkLoader(repository, (QueryConfig) config);
-            Set<String> preferredURIs = getPreferredURIs(config.getAggregationSpec(), config.getCanonicalURIsInputFile());
-            URIMappingIterable uriMapping = sameAsLoader.getSameAsMappings(preferredURIs);
+            URIMappingIterable uriMapping = getURIMapping(dataSources, config);
             AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
             Set<String> resolvedCanonicalURIs = collectionFactory.createSet();
-            
+
             // Get iterator over subjects of relevant triples
-            SeedSubjectsLoader tripleSubjectsLoader = new SeedSubjectsLoader(repository, (QueryConfig) config);
-            UriCollection seedSubjects = tripleSubjectsLoader.getTripleSubjectsCollection();
+            UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
             final boolean isTransitive = config.getSeedResourceRestriction() != null;
             if (isTransitive) {
                 queuedSubjects = new BufferSubjectsCollection(collectionFactory.<String>createSet());
@@ -121,24 +108,24 @@ public class CRBatchExecutor {
             } else {
                 queuedSubjects = seedSubjects;
             }
-    
+
             // Initialize CR
             ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
-    
+
             // Initialize output writer
             rdfWriters = createRDFWriters(config.getOutputs(), config.getPrefixes());
-    
+
             // Initialize triple counter
             boolean checkMaxOutputTriples = config.getMaxOutputTriples() != null && config.getMaxOutputTriples() >= 0;
-            long maxOutputTriples = checkMaxOutputTriples ? config.getMaxOutputTriples() : -1; 
+            long maxOutputTriples = checkMaxOutputTriples ? config.getMaxOutputTriples() : -1;
             long outputTriples = 0;
-            
+
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
-            quadLoader = new QuadLoader(repository, config, alternativeURINavigator);
+            quadLoader = new FederatedQuadLoader(dataSources, alternativeURINavigator);
             while (queuedSubjects.hasNext()) {
                 String uri = queuedSubjects.next();
                 String canonicalURI = uriMapping.getCanonicalURI(uri);
-                
+
                 if (resolvedCanonicalURIs.contains(canonicalURI)) {
                     // avoid processing a URI multiple times
                     continue;
@@ -158,7 +145,7 @@ public class CRBatchExecutor {
                     break;
                 }
                 outputTriples += resolvedQuads.size();
-                
+
                 // Add objects filtered by CR for traversal
                 if (isTransitive) {
                     addDiscoveredObjects(queuedSubjects, resolvedQuads, uriMapping, resolvedCanonicalURIs);
@@ -171,10 +158,10 @@ public class CRBatchExecutor {
                 }
             }
             LOG.info(String.format("Written %,d resolved quads", outputTriples));
-            
+
             writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
-            writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes(), repository.getValueFactory());
-            
+            writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes(), ValueFactoryImpl.getInstance());
+
         } finally {
             if (quadLoader != null) {
                 quadLoader.close();
@@ -187,14 +174,65 @@ public class CRBatchExecutor {
                     writer.close();
                 }
             }
-            if (repository != null) {
+            for (DataSource dataSource : dataSources) {
                 try {
-                    repository.shutDown();
+                    dataSource.getRepository().shutDown();
                 } catch (RepositoryException e) {
                     LOG.error("Error when closing repository");
                 }
             }
         }
+    }
+
+    private Collection<DataSource> initializeDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
+            throws CRBatchException {
+        List<DataSource> dataSources = new ArrayList<DataSource>();
+        for (DataSourceConfig dataSourceConfig : config) {
+            DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes);
+            try {
+                dataSource.getRepository().initialize();
+                dataSources.add(dataSource);
+            } catch (RepositoryException e) {
+                // clean up already initialized repositories
+                for (DataSource initializedDataSource : dataSources) {
+                    try {
+                        initializedDataSource.getRepository().shutDown();
+                    } catch (RepositoryException e2) {
+                        // ignore
+                    }
+                }
+                throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT,
+                        "Error when initializing repository for " + dataSource.getName(), e);
+            }
+        }
+        return dataSources;
+    }
+    
+    private NamedGraphMetadataMap getMetadata(Collection<DataSource> dataSources) throws CRBatchException {
+        NamedGraphMetadataMap metadata = new NamedGraphMetadataMap();
+        for (DataSource source : dataSources) {
+            NamedGraphMetadataLoader loader = new NamedGraphMetadataLoader(source);
+            loader.loadNamedGraphsMetadata(metadata);
+        }
+        return metadata;
+    }
+    
+    private URIMappingIterable getURIMapping(Collection<DataSource> dataSources, Config config)
+            throws CRBatchException, IOException {
+        Set<String> preferredURIs = getPreferredURIs(config.getAggregationSpec(), config.getCanonicalURIsInputFile());
+        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
+        for (DataSource source : dataSources) {
+            SameAsLinkLoader loader = new SameAsLinkLoader(source);
+            loader.loadSameAsMappings(uriMapping);
+        }
+        return uriMapping;
+    }
+    
+
+    private UriCollection getSeedSubjects(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
+            throws CRBatchException { 
+        FederatedSeedSubjectsLoader loader = new FederatedSeedSubjectsLoader(dataSources);
+        return loader.getTripleSubjectsCollection(seedResourceRestriction);
     }
 
     private LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
@@ -204,7 +242,7 @@ public class CRBatchExecutor {
             return new LargeCollectionFactory() {
                 @Override
                 public <T> Set<T> createSet() {
-                    return new HashSet<T>(); 
+                    return new HashSet<T>();
                 }
 
                 @Override
@@ -273,8 +311,8 @@ public class CRBatchExecutor {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         for (Output output : outputs) {
             CloseableRDFWriter writer = createOutputWriter(
-                    output.getFileLocation(), 
-                    output.getFormat(), 
+                    output.getFileLocation(),
+                    output.getFormat(),
                     output.getSplitByBytes());
             writers.add(writer);
             writeNamespaceDeclarations(writer, nsPrefixes);
@@ -284,7 +322,7 @@ public class CRBatchExecutor {
 
     private static CloseableRDFWriter createOutputWriter(File file, EnumOutputFormat outputFormat, Long splitByBytes)
             throws IOException {
-        
+
         CRBatchUtils.ensureParentsExists(file);
         if (splitByBytes == null) {
             return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, new FileOutputStream(file));
@@ -346,7 +384,7 @@ public class CRBatchExecutor {
             } finally {
                 writer.close();
             }
-            LOG.info(String.format("Written %,d canonical URIs (total size %s)", 
+            LOG.info(String.format("Written %,d canonical URIs (total size %s)",
                     resolvedCanonicalURIs.size(),
                     CRBatchUtils.humanReadableSize(outputStream.getByteCount())));
         } else {
@@ -355,9 +393,9 @@ public class CRBatchExecutor {
         }
     }
 
-    private void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs, Map<String, String> nsPrefixes,
-            final ValueFactory valueFactory) throws IOException {
-        
+    private static void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs,
+            Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException {
+
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         try {
             // Create output writers
@@ -387,13 +425,13 @@ public class CRBatchExecutor {
                             valueFactory.createURI(canonicalUri));
                 }
             };
-            
+
             for (CloseableRDFWriter writer : writers) {
                 Iterator<String> uriIterator = uriMapping.iterator();
                 Iterator<Statement> sameAsTripleIterator = ConvertingIterator.decorate(uriIterator, uriToTripleConverter);
                 writer.write(sameAsTripleIterator);
             }
-            
+
             LOG.info("Written owl:sameAs links");
         } finally {
             for (CloseableRDFWriter writer : writers) {

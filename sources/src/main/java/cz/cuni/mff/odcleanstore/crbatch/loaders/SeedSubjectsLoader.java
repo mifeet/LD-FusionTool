@@ -15,7 +15,7 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -23,11 +23,9 @@ import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
- * Loads subjects of triples to be processed and returns them in a collection.
- * If seed resource restriction is given, only subjects matching this restriction will 
- * be returned.
+ * Loads subjects of triples to be processed.
+ * If seed resource restriction is given, only subjects matching this restriction will be returned.
  * In the current implementation, the collection uses an open cursor in the database.
- * @todo another option would be to load subjects and keep them all in the memory or on the FS.
  * @author Jan Michelfeit
  */
 public class SeedSubjectsLoader extends RepositoryLoaderBase {
@@ -173,34 +171,33 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param repository an initialized RDF repository
-     * @param queryConfig Settings for SPARQL queries  
+     * @param dataSource an initialized data source  
      */
-    public SeedSubjectsLoader(Repository repository, QueryConfig queryConfig) {
-        super(repository, queryConfig);
+    public SeedSubjectsLoader(DataSource dataSource) {
+        super(dataSource);
     }
 
     /**
-     * Returns all subjects of triples in payload graphs matching the given named graph constraint pattern
-     * and in their attached graphs.
+     * Returns all subjects of triples in payload graphs matching the given named graph constraint pattern.
      * The collection should be closed after it is no longer needed.
      * The current implementation returns distinct values.
+     * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
+     *      or null to iterate all subjects
      * @return collection of subjects of relevant triples
      * @throws CRBatchException query error or when seed resource restriction variable and named graph restriction variable are
      *         the same
      */
-    public UriCollection getTripleSubjectsCollection() throws CRBatchException {
+    public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws CRBatchException {
         long startTime = System.currentTimeMillis();
 
-        String seedResourceRestriction = "";
+        String seedResourceRestrictionStr = "";
         String subjectVariable = VAR_PREFIX + "s";
-        if (queryConfig.getSeedResourceRestriction() != null) {
-            SparqlRestriction restriction = queryConfig.getSeedResourceRestriction();
-            seedResourceRestriction = restriction.getPattern();
-            subjectVariable = restriction.getVar();
+        if (seedResourceRestriction != null) {
+            seedResourceRestrictionStr = seedResourceRestriction.getPattern();
+            subjectVariable = seedResourceRestriction.getVar();
         }
 
-        if (queryConfig.getNamedGraphRestriction().getVar().equals(subjectVariable)) {
+        if (dataSource.getNamedGraphRestriction().getVar().equals(subjectVariable)) {
             throw new CRBatchException(
                     CRBatchErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
                     "Source named graph restriction and seed resource restrictions need to use different"
@@ -209,12 +206,12 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
         
         String query = String.format(Locale.ROOT, SUBJECTS_QUERY,
                 getPrefixDecl(),
-                queryConfig.getNamedGraphRestriction().getPattern(),
-                queryConfig.getNamedGraphRestriction().getVar(),
+                dataSource.getNamedGraphRestriction().getPattern(),
+                dataSource.getNamedGraphRestriction().getVar(),
                 getSourceNamedGraphPrefixFilter(),
-                seedResourceRestriction,
+                seedResourceRestrictionStr,
                 subjectVariable);
-        UriCollection result = new UriCollectionImpl(query, getRepository());
+        UriCollection result = new UriCollectionImpl(query, dataSource.getRepository());
         LOG.debug("CR-batch: Triple subjects collection initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;
     }

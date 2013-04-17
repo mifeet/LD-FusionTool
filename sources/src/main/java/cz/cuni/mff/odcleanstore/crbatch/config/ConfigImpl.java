@@ -3,6 +3,7 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -18,11 +19,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
 public class ConfigImpl implements Config {
     private static final DateFormat CANONICAL_FILE_SUFFIS_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss");
     
-    private String databaseConnectionString;
-    private String databaseUsername;
-    private String databasePassword;
-    private SparqlRestriction namedGraphRestriction;
-    private SparqlRestriction ontologyGraphRestriction;
+    private List<DataSourceConfig> dataSources = Collections.emptyList();
     private SparqlRestriction seedResourceRestriction;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
@@ -35,68 +32,18 @@ public class ConfigImpl implements Config {
     private Long maxOutputTriples = null;
 
     @Override
-    public String getDatabaseConnectionString() {
-        return databaseConnectionString;
-    }
-
-    /**
-     * @param databaseConnectionString the databaseConnectionString to set
-     */
-    public void setDatabaseConnectionString(String databaseConnectionString) {
-        this.databaseConnectionString = databaseConnectionString;
-    }
-
-    @Override
-    public String getDatabaseUsername() {
-        return databaseUsername;
-    }
-
-    /**
-     * @param databaseUsername the databaseUsername to set
-     */
-    public void setDatabaseUsername(String databaseUsername) {
-        this.databaseUsername = databaseUsername;
-    }
-
-    @Override
-    public String getDatabasePassword() {
-        return databasePassword;
-    }
-
-    /**
-     * @param databasePassword the databasePassword to set
-     */
-    public void setDatabasePassword(String databasePassword) {
-        this.databasePassword = databasePassword;
-    }
-
-    @Override
-    public SparqlRestriction getNamedGraphRestriction() {
-        return namedGraphRestriction;
+    public List<DataSourceConfig> getDataSources() {
+        return dataSources;
     }
     
     /**
-     * Sets SPARQL group graph pattern limiting source payload named graphs.
-     * @param restriction SPARQL group graph pattern
-     * @see #getNamedGraphRestrictionPattern()
+     * Sets data source settings.
+     * @param dataSources settings for data sources
      */
-    public void setNamedGraphRestriction(SparqlRestriction restriction) {
-        this.namedGraphRestriction = restriction;
+    public void setDataSources(List<DataSourceConfig> dataSources) {
+        this.dataSources = dataSources;
     }
     
-    @Override
-    public SparqlRestriction getOntologyGraphRestriction() {
-        return ontologyGraphRestriction;
-    }
-    
-    /**
-     * Sets value for {@link #getOntologyGraphRestrictionPattern()}.
-     * @param restriction SPARQL group graph pattern
-     */
-    public void setOntologyGraphRestriction(SparqlRestriction restriction) {
-        this.ontologyGraphRestriction = restriction;
-    }
-
     @Override
     public SparqlRestriction getSeedResourceRestriction() {
         return seedResourceRestriction;

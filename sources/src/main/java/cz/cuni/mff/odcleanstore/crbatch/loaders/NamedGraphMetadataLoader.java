@@ -14,14 +14,13 @@ import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQueryResult;
-import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadata;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
-import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
@@ -30,11 +29,10 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * Loads URIs and metadata of named graphs to be processed.
- * Only payload graphs are included.
  * @author Jan Michelfeit
  */
-public class NamedGraphLoader extends RepositoryLoaderBase {
-    private static final Logger LOG = LoggerFactory.getLogger(NamedGraphLoader.class);
+public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
+    private static final Logger LOG = LoggerFactory.getLogger(NamedGraphMetadataLoader.class);
     
     /**
      * SPARQL query that gets metadata for named graphs to be processed.
@@ -77,46 +75,45 @@ public class NamedGraphLoader extends RepositoryLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param repository an initialized RDF repository
-     * @param queryConfig Settings for SPARQL queries  
+     * @param dataSource an initialized data source
      */
-    public NamedGraphLoader(Repository repository, QueryConfig queryConfig) {
-        super(repository, queryConfig);
+    public NamedGraphMetadataLoader(DataSource dataSource) {
+        super(dataSource);
     }
-    
+
     /**
-     * Loads metadata for payload graphs matching the named graph constraint given in the constructor.
-     * @return metadata for relevant named graphs
-     * @throws CRBatchException error
+     * Loads relevant metadata and adds them to the given metadata collection.
+     * Metadata are loaded for named graphs containing triples to be processed and metadata graphs.
+     * @param metadata named graph metadata
+     * @throws CRBatchException repository error
+     * @see DataSource#getMetadataGraphRestriction()
      */
-    public NamedGraphMetadataMap getNamedGraphs() throws CRBatchException {
+    public void loadNamedGraphsMetadata(NamedGraphMetadataMap metadata) throws CRBatchException {
         long startTime = System.currentTimeMillis();
-        NamedGraphMetadataMap metadata = null;
         try {
-            metadata = loadNamedGraphMetadata();
+            metadata = loadBasicMetadata();
             addPublisherScores(metadata);
         } catch (OpenRDFException e) {
-            throw new CRBatchException(CRBatchErrorCodes.QUERY_NG_METADATA, "Database error", e);
+            throw new CRBatchException(CRBatchErrorCodes.QUERY_NG_METADATA, 
+                    "Repository error for data source " + dataSource.getName() , e);
         }
-        
-        LOG.debug("CR-batch: Metadata loaded in {} ms", System.currentTimeMillis() - startTime);
-        return metadata;
+        LOG.debug("CR-batch: Metadata loaded from source {} in {} ms", 
+                dataSource.getName(), System.currentTimeMillis() - startTime);
     }
     
-    
-    private NamedGraphMetadataMap loadNamedGraphMetadata() throws OpenRDFException {
+    private NamedGraphMetadataMap loadBasicMetadata() throws OpenRDFException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
                 getPrefixDecl(),
-                queryConfig.getNamedGraphRestriction().getPattern(),
-                queryConfig.getNamedGraphRestriction().getVar(),
+                dataSource.getNamedGraphRestriction().getPattern(),
+                dataSource.getNamedGraphRestriction().getVar(),
                 getSourceNamedGraphPrefixFilter());
-        final String graphVar = queryConfig.getNamedGraphRestriction().getVar();
+        final String graphVar = dataSource.getNamedGraphRestriction().getVar();
         final String propertyVar = VAR_PREFIX + "gp";
         final String objectVar = VAR_PREFIX + "go";
 
         NamedGraphMetadataMap metadata = new NamedGraphMetadataMap();
         long startTime = System.currentTimeMillis();
-        RepositoryConnection connection = getRepository().getConnection();
+        RepositoryConnection connection = dataSource.getRepository().getConnection();
         TupleQueryResult resultSet = null;
         try {
             resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
@@ -181,7 +178,7 @@ public class NamedGraphLoader extends RepositoryLoaderBase {
      * Retrieve scores of publishers for all publishers occurring in given metadata.
      * @param metadata metadata retrieved for a query
      * @return map of publishers' scores
-     * @throws OpenRDFException repositorys error
+     * @throws OpenRDFException repository error
      */
     protected Map<String, Double> getPublisherScores(NamedGraphMetadataMap metadata)
             throws OpenRDFException {
@@ -202,7 +199,7 @@ public class NamedGraphLoader extends RepositoryLoaderBase {
         for (CharSequence publisherURIList : limitedURIListBuilder) {
             String query = String.format(Locale.ROOT, PUBLISHER_SCORE_QUERY, publisherURIList);
             long queryStartTime = System.currentTimeMillis();
-            RepositoryConnection connection = getRepository().getConnection();
+            RepositoryConnection connection = dataSource.getRepository().getConnection();
             TupleQueryResult resultSet = null;
             try {
                 resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
@@ -257,14 +254,5 @@ public class NamedGraphLoader extends RepositoryLoaderBase {
         return (count > 0) ? result / count : null;
     }
 
-    
-//    /**
-//     * Extract named graph metadata from the result of the given SPARQL SELECT query.
-//     * The query must contain three variables in the result, exactly in this order: named graph, property, value
-//     * @param sparqlQuery a SPARQL SELECT query with three variables in the result: resGraph, property, value
-//     * @param debugName named of the query used for debug log
-//     * @return map of named graph metadata
-//     * @throws DatabaseException database error
-//     */
 
 }

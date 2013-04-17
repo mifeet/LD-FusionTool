@@ -1,34 +1,29 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
-import java.util.Collections;
 import java.util.Locale;
-import java.util.Set;
 
 import org.openrdf.OpenRDFException;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQueryResult;
-import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
+import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterable;
-import cz.cuni.mff.odcleanstore.crbatch.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
- * Loads owl:sameAs links from named graphs to be processed and their attached graphs.
- * The result is returned as an instance of {@link URIMappingIterable}.
+ * Loads owl:sameAs links from named graphs to be processed.
  * @author Jan Michelfeit
  */
 public class SameAsLinkLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkLoader.class);
-    
+
     /**
      * SPARQL query that gets owl:sameAs links from relevant payload graphs.
      * Variable {@link #ngRestrictionVar} represents the named graph.
@@ -50,7 +45,7 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n   %4$s"
             + "\n }";
-    
+
     /**
      * SPARQL query that gets owl:sameAs links from relevant attached graphs.
      * Variable {@link #ngRestrictionVar} represents the named graph.
@@ -73,13 +68,13 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             + "\n   }"
             + "\n   %4$s"
             + "\n }";
-    
+
     /**
-     * SPARQL query that gets owl:sameAs links from ontology graphs. 
+     * SPARQL query that gets owl:sameAs links from ontology graphs.
      * Contents of these graphs is not part of the output but the contained owl:sameAs links are used
      * in conflict resolution.
      * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
-     *
+     * 
      * Must be formatted with arguments:
      * (1) namespace prefixes declaration
      * (2) ontology graph restriction patter
@@ -98,75 +93,58 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
 
     /**
      * Creates a new instance.
-     * @param repository an initialized RDF repository
-     * @param queryConfig Settings for SPARQL queries  
+     * @param dataSource an initialized data source
      */
-    public SameAsLinkLoader(Repository repository, QueryConfig queryConfig) {
-        super(repository, queryConfig);
-    }
-    
-    /**
-     * Loads owl:sameAs links from payload graphs matching the named graph constraint given
-     * in the constructor and their attached graphs, create mapping to canonical URIs from them
-     * and return it.
-     * @return mapping to canonical URIs created from relevant owl:sameAs links
-     * @throws CRBatchException error
-     */
-    public URIMappingIterable getSameAsMappings() throws CRBatchException {
-        return getSameAsMappings(Collections.<String>emptySet());
+    public SameAsLinkLoader(DataSource dataSource) {
+        super(dataSource);
     }
 
     /**
-     * Loads owl:sameAs links from payload graphs matching the named graph constraint given
-     * in the constructor and their attached graphs, create mapping to canonical URIs from them
-     * and return it.
-     * @param preferredURIs set of URIs preferred as canonical URIs; can be null
-     * @return mapping to canonical URIs created from relevant owl:sameAs links
-     * @throws CRBatchException error
+     * Loads owl:sameAs links from relevant named graphs and adds them to the given canonical URI mapping.
+     * @param uriMapping URI mapping where loaded links will be added
+     * @throws CRBatchException repository error
      */
-    public URIMappingIterable getSameAsMappings(Set<String> preferredURIs) throws CRBatchException {
+    public void loadSameAsMappings(URIMappingImpl uriMapping) throws CRBatchException {
         long startTime = System.currentTimeMillis();
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
         long linkCount = 0;
         try {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
                     getPrefixDecl(),
-                    queryConfig.getNamedGraphRestriction().getPattern(),
-                    queryConfig.getNamedGraphRestriction().getVar(),
+                    dataSource.getNamedGraphRestriction().getPattern(),
+                    dataSource.getNamedGraphRestriction().getVar(),
                     getSourceNamedGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
 
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
                     getPrefixDecl(),
-                    queryConfig.getNamedGraphRestriction().getPattern(),
-                    queryConfig.getNamedGraphRestriction().getVar(),
+                    dataSource.getNamedGraphRestriction().getPattern(),
+                    dataSource.getNamedGraphRestriction().getVar(),
                     getSourceNamedGraphPrefixFilter());
             linkCount += loadSameAsLinks(uriMapping, attachedQuery);
 
-            if (queryConfig.getOntologyGraphRestriction() != null) {
+            if (dataSource.getMetadataGraphRestriction() != null) {
                 String ontologyQuery = String.format(Locale.ROOT, ONTOLOGY_SAMEAS_QUERY,
                         getPrefixDecl(),
-                        queryConfig.getOntologyGraphRestriction().getPattern(),
-                        queryConfig.getOntologyGraphRestriction().getVar(),
-                        getGraphPrefixFilter(queryConfig.getOntologyGraphRestriction().getVar()));
+                        dataSource.getMetadataGraphRestriction().getPattern(),
+                        dataSource.getMetadataGraphRestriction().getVar(),
+                        getGraphPrefixFilter(dataSource.getMetadataGraphRestriction().getVar()));
                 linkCount += loadSameAsLinks(uriMapping, ontologyQuery);
             }
         } catch (OpenRDFException e) {
-            throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Database error", e);
+            throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Repository error for source " + dataSource.getName(), e);
         }
 
-        LOG.debug(String.format("CR-batch: loaded & resolved %,d owl:sameAs links in %d ms", 
-                linkCount, System.currentTimeMillis() - startTime));
-        return uriMapping;
+        LOG.debug(String.format("CR-batch: loaded & resolved %,d owl:sameAs links from source %s in %d ms",
+                    linkCount, dataSource.getName(), System.currentTimeMillis() - startTime));
     }
 
-    private long loadSameAsLinks(URIMappingIterableImpl uriMapping, String query) throws OpenRDFException {
+    private long loadSameAsLinks(URIMappingImpl uriMapping, String query) throws OpenRDFException {
         final String var1 = VAR_PREFIX + "r1";
         final String var2 = VAR_PREFIX + "r2";
 
         long linkCount = 0;
         long startTime = System.currentTimeMillis();
-        RepositoryConnection connection = getRepository().getConnection();
+        RepositoryConnection connection = dataSource.getRepository().getConnection();
         TupleQueryResult resultSet = null;
         try {
             resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();

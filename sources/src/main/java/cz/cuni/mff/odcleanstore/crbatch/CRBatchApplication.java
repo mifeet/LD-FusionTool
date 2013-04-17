@@ -11,6 +11,7 @@ import org.simpleframework.xml.core.PersistenceException;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
+import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
@@ -49,10 +50,10 @@ public final class CRBatchApplication {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-            //Repository myRepository = new SailRepository(new MemoryStore());
-            //Repository myRepository = new SPARQLRepository("http://localhost:8890/sparql");
-            //con.add(file, baseURI, RDFFormat.RDFXML);
-        
+        // Repository myRepository = new SailRepository(new MemoryStore());
+        // Repository myRepository = new SPARQLRepository("http://localhost:8890/sparql");
+        // con.add(file, baseURI, RDFFormat.RDFXML);
+
         ApplicationArgs parsedArgs;
         try {
             parsedArgs = parseArgs(args);
@@ -136,12 +137,6 @@ public final class CRBatchApplication {
             throw new InvalidInputException("Result data URI prefix must be a valid URI, '" + config.getResultDataURIPrefix()
                     + "' given");
         }
-        for (Output output : config.getOutputs()) {
-            if (output.getFileLocation().exists() && !output.getFileLocation().canWrite()) {
-                System.out.println(output.getFileLocation().getAbsolutePath());
-                throw new InvalidInputException("Cannot write to output file " + output.getFileLocation().getPath());
-            }
-        }
         for (Map.Entry<String, String> prefixEntry : config.getPrefixes().entrySet()) {
             if (!prefixEntry.getKey().isEmpty() && !ODCSUtils.isValidNamespacePrefix(prefixEntry.getKey())) {
                 throw new InvalidInputException("Invalid namespace prefix '" + prefixEntry.getKey() + "'");
@@ -150,32 +145,71 @@ public final class CRBatchApplication {
                 throw new InvalidInputException("Invalid namespace prefix definition for URI '" + prefixEntry.getValue() + "'");
             }
         }
-        if (!ODCSUtils.isValidSparqlVar(config.getNamedGraphRestriction().getVar())) {
-            throw new InvalidInputException(
-                    "Variable name specified in source graphs restriction must be a valid SPARQL identifier, '"
-                            + config.getNamedGraphRestriction().getVar() + "' given");
-        }
-        if (config.getOntologyGraphRestriction() != null
-                && !ODCSUtils.isValidSparqlVar(config.getOntologyGraphRestriction().getVar())) {
-            throw new InvalidInputException(
-                    "Variable name specified in ontology graphs restriction must be a valid SPARQL identifier, '"
-                            + config.getOntologyGraphRestriction().getVar() + "' given");
-        }
         if (config.getSeedResourceRestriction() != null
                 && !ODCSUtils.isValidSparqlVar(config.getSeedResourceRestriction().getVar())) {
             throw new InvalidInputException(
                     "Variable name specified in seed resources restriction must be a valid SPARQL identifier, '"
                             + config.getSeedResourceRestriction().getVar() + "' given");
         }   
+       
+        // Check data Source settings
+        for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
+            checkDataSourceValidInput(dataSourceConfig, config);
+        }
+        
+        // Check output settings
+        for (Output output : config.getOutputs()) {
+            if (output.getFileLocation().exists() && !output.getFileLocation().canWrite()) {
+                System.out.println(output.getFileLocation().getAbsolutePath());
+                throw new InvalidInputException("Cannot write to output file " + output.getFileLocation().getPath());
+            }
+        }
+
+        // intentionally do not check canonical URI files
+    }
+
+    private static void checkDataSourceValidInput(DataSourceConfig dataSourceConfig, Config config) throws InvalidInputException {
+        if (!ODCSUtils.isValidSparqlVar(dataSourceConfig.getNamedGraphRestriction().getVar())) {
+            throw new InvalidInputException(
+                    "Variable name specified in source graphs restriction must be a valid SPARQL identifier, '"
+                            + dataSourceConfig.getNamedGraphRestriction().getVar() 
+                            + "' given for data source " + dataSourceConfig);
+        }
+        if (dataSourceConfig.getMetadataGraphRestriction() != null
+                && !ODCSUtils.isValidSparqlVar(dataSourceConfig.getMetadataGraphRestriction().getVar())) {
+            throw new InvalidInputException(
+                    "Variable name specified in ontology graphs restriction must be a valid SPARQL identifier, '"
+                            + dataSourceConfig.getMetadataGraphRestriction().getVar() 
+                            + "' given for data source " + dataSourceConfig);
+        }
         if (config.getSeedResourceRestriction() != null
-                && config.getNamedGraphRestriction().getVar().equals(config.getSeedResourceRestriction().getVar())) {
-            String message = "SPARQL variable used in source named graph restriction (<GraphsRestriction var=\"...\" />) "
+                && dataSourceConfig.getNamedGraphRestriction().getVar().equals(
+                        config.getSeedResourceRestriction().getVar())) {
+            String message = "SPARQL variable used in source named graph restriction (<GraphRestriction var=\"...\" />) "
                     + "and variable used in seed resource restriction (<SeedResourceRestriction var=\"...\" />)"
-                    + " must be different, but both are set to ?" + config.getNamedGraphRestriction().getVar() + "."
+                    + " must be different, but both are set to ?" + config.getSeedResourceRestriction().getVar() + "."
                     + "\nNote that any other variables used in the two restriction patterns should be also different.";
             throw new InvalidInputException(message);
         }
-        // intentionally do not check canonical URI files
+        
+        switch (dataSourceConfig.getType()) {
+        case VIRTUOSO:
+            checkRequiredDataSourceParam(dataSourceConfig, "host", "port", "username", "password");
+            break;
+        default:
+            throw new InvalidInputException("Unsupported type of data source: " + dataSourceConfig.getType());
+        }
+    }
+
+    private static void checkRequiredDataSourceParam(DataSourceConfig dataSourceConfig, String... requiredParams)
+            throws InvalidInputException {
+        
+        for (String requiredParam : requiredParams) {
+            if (dataSourceConfig.getParams().get(requiredParam) == null) {
+                throw new InvalidInputException("Missing required parameter '" + requiredParam
+                        + "' for data source " + dataSourceConfig);
+            }
+        }
     }
 
     /** Disable constructor. */

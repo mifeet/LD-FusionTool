@@ -4,6 +4,7 @@
 package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,12 +19,12 @@ import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationType;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.AggregationXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.ConfigXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.ConflictResolutionXml;
+import cz.cuni.mff.odcleanstore.crbatch.config.xml.DataSourceXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.OutputXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.ParamXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.PrefixXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.PropertyXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.RestrictionXml;
-import cz.cuni.mff.odcleanstore.crbatch.config.xml.SourceDatasetXml;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
@@ -58,37 +59,34 @@ public final class ConfigReader {
         }
 
         // Prefixes
+        Map<String, String> prefixes;
         if (configXml.getPrefixes() != null) {
-            config.setPrefixes(extractPrefixes(configXml.getPrefixes()));
+            prefixes = extractPrefixes(configXml.getPrefixes());
         } else {
-            config.setPrefixes(new HashMap<String, String>());
+            prefixes = new HashMap<String, String>();
         }
+        config.setPrefixes(Collections.unmodifiableMap(prefixes));
 
-        // Data source
-        List<ParamXml> dataSourceParams = configXml.getDataSource();
-        config.setDatabaseConnectionString(extractDatabaseConnectionString(dataSourceParams));
-        config.setDatabaseUsername(extractParamByName(dataSourceParams, "username"));
-        config.setDatabasePassword(extractParamByName(dataSourceParams, "password"));
-
-        // Source dataset restrictions
-        if (configXml.getSourceDataset() != null) {
-            SourceDatasetXml sourceDatasetXml = configXml.getSourceDataset();
-            config.setNamedGraphRestriction(extractGraphRestriction(sourceDatasetXml.getGraphsRestriction()));
-            config.setOntologyGraphRestriction(extractGraphRestriction(sourceDatasetXml.getOntologyRestriction()));
-            config.setSeedResourceRestriction(extractResourceRestriction(sourceDatasetXml.getSeedResourceRestriction()));
+        // Data sources
+        List<DataSourceConfig> dataSources = new LinkedList<DataSourceConfig>();
+        for (DataSourceXml dsXml : configXml.getDataSources()) {
+            dataSources.add(extractDataSource(dsXml));
         }
-        if (config.getNamedGraphRestriction() == null) {
-            // must not be null
-            config.setNamedGraphRestriction(new SparqlRestrictionImpl("", ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR));
+        config.setDataSources(Collections.unmodifiableList(dataSources));
+        
+        // Data processing settings
+        if (configXml.getDataProcessing() != null) {
+            RestrictionXml seedRestriction = configXml.getDataProcessing().getSeedResourceRestriction();
+            config.setSeedResourceRestriction(extractResourceRestriction(seedRestriction));
+            List<ParamXml> params = configXml.getDataProcessing().getParams();
+            if (params != null) {
+                extractDataProcessingParams(params, config);
+            }
         }
-
+        
         // Conflict resolution settings
         if (configXml.getConflictResolution() != null) {
             config.setAggregationSpec(extractAggregationSpec(configXml.getConflictResolution()));
-            if (configXml.getConflictResolution().getParams() != null) {
-                List<ParamXml> params = configXml.getConflictResolution().getParams();
-                extractConflictResolutionParams(params, config);
-            }
         } else {
             config.setAggregationSpec(new AggregationSpec());
         }
@@ -122,19 +120,6 @@ public final class ConfigReader {
             prefixMap.put(prefixXml.getId(), prefixXml.getNamespace());
         }
         return prefixMap;
-    }
-
-    private String extractDatabaseConnectionString(List<ParamXml> dataSource) throws InvalidInputException {
-        String host = extractParamByName(dataSource, "host");
-        String port = extractParamByName(dataSource, "port");
-        if (host == null) {
-            throw new InvalidInputException("Database host must be specified in <DataSource>");
-        }
-        if (port == null) {
-            throw new InvalidInputException("Database connection port must be specified in <DataSource>");
-        }
-
-        return "jdbc:virtuoso://" + host + ":" + port + "/CHARSET=UTF-8";
     }
 
     private AggregationSpec extractAggregationSpec(ConflictResolutionXml conflictResolutionXml) throws InvalidInputException {
@@ -193,7 +178,7 @@ public final class ConfigReader {
         }
     }
 
-    private void extractConflictResolutionParams(List<ParamXml> params, ConfigImpl config) throws InvalidInputException {
+    private void extractDataProcessingParams(List<ParamXml> params, ConfigImpl config) throws InvalidInputException {
         for (ParamXml param : params) {
             if (param.getValue() == null) {
                 continue;
@@ -220,6 +205,29 @@ public final class ConfigReader {
                         + " used in conflict resolution parameters");
             }
         }
+    }
+
+    private DataSourceConfig extractDataSource(DataSourceXml dataSourceXml) throws InvalidInputException {
+        EnumDataSourceType type;
+        try {
+            type = EnumDataSourceType.valueOf(dataSourceXml.getType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidInputException("Unknown type of data source: " + dataSourceXml.getType());
+        }
+        
+        DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(type, dataSourceXml.getName());
+        
+        for (ParamXml param : dataSourceXml.getParams()) {
+            dataSourceConfig.getParams().put(param.getName(), param.getValue());
+        }
+        
+        SparqlRestriction namedGraphResriction = extractGraphRestriction(dataSourceXml.getGraphRestriction());
+        if (namedGraphResriction != null) {
+            dataSourceConfig.setNamedGraphRestriction(namedGraphResriction);
+        }
+        dataSourceConfig.setMetadataGraphRestriction(extractGraphRestriction(dataSourceXml.getMetadataGraphRestriction()));
+
+        return dataSourceConfig;
     }
 
     private Output extractOutput(OutputXml outputXml) throws InvalidInputException {

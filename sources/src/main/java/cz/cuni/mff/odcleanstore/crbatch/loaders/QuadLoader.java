@@ -1,7 +1,6 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -14,13 +13,12 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQueryResult;
-import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.crbatch.config.QueryConfig;
+import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
@@ -30,7 +28,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject)
- * from payload graphs matching the given named graph constraint pattern, taking into consideration
+ * from graphs matching the given named graph constraint pattern, taking into consideration
  * given owl:sameAs alternatives.
  * @author Jan Michelfeit
  */
@@ -135,55 +133,56 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
 
     /**
      * Creates a new instance.
-     * @param repository an initialized RDF repository
-     * @param queryConfig Settings for SPARQL queries
+     * @param dataSource an initialized data source
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      */
-    public QuadLoader(Repository repository, QueryConfig queryConfig, AlternativeURINavigator alternativeURINavigator) {
-        super(repository, queryConfig);
+    public QuadLoader(DataSource dataSource, AlternativeURINavigator alternativeURINavigator) {
+        super(dataSource);
         this.alternativeURINavigator = alternativeURINavigator;
     }
 
     /**
-     * Returns quads having the given uri or one of its owl:sameAs alternatives as their subject.
-     * Triples are loaded from payload graphs matching the given named graph constraint pattern
-     * and from their attached graphs.
+     * Adds quads having the given uri or one of its owl:sameAs alternatives as their subject to quadCollestion.
+     * Only quads from graph matching the data source's {@link DataSource#getNamedGraphRestriction() named graph restriction}
+     * will be loaded.
      * @param uri searched subject URI
-     * @return collection of quads having uri as their subject
+     * @param quadCollection collection to which the result will be added
      * @throws CRBatchException error
+     * @see DataSource#getNamedGraphRestriction()
      */
-    public Collection<Statement> getQuadsForURI(String uri) throws CRBatchException {
+    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws CRBatchException {
         long startTime = System.currentTimeMillis();
-        List<Statement> result = new ArrayList<Statement>();
+        
         try {
             List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
             if (alternativeURIs.size() <= 1) {
                 String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
                         getPrefixDecl(),
-                        queryConfig.getNamedGraphRestriction().getPattern(),
-                        queryConfig.getNamedGraphRestriction().getVar(),
+                        dataSource.getNamedGraphRestriction().getPattern(),
+                        dataSource.getNamedGraphRestriction().getVar(),
                         getSourceNamedGraphPrefixFilter(),
                         uri);
-                addQuadsFromQuery(query, result);
+                addQuadsFromQuery(query, quadCollection);
             } else {
                 Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
                 for (CharSequence uriList : limitedURIListBuilder) {
                     String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
                             getPrefixDecl(),
-                            queryConfig.getNamedGraphRestriction().getPattern(),
-                            queryConfig.getNamedGraphRestriction().getVar(),
+                            dataSource.getNamedGraphRestriction().getPattern(),
+                            dataSource.getNamedGraphRestriction().getVar(),
                             getSourceNamedGraphPrefixFilter(),
                             uriList);
-                    addQuadsFromQuery(query, result);
+                    addQuadsFromQuery(query, quadCollection);
                 }
             }
-
         } catch (OpenRDFException e) {
-            throw new CRBatchException(CRBatchErrorCodes.QUERY_QUADS, "Database error", e);
+            throw new CRBatchException(CRBatchErrorCodes.QUERY_QUADS, "Repository error for source " + dataSource.getName(), e);
         } 
 
-        LOG.trace("CR-batch: Loaded quads for URI {} in {} ms", uri, System.currentTimeMillis() - startTime);
-        return result;
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("CR-batch: Loaded quads for URI {} from source {} in {} ms", new Object[] {
+                    uri, dataSource, System.currentTimeMillis() - startTime });
+        }
     }
 
     /**
@@ -207,7 +206,7 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
         try {
             LOG.trace("CR-batch: Quads query took {} ms", System.currentTimeMillis() - startTime);
 
-            ValueFactory valueFactory = getRepository().getValueFactory();
+            ValueFactory valueFactory = dataSource.getRepository().getValueFactory();
             while (resultSet.hasNext()) {
                 BindingSet bindings = resultSet.next();
                 Statement quad = valueFactory.createStatement(
@@ -224,7 +223,7 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
     
     private RepositoryConnection getConnection() throws RepositoryException {
         if (connection == null) {
-            connection = getRepository().getConnection();
+            connection = dataSource.getRepository().getConnection();
         }
         return connection;
     }

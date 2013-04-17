@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Config>
-  <!-- Definition of data source (required) -->
-  <DataSource>
-    <Param name="host" value="localhost" />
-    <Param name="port" value="1111" />
-    <Param name="username" value="dba" />
-    <Param name="password" value="dba" />
-  </DataSource>
+  <!-- Definitions of data sources; multiple <DataSource> children can be given; (required) -->
+  <DataSources>
+    <!-- Definition of a data source connecting to an Openlink Virtuoso database instance using JDBC -->
+    <DataSource type="virtuoso">
+      <Param name="host" value="localhost" />
+      <Param name="port" value="1111" />
+      <Param name="username" value="dba" />
+      <Param name="password" value="dba" />
+    </DataSource>
+  </DataSources>
   
   <!-- Definition of where the output shall be written (required) -->
   <Outputs>

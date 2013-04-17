@@ -20,11 +20,11 @@ public class ConfigXml {
     @ElementList(name = "Prefixes", required = false)
     private List<PrefixXml> prefixes;
 
-    @ElementList(name = "DataSource")
-    private List<ParamXml> dataSource;
-
-    @Element(name = "SourceDataset", required = false)
-    private SourceDatasetXml sourceDataset;
+    @ElementList(name = "DataSources", empty = true, required = true)
+    private List<DataSourceXml> dataSources;
+    
+    @Element(name="DataProcessing", required = false)
+    private DataProcessingXml dataProcessing;
 
     @Element(name = "ConflictResolution", required = false)
     private ConflictResolutionXml conflictResolution;
@@ -36,12 +36,12 @@ public class ConfigXml {
         return prefixes;
     }
 
-    public List<ParamXml> getDataSource() {
-        return dataSource;
+    public List<DataSourceXml> getDataSources() {
+        return dataSources;
     }
-
-    public SourceDatasetXml getSourceDataset() {
-        return sourceDataset;
+    
+    public DataProcessingXml getDataProcessing() {
+        return dataProcessing;
     }
 
     public ConflictResolutionXml getConflictResolution() {
