@@ -44,7 +44,6 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
      * (1) namespace prefixes declaration
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
-     * (4) graph name prefix filter
      * 
      * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
@@ -57,7 +56,6 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
             + "\n   }"
             + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n   ?%3$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
-            + "\n   %4$s"
             + "\n }";
     
     /**
@@ -105,8 +103,7 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
                 getPrefixDecl(),
                 dataSource.getNamedGraphRestriction().getPattern(),
-                dataSource.getNamedGraphRestriction().getVar(),
-                getSourceNamedGraphPrefixFilter());
+                dataSource.getNamedGraphRestriction().getVar());
         final String graphVar = dataSource.getNamedGraphRestriction().getVar();
         final String propertyVar = VAR_PREFIX + "gp";
         final String objectVar = VAR_PREFIX + "go";

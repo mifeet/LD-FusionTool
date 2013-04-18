@@ -33,7 +33,6 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
      * (1) namespace prefixes declaration
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
-     * (4) graph name prefix filter
      */
     private static final String PAYLOAD_SAMEAS_QUERY = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
@@ -43,7 +42,6 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
             + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   %4$s"
             + "\n }";
 
     /**
@@ -55,7 +53,6 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
      * (1) namespace prefixes declaration
      * (2) named graph restriction patter
      * (3) named graph restriction variable
-     * (4) graph name prefix filter
      */
     private static final String ATTACHED_SAMEAS_QUERY = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
@@ -66,7 +63,6 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             + "\n   GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
-            + "\n   %4$s"
             + "\n }";
 
     /**
@@ -79,7 +75,6 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
      * (1) namespace prefixes declaration
      * (2) ontology graph restriction patter
      * (3) ontology graph restriction variable
-     * (4) ontology graph name prefix filter
      */
     private static final String ONTOLOGY_SAMEAS_QUERY = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
@@ -88,7 +83,6 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             + "\n   GRAPH ?%3$s {"
             + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
-            + "\n   %4$s"
             + "\n }";
 
     /**
@@ -111,23 +105,20 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
                     getPrefixDecl(),
                     dataSource.getNamedGraphRestriction().getPattern(),
-                    dataSource.getNamedGraphRestriction().getVar(),
-                    getSourceNamedGraphPrefixFilter());
+                    dataSource.getNamedGraphRestriction().getVar());
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
 
             String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
                     getPrefixDecl(),
                     dataSource.getNamedGraphRestriction().getPattern(),
-                    dataSource.getNamedGraphRestriction().getVar(),
-                    getSourceNamedGraphPrefixFilter());
+                    dataSource.getNamedGraphRestriction().getVar());
             linkCount += loadSameAsLinks(uriMapping, attachedQuery);
 
             if (dataSource.getMetadataGraphRestriction() != null) {
                 String ontologyQuery = String.format(Locale.ROOT, ONTOLOGY_SAMEAS_QUERY,
                         getPrefixDecl(),
                         dataSource.getMetadataGraphRestriction().getPattern(),
-                        dataSource.getMetadataGraphRestriction().getVar(),
-                        getGraphPrefixFilter(dataSource.getMetadataGraphRestriction().getVar()));
+                        dataSource.getMetadataGraphRestriction().getVar());
                 linkCount += loadSameAsLinks(uriMapping, ontologyQuery);
             }
         } catch (OpenRDFException e) {

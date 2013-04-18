@@ -4,13 +4,12 @@
 package cz.cuni.mff.odcleanstore.crbatch;
 
 import java.io.File;
-import java.io.IOException;
 
-import org.openrdf.OpenRDFException;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.sail.memory.MemoryStore;
@@ -32,8 +31,9 @@ public final class RepositoryFactory {
 
     /**
      * Creates a {@link Repository} based on the given configuration.
+     * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
      * @param dataSourceConfig data source configuration
-     * @return an uninitialized repository
+     * @return initialized repository
      * @throws CRBatchException error creating repository
      */
     public Repository createRepository(DataSourceConfig dataSourceConfig) throws CRBatchException {
@@ -58,11 +58,12 @@ public final class RepositoryFactory {
 
     /**
      * Creates a repository from RDF data from a file.
+     * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
      * @param dataSourceName data source name (for logging)
      * @param path path to the file to load data from
      * @param format serialization format (see {@link EnumSerializationFormat})
      * @param baseURI base URI
-     * @return uninitialized repository
+     * @return initialized repository
      * @throws CRBatchException error loading data from file
      */
     public Repository createFileRepository(String dataSourceName, String path, String format, String baseURI)
@@ -95,37 +96,35 @@ public final class RepositoryFactory {
         Repository repository = new SailRepository(new MemoryStore()); // TODO cache
         try {
             RepositoryConnection connection = null;
+            repository.initialize();
+            connection = repository.getConnection();
             try {
-                repository.initialize();
-                connection = repository.getConnection();
                 connection.add(file, baseURI, sesameFormat, context);
             } finally {
-                if (connection != null) {
-                    connection.close();
-                }
-                // the returned value is expected to be uninitialized; calling shutDown() and initialize() shouldn't loose any
-                // data
-                repository.shutDown();
+                connection.close();
             }
-        } catch (OpenRDFException e) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_FILE,
-                    "Cannot load data to repository for source " + dataSourceName, e);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            try {
+                repository.shutDown();
+            } catch (RepositoryException e2) {
+                // ignore
+            }
             throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_FILE,
                     "Cannot load data to repository for source " + dataSourceName, e);
         }
-        LOG.debug("Created file repository {}", dataSourceName);
+        LOG.debug("Initialized file repository {}", dataSourceName);
         return repository;
     }
 
     /**
      * Creates a repository backed by a Virtuoso JDBC connection.
+     * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
      * @param dataSourceName data source name (for logging)
      * @param host host for the connection
      * @param port connection port
      * @param username connection username
      * @param password connection password
-     * @return uninitialized repository
+     * @return initialized repository
      * @throws CRBatchException error creating repository
      */
     public Repository createVirtuosoRepository(String dataSourceName, String host, String port,
@@ -136,7 +135,14 @@ public final class RepositoryFactory {
         }
         String connectionString = "jdbc:virtuoso://" + host + ":" + port + "/CHARSET=UTF-8";
         Repository repository = new VirtuosoRepository(connectionString, username, password);
-        LOG.debug("Created Virtuoso repository {}", dataSourceName);
+        try {
+            repository.initialize();
+        } catch (RepositoryException e) {
+            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_VIRTUOSO,
+                    "Error when initializing repository for " + dataSourceName, e);
+        }
+        
+        LOG.debug("Initialized Virtuoso repository {}", dataSourceName);
         return repository;
     }
 }

@@ -39,7 +39,6 @@ import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriterFactory;
@@ -85,7 +84,7 @@ public class CRBatchExecutor {
         FederatedQuadLoader quadLoader = null;
         UriCollection queuedSubjects = null;
         List<CloseableRDFWriter> rdfWriters = null;
-        Collection<DataSource> dataSources = initializeDataSources(config.getDataSources(), config.getPrefixes());
+        Collection<DataSource> dataSources = getDataSources(config.getDataSources(), config.getPrefixes());
         try {
             // Load source named graphs metadata
             NamedGraphMetadataMap namedGraphsMetadata = getMetadata(dataSources);
@@ -184,16 +183,15 @@ public class CRBatchExecutor {
         }
     }
 
-    private Collection<DataSource> initializeDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
+    private Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
             throws CRBatchException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
         RepositoryFactory repositoryFactory = new RepositoryFactory();
         for (DataSourceConfig dataSourceConfig : config) {
-            DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, repositoryFactory);
             try {
-                dataSource.getRepository().initialize();
+                DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, repositoryFactory);
                 dataSources.add(dataSource);
-            } catch (RepositoryException e) {
+            } catch (CRBatchException e) {
                 // clean up already initialized repositories
                 for (DataSource initializedDataSource : dataSources) {
                     try {
@@ -202,8 +200,7 @@ public class CRBatchExecutor {
                         // ignore
                     }
                 }
-                throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT,
-                        "Error when initializing repository for " + dataSource.getName(), e);
+                throw e;
             }
         }
         return dataSources;

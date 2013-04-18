@@ -45,11 +45,10 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * (1) namespace prefixes declaration
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
-     * (4) graph name prefix filter
-     * (5) searched uri
+     * (4) searched uri
      */
     private static final String QUADS_QUERY_SIMPLE = "%1$s"
-            + "\n SELECT ?" + VAR_PREFIX + "g  <%5$s> AS ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n SELECT ?" + VAR_PREFIX + "g  <%4$s> AS ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n WHERE {"
             + "\n   {"
             + "\n     SELECT DISTINCT "
@@ -57,11 +56,10 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
             + "\n       ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n     WHERE {"
             + "\n       GRAPH ?%3$s {"
-            + "\n         <%5$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n         <%4$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n       }"
             + "\n       %2$s"
             + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       %4$s"
             + "\n     }"
             + "\n   }"
             + "\n   UNION"
@@ -72,9 +70,8 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
             + "\n       %2$s"
             + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n       ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n       %4$s"
             + "\n       GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n         <%5$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n         <%4$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n       }"
             + "\n     }"
             + "\n   }"
@@ -90,8 +87,7 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * (1) namespace prefixes declaration
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
-     * (4) graph name prefix filter
-     * (5) list of searched URIs (e.g. "<uri1>,<uri2>,<uri3>")
+     * (4) list of searched URIs (e.g. "<uri1>,<uri2>,<uri3>")
      */
     private static final String QUADS_QUERY_ALTERNATIVE = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "g ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
@@ -103,10 +99,9 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
             + "\n     WHERE {"
             + "\n       %2$s"
             + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       %4$s"
             + "\n       GRAPH ?%3$s {"
             + "\n         ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%5$s))"
+            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%4$s))"
             + "\n       }"
             + "\n     }"
             + "\n   }"
@@ -119,10 +114,9 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
             + "\n       %2$s"
             + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
             + "\n       ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n       %4$s"
             + "\n       GRAPH ?" + VAR_PREFIX + "attachedGraph {"
             + "\n         ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%5$s))"
+            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%4$s))"
             + "\n       }"
             + "\n     }"
             + "\n   }"
@@ -160,7 +154,6 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
                         getPrefixDecl(),
                         dataSource.getNamedGraphRestriction().getPattern(),
                         dataSource.getNamedGraphRestriction().getVar(),
-                        getSourceNamedGraphPrefixFilter(),
                         uri);
                 addQuadsFromQuery(query, quadCollection);
             } else {
@@ -170,7 +163,6 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
                             getPrefixDecl(),
                             dataSource.getNamedGraphRestriction().getPattern(),
                             dataSource.getNamedGraphRestriction().getVar(),
-                            getSourceNamedGraphPrefixFilter(),
                             uriList);
                     addQuadsFromQuery(query, quadCollection);
                 }

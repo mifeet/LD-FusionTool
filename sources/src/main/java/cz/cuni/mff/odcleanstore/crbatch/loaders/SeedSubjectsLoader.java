@@ -143,28 +143,26 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      * (1) namespace prefixes declaration
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
-     * (4) graph name prefix filter
-     * (5) seed resource restriction pattern
-     * (6) variable representing subject and at the same time seed resource restriction variable
+     * (4) seed resource restriction pattern
+     * (5) variable representing subject and at the same time seed resource restriction variable
      */
     private static final String SUBJECTS_QUERY = "%1$s"
-            + "\n SELECT DISTINCT ?%6$s"
+            + "\n SELECT DISTINCT ?%5$s"
             + "\n WHERE {"
             + "\n   %2$s"
             + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   %4$s"
             + "\n   {"
             + "\n     GRAPH ?%3$s {"
-            + "\n       ?%6$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
-            + "\n       %5$s"
+            + "\n       ?%5$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
+            + "\n       %4$s"
             + "\n     }"
             + "\n   }"
             + "\n   UNION"
             + "\n   {"
             + "\n     ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
             + "\n     GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n       ?%6$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
-            + "\n       %5$s"
+            + "\n       ?%5$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
+            + "\n       %4$s"
             + "\n     }"
             + "\n   }"
             + "\n }";
@@ -208,7 +206,6 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 getPrefixDecl(),
                 dataSource.getNamedGraphRestriction().getPattern(),
                 dataSource.getNamedGraphRestriction().getVar(),
-                getSourceNamedGraphPrefixFilter(),
                 seedResourceRestrictionStr,
                 subjectVariable);
         UriCollection result = new UriCollectionImpl(query, dataSource.getRepository());
