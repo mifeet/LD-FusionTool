@@ -23,6 +23,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
@@ -99,7 +100,7 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
                 dataSource.getName(), System.currentTimeMillis() - startTime);
     }
     
-    private void loadBasicMetadata(NamedGraphMetadataMap metadata) throws OpenRDFException {
+    private void loadBasicMetadata(NamedGraphMetadataMap metadata) throws OpenRDFException, CRBatchException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
                 getPrefixDecl(),
                 dataSource.getNamedGraphRestriction().getPattern(),
@@ -152,6 +153,8 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
                     LOG.warn("Invalid metadata for graph {}", namedGraphURI);
                 }
             }
+        } catch (OpenRDFException e) {
+            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_NG_METADATA, query, dataSource.getName(), e);
         } finally {
             if (resultSet != null) {
                 resultSet.close();
@@ -160,7 +163,7 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
         }
     }
 
-    private void loadPublisherScores(NamedGraphMetadataMap metadata) throws OpenRDFException {
+    private void loadPublisherScores(NamedGraphMetadataMap metadata) throws OpenRDFException, CRBatchQueryException {
         Map<String, Double> publisherScores = getPublisherScores(metadata);
         for (NamedGraphMetadata ngMetadata : metadata.listMetadata()) {
             Double publisherScore = calculatePublisherScore(ngMetadata, publisherScores);
@@ -173,9 +176,10 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
      * @param metadata metadata retrieved for a query
      * @return map of publishers' scores
      * @throws OpenRDFException repository error
+     * @throws CRBatchQueryException repository error
      */
     protected Map<String, Double> getPublisherScores(NamedGraphMetadataMap metadata)
-            throws OpenRDFException {
+            throws OpenRDFException, CRBatchQueryException {
         final String publisherVar = "publishedBy";
         final String scoreVar = "score";
 
@@ -213,6 +217,8 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
                         LOG.warn("Query Execution: invalid publisher score for {}", publisher);
                     }
                 }
+            } catch (OpenRDFException e) {
+                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_NG_METADATA, query, dataSource.getName(), e);
             } finally {
                 if (resultSet != null) {
                     resultSet.close();

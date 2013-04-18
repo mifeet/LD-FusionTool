@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
@@ -137,8 +138,8 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
 
     /**
      * Adds quads having the given uri or one of its owl:sameAs alternatives as their subject to quadCollestion.
-     * Only quads from graph matching the data source's {@link DataSource#getNamedGraphRestriction() named graph restriction}
-     * will be loaded.
+     * Only quads from graph matching the data source's {@link DataSource#getNamedGraphRestriction() named graph restriction} will
+     * be loaded.
      * @param uri searched subject URI
      * @param quadCollection collection to which the result will be added
      * @throws CRBatchException error
@@ -146,30 +147,34 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      */
     public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws CRBatchException {
         long startTime = System.currentTimeMillis();
-        
-        try {
-            List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
-            if (alternativeURIs.size() <= 1) {
-                String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
+
+        List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
+        if (alternativeURIs.size() <= 1) {
+            String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
+                    getPrefixDecl(),
+                    dataSource.getNamedGraphRestriction().getPattern(),
+                    dataSource.getNamedGraphRestriction().getVar(),
+                    uri);
+            try {
+                addQuadsFromQuery(query, quadCollection);
+            } catch (OpenRDFException e) {
+                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
+            }
+        } else {
+            Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
+            for (CharSequence uriList : limitedURIListBuilder) {
+                String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
                         getPrefixDecl(),
                         dataSource.getNamedGraphRestriction().getPattern(),
                         dataSource.getNamedGraphRestriction().getVar(),
-                        uri);
-                addQuadsFromQuery(query, quadCollection);
-            } else {
-                Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
-                for (CharSequence uriList : limitedURIListBuilder) {
-                    String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
-                            getPrefixDecl(),
-                            dataSource.getNamedGraphRestriction().getPattern(),
-                            dataSource.getNamedGraphRestriction().getVar(),
-                            uriList);
+                        uriList);
+                try {
                     addQuadsFromQuery(query, quadCollection);
+                } catch (OpenRDFException e) {
+                    throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
                 }
             }
-        } catch (OpenRDFException e) {
-            throw new CRBatchException(CRBatchErrorCodes.QUERY_QUADS, "Repository error for source " + dataSource.getName(), e);
-        } 
+        }
 
         if (LOG.isTraceEnabled()) {
             LOG.trace("CR-batch: Loaded quads for URI {} from source {} in {} ms", new Object[] {

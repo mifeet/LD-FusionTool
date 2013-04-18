@@ -14,6 +14,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
@@ -101,28 +102,36 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
     public void loadSameAsMappings(URIMappingImpl uriMapping) throws CRBatchException {
         long startTime = System.currentTimeMillis();
         long linkCount = 0;
+        String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
+                getPrefixDecl(),
+                dataSource.getNamedGraphRestriction().getPattern(),
+                dataSource.getNamedGraphRestriction().getVar());
         try {
-            String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
-                    getPrefixDecl(),
-                    dataSource.getNamedGraphRestriction().getPattern(),
-                    dataSource.getNamedGraphRestriction().getVar());
             linkCount += loadSameAsLinks(uriMapping, payloadQuery);
-
-            String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
-                    getPrefixDecl(),
-                    dataSource.getNamedGraphRestriction().getPattern(),
-                    dataSource.getNamedGraphRestriction().getVar());
-            linkCount += loadSameAsLinks(uriMapping, attachedQuery);
-
-            if (dataSource.getMetadataGraphRestriction() != null) {
-                String ontologyQuery = String.format(Locale.ROOT, ONTOLOGY_SAMEAS_QUERY,
-                        getPrefixDecl(),
-                        dataSource.getMetadataGraphRestriction().getPattern(),
-                        dataSource.getMetadataGraphRestriction().getVar());
-                linkCount += loadSameAsLinks(uriMapping, ontologyQuery);
-            }
         } catch (OpenRDFException e) {
-            throw new CRBatchException(CRBatchErrorCodes.QUERY_SAMEAS, "Repository error for source " + dataSource.getName(), e);
+            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, payloadQuery, dataSource.getName(), e);
+        }
+
+        String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
+                getPrefixDecl(),
+                dataSource.getNamedGraphRestriction().getPattern(),
+                dataSource.getNamedGraphRestriction().getVar());
+        try {
+            linkCount += loadSameAsLinks(uriMapping, attachedQuery);
+        } catch (OpenRDFException e) {
+            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, attachedQuery, dataSource.getName(), e);
+        }
+
+        if (dataSource.getMetadataGraphRestriction() != null) {
+            String ontologyQuery = String.format(Locale.ROOT, ONTOLOGY_SAMEAS_QUERY,
+                    getPrefixDecl(),
+                    dataSource.getMetadataGraphRestriction().getPattern(),
+                    dataSource.getMetadataGraphRestriction().getVar());
+            try {
+                linkCount += loadSameAsLinks(uriMapping, ontologyQuery);
+            } catch (OpenRDFException e) {
+                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, ontologyQuery, dataSource.getName(), e);
+            }
         }
 
         LOG.debug(String.format("CR-batch: loaded & resolved %,d owl:sameAs links from source %s in %d ms",

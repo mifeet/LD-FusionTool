@@ -19,6 +19,7 @@ import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
@@ -52,7 +53,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 this.subjectsResultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
             } catch (OpenRDFException e) {
                 close();
-                throw new CRBatchException(CRBatchErrorCodes.QUERY_TRIPLE_SUBJECTS, "Database error", e);
+                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
             }
 
             next = getNextResult();
