@@ -6,6 +6,7 @@ import org.openrdf.model.BNode;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
@@ -67,6 +68,15 @@ public final class CRBatchUtils {
      */
     public static void ensureParentsExists(File file) {
         file.getAbsoluteFile().getParentFile().mkdirs();
+    }
+    
+    /**
+     * Returns true if the given restriction is null or its pattern is empty.
+     * @param restriction SPARQL restriction
+     * @return true if the given restriction is null or its pattern is empty
+     */
+    public static boolean isRestrictionEmpty(SparqlRestriction restriction) {
+        return restriction == null || ODCSUtils.isNullOrEmpty(restriction.getPattern());
     }
 
     /** Disable constructor for a utility class. */

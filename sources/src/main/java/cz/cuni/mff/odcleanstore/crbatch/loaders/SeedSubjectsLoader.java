@@ -17,11 +17,11 @@ import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
-import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * Loads subjects of triples to be processed.
@@ -135,38 +135,39 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
             // do nothing
         }
     }
+
+    private static final String SUBJECT_VARIABLE = VAR_PREFIX + "s";
     
     /**
      * SPARQL query that gets all distinct subjects of triples to be processed.
-     * Variable {@link #ngRestrictionVar} represents a relevant payload graph.
+     * The result contains a single variable {@value #SUBJECT_VARIABLE}. 
      * 
      * Must be formatted with arguments:
      * (1) namespace prefixes declaration
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
      * (4) seed resource restriction pattern
-     * (5) variable representing subject and at the same time seed resource restriction variable
+     * (5) seed resource restriction variable
      */
     private static final String SUBJECTS_QUERY = "%1$s"
-            + "\n SELECT DISTINCT ?%5$s"
+            + "\n SELECT DISTINCT (?%5$s AS ?" + SUBJECT_VARIABLE + ")"
             + "\n WHERE {"
             + "\n   %2$s"
-            + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   {"
-            + "\n     GRAPH ?%3$s {"
-            + "\n       ?%5$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
-            + "\n       %4$s"
-            + "\n     }"
-            + "\n   }"
-            + "\n   UNION"
-            + "\n   {"
-            + "\n     ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n     GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n       ?%5$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
-            + "\n       %4$s"
-            + "\n     }"
+            + "\n   GRAPH ?%3$s {"
+            + "\n     ?%5$s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o."
+            + "\n     %4$s"
             + "\n   }"
             + "\n }";
+    
+    /**
+     * An empty seed restriction.
+     */
+    private static final SparqlRestriction EMPTY_SEED_RESTRICTION = new SparqlRestrictionImpl("", VAR_PREFIX + "seed");
+    
+    /**
+     * An empty source named graphs restriction. Must have variable different from {@link #EMPTY_SEED_RESTRICTION}.
+     */
+    private static final SparqlRestriction EMPTY_GRAPH_RESTRICTION = new SparqlRestrictionImpl("", VAR_PREFIX + "graph");
 
     /**
      * Creates a new instance.
@@ -189,26 +190,27 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
     public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws CRBatchException {
         long startTime = System.currentTimeMillis();
 
-        String seedResourceRestrictionStr = "";
-        String subjectVariable = VAR_PREFIX + "s";
-        if (seedResourceRestriction != null) {
-            seedResourceRestrictionStr = seedResourceRestriction.getPattern();
-            subjectVariable = seedResourceRestriction.getVar();
-        }
-
-        if (dataSource.getNamedGraphRestriction().getVar().equals(subjectVariable)) {
+        SparqlRestriction graphRestriction = dataSource.getNamedGraphRestriction() != null 
+                ? dataSource.getNamedGraphRestriction()
+                : EMPTY_GRAPH_RESTRICTION;
+        SparqlRestriction seedRestriction = seedResourceRestriction != null
+                ? seedResourceRestriction
+                : EMPTY_SEED_RESTRICTION;
+                
+                
+        if (graphRestriction.getVar().equals(seedRestriction.getVar())) {
             throw new CRBatchException(
                     CRBatchErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
                     "Source named graph restriction and seed resource restrictions need to use different"
-                            + " variables in SPARQL patterns, both using to ?" + subjectVariable);
+                            + " variables in SPARQL patterns, both using ?" + seedRestriction.getVar());
         }
         
         String query = String.format(Locale.ROOT, SUBJECTS_QUERY,
                 getPrefixDecl(),
-                dataSource.getNamedGraphRestriction().getPattern(),
-                dataSource.getNamedGraphRestriction().getVar(),
-                seedResourceRestrictionStr,
-                subjectVariable);
+                graphRestriction.getPattern(),
+                graphRestriction.getVar(),
+                seedRestriction.getPattern(),
+                seedRestriction.getVar());
         UriCollection result = new UriCollectionImpl(query, dataSource.getRepository());
         LOG.debug("CR-batch: Triple subjects collection initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;

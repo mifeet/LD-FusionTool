@@ -12,9 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
@@ -24,6 +27,15 @@ import cz.cuni.mff.odcleanstore.vocabulary.OWL;
  */
 public class SameAsLinkLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkLoader.class);
+    
+    /**
+     * SPARQL group graph pattern limiting graphs from which links are loaded
+     * if no source graph restriction is given.
+     */
+    protected static final SparqlRestriction DEFAULT_DATA_GRAPH_RESTRICTION = new SparqlRestrictionImpl(
+            "{ SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_g <" + ODCS.metadataGraph + "> ?308ae1cdfa_m} }"
+                    + "\n UNION { SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_a <" + ODCS.attachedGraph + "> ?308ae1cdfa_g} }",
+            "308ae1cdfa_g");
 
     /**
      * SPARQL query that gets owl:sameAs links from relevant payload graphs.
@@ -35,49 +47,7 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
      */
-    private static final String PAYLOAD_SAMEAS_QUERY = "%1$s"
-            + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
-            + "\n WHERE {"
-            + "\n   %2$s"
-            + "\n   GRAPH ?%3$s {"
-            + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
-            + "\n   }"
-            + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n }";
-
-    /**
-     * SPARQL query that gets owl:sameAs links from relevant attached graphs.
-     * Variable {@link #ngRestrictionVar} represents the named graph.
-     * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
-     * 
-     * Must be formatted with arguments:
-     * (1) namespace prefixes declaration
-     * (2) named graph restriction patter
-     * (3) named graph restriction variable
-     */
-    private static final String ATTACHED_SAMEAS_QUERY = "%1$s"
-            + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
-            + "\n WHERE {"
-            + "\n   %2$s"
-            + "\n   ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n   ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n   GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
-            + "\n   }"
-            + "\n }";
-
-    /**
-     * SPARQL query that gets owl:sameAs links from ontology graphs.
-     * Contents of these graphs is not part of the output but the contained owl:sameAs links are used
-     * in conflict resolution.
-     * Result contains variables ?r1 ?r2 representing two resources connected by the owl:sameAs property
-     * 
-     * Must be formatted with arguments:
-     * (1) namespace prefixes declaration
-     * (2) ontology graph restriction patter
-     * (3) ontology graph restriction variable
-     */
-    private static final String ONTOLOGY_SAMEAS_QUERY = "%1$s"
+    private static final String SAMEAS_QUERY = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "r1 ?" + VAR_PREFIX + "r2"
             + "\n WHERE {"
             + "\n   %2$s"
@@ -102,35 +72,34 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
     public void loadSameAsMappings(URIMappingImpl uriMapping) throws CRBatchException {
         long startTime = System.currentTimeMillis();
         long linkCount = 0;
-        String payloadQuery = String.format(Locale.ROOT, PAYLOAD_SAMEAS_QUERY,
+        
+        // Load links from processed data
+        SparqlRestriction restriction;
+        if (!CRBatchUtils.isRestrictionEmpty(dataSource.getNamedGraphRestriction())) {
+            restriction = dataSource.getNamedGraphRestriction();
+        } else {
+            restriction = DEFAULT_DATA_GRAPH_RESTRICTION;
+        }
+        String dataQuery = String.format(Locale.ROOT, SAMEAS_QUERY,
                 getPrefixDecl(),
-                dataSource.getNamedGraphRestriction().getPattern(),
-                dataSource.getNamedGraphRestriction().getVar());
+                restriction.getPattern(),
+                restriction.getVar());
         try {
-            linkCount += loadSameAsLinks(uriMapping, payloadQuery);
+            linkCount += loadSameAsLinks(uriMapping, dataQuery);
         } catch (OpenRDFException e) {
-            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, payloadQuery, dataSource.getName(), e);
+            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, dataQuery, dataSource.getName(), e);
         }
 
-        String attachedQuery = String.format(Locale.ROOT, ATTACHED_SAMEAS_QUERY,
-                getPrefixDecl(),
-                dataSource.getNamedGraphRestriction().getPattern(),
-                dataSource.getNamedGraphRestriction().getVar());
-        try {
-            linkCount += loadSameAsLinks(uriMapping, attachedQuery);
-        } catch (OpenRDFException e) {
-            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, attachedQuery, dataSource.getName(), e);
-        }
-
-        if (dataSource.getMetadataGraphRestriction() != null) {
-            String ontologyQuery = String.format(Locale.ROOT, ONTOLOGY_SAMEAS_QUERY,
+        // Load links from metadata graphs
+        if (!CRBatchUtils.isRestrictionEmpty(dataSource.getMetadataGraphRestriction())) {
+            String metadataQuery = String.format(Locale.ROOT, SAMEAS_QUERY,
                     getPrefixDecl(),
                     dataSource.getMetadataGraphRestriction().getPattern(),
                     dataSource.getMetadataGraphRestriction().getVar());
             try {
-                linkCount += loadSameAsLinks(uriMapping, ontologyQuery);
+                linkCount += loadSameAsLinks(uriMapping, metadataQuery);
             } catch (OpenRDFException e) {
-                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, ontologyQuery, dataSource.getName(), e);
+                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, metadataQuery, dataSource.getName(), e);
             }
         }
 

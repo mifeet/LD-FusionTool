@@ -19,10 +19,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
@@ -37,9 +40,17 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(QuadLoader.class);
     
     /**
-     * SPARQL query that gets all quads having the given uri as their subject from
-     * from relevant payload graph and attached graphs.
-     * Variable {@link #ngRestrictionVar} represents a relevant payload graph.
+     * SPARQL group graph pattern limiting graphs from which links are loaded
+     * if no source graph restriction is given.
+     */
+    protected static final SparqlRestriction DEFAULT_DATA_GRAPH_RESTRICTION = new SparqlRestrictionImpl(
+            "{ SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_g <" + ODCS.metadataGraph + "> ?308ae1cdfa_m} }"
+                    + "\n UNION { SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_a <" + ODCS.attachedGraph + "> ?308ae1cdfa_g} }",
+            "308ae1cdfa_g");
+    
+    /**
+     * SPARQL query that gets all quads having the given uri as their subject.
+     * Quads are loaded from named graphs optionally limited by named graph restriction pattern.
      * This query is to be used when there are no owl:sameAs alternatives for the given URI.
      * 
      * Must be formatted with arguments:
@@ -48,40 +59,19 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * (3) named graph restriction variable
      * (4) searched uri
      */
-    private static final String QUADS_QUERY_SIMPLE = "%1$s"
-            + "\n SELECT ?" + VAR_PREFIX + "g  (<%4$s> AS ?" + VAR_PREFIX + "s) ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+    private static final String QUADS_QUERY_SIMPLE = "%1$s" // TODO: distinct?
+            + "\n SELECT DISTINCT (?%3$s AS ?" + VAR_PREFIX + "g)  (<%4$s> AS ?" + VAR_PREFIX + "s)" 
+            + "\n   ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n WHERE {"
-            + "\n   {"
-            + "\n     SELECT DISTINCT "
-            + "\n       (?%3$s AS ?" + VAR_PREFIX + "g)"
-            + "\n       ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n     WHERE {"
-            + "\n       GRAPH ?%3$s {"
-            + "\n         <%4$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n       }"
-            + "\n       %2$s"
-            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n     }"
-            + "\n   }"
-            + "\n   UNION"
-            + "\n   {"
-            + "\n     SELECT DISTINCT"
-            + "\n       (?" + VAR_PREFIX + "attachedGraph AS ?" + VAR_PREFIX + "g) ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n     WHERE {"
-            + "\n       %2$s"
-            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n       GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n         <%4$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n       }"
-            + "\n     }"
+            + "\n   %2$s"
+            + "\n   GRAPH ?%3$s {"
+            + "\n     <%4$s> ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n   }"
             + "\n }";
 
     /**
-     * SPARQL query that gets all quads having one of the given URIs as their subject from
-     * from relevant payload graph and attached graphs.
-     * Variable {@link #ngRestrictionVar} represents a relevant payload graph.
+     * SPARQL query that gets all quads having one of the given URIs as their subject.
+     * Quads are loaded from named graphs optionally limited by named graph restriction pattern.
      * This query is to be used when there are multiple owl:sameAs alternatives.
      * 
      * Must be formatted with arguments:
@@ -91,38 +81,20 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * (4) list of searched URIs (e.g. "<uri1>,<uri2>,<uri3>")
      */
     private static final String QUADS_QUERY_ALTERNATIVE = "%1$s"
-            + "\n SELECT ?" + VAR_PREFIX + "g ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n SELECT DISTINCT (?%3$s AS ?" + VAR_PREFIX + "g)  ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
             + "\n WHERE {"
-            + "\n   {"
-            + "\n     SELECT DISTINCT "
-            + "\n       (?%3$s AS ?" + VAR_PREFIX + "g)"
-            + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n     WHERE {"
-            + "\n       %2$s"
-            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       GRAPH ?%3$s {"
-            + "\n         ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%4$s))"
-            + "\n       }"
-            + "\n     }"
-            + "\n   }"
-            + "\n   UNION"
-            + "\n   {"
-            + "\n     SELECT DISTINCT"
-            + "\n       (?" + VAR_PREFIX + "attachedGraph AS ?" + VAR_PREFIX + "g)"
-            + "\n       ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n     WHERE {"
-            + "\n       %2$s"
-            + "\n       ?%3$s <" + ODCS.metadataGraph + "> ?" + VAR_PREFIX + "metadataGraph."
-            + "\n       ?%3$s <" + ODCS.attachedGraph + "> ?" + VAR_PREFIX + "attachedGraph."
-            + "\n       GRAPH ?" + VAR_PREFIX + "attachedGraph {"
-            + "\n         ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
-            + "\n         FILTER (?" + VAR_PREFIX + "s IN (%4$s))"
-            + "\n       }"
-            + "\n     }"
+            + "\n   %2$s"
+            + "\n   GRAPH ?%3$s {"
+            + "\n     ?" + VAR_PREFIX + "s ?" + VAR_PREFIX + "p ?" + VAR_PREFIX + "o"
+            + "\n     FILTER (?" + VAR_PREFIX + "s IN (%4$s))" // TODO: replace by a large union for efficiency?
             + "\n   }"
             + "\n }";
-
+    
+    private static final String SUBJECT_VAR = VAR_PREFIX + "s";
+    private static final String PROPERTY_VAR = VAR_PREFIX + "p";
+    private static final String OBJECT_VAR = VAR_PREFIX + "o";
+    private static final String GRAPH_VAR = VAR_PREFIX + "g";
+    
     private final AlternativeURINavigator alternativeURINavigator;
     private RepositoryConnection connection;
 
@@ -148,13 +120,16 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
     public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws CRBatchException {
         long startTime = System.currentTimeMillis();
 
+        SparqlRestriction restriction;
+        if (!CRBatchUtils.isRestrictionEmpty(dataSource.getNamedGraphRestriction())) {
+            restriction = dataSource.getNamedGraphRestriction();
+        } else {
+            restriction = DEFAULT_DATA_GRAPH_RESTRICTION;
+        }
+        
         List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
         if (alternativeURIs.size() <= 1) {
-            String query = String.format(Locale.ROOT, QUADS_QUERY_SIMPLE,
-                    getPrefixDecl(),
-                    dataSource.getNamedGraphRestriction().getPattern(),
-                    dataSource.getNamedGraphRestriction().getVar(),
-                    uri);
+            String query = formatQuery(QUADS_QUERY_SIMPLE, restriction, uri);
             try {
                 addQuadsFromQuery(query, quadCollection);
             } catch (OpenRDFException e) {
@@ -163,11 +138,7 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
         } else {
             Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
             for (CharSequence uriList : limitedURIListBuilder) {
-                String query = String.format(Locale.ROOT, QUADS_QUERY_ALTERNATIVE,
-                        getPrefixDecl(),
-                        dataSource.getNamedGraphRestriction().getPattern(),
-                        dataSource.getNamedGraphRestriction().getVar(),
-                        uriList);
+                String query = formatQuery(QUADS_QUERY_ALTERNATIVE, restriction, uriList);
                 try {
                     addQuadsFromQuery(query, quadCollection);
                 } catch (OpenRDFException e) {
@@ -181,6 +152,14 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
                     uri, dataSource, System.currentTimeMillis() - startTime });
         }
     }
+    
+    private String formatQuery(String unformattedQuery, SparqlRestriction restriction, Object uriPart) {
+        return String.format(Locale.ROOT, unformattedQuery,
+                getPrefixDecl(),
+                restriction.getPattern(),
+                restriction.getVar(),
+                uriPart);
+    }
 
     /**
      * Execute the given SPARQL SELECT and constructs a collection of quads from the result.
@@ -192,11 +171,6 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * @throws OpenRDFException repository error
      */
     private void addQuadsFromQuery(String sparqlQuery, Collection<Statement> quads) throws OpenRDFException {
-        final String subjectVar = VAR_PREFIX + "s";
-        final String propertyVar = VAR_PREFIX + "p";
-        final String objectVar = VAR_PREFIX + "o";
-        final String graphVar = VAR_PREFIX + "g";
-
         long startTime = System.currentTimeMillis();
         RepositoryConnection connection = getConnection();
         TupleQueryResult resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery).evaluate();
@@ -207,10 +181,10 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
             while (resultSet.hasNext()) {
                 BindingSet bindings = resultSet.next();
                 Statement quad = valueFactory.createStatement(
-                        (Resource) bindings.getValue(subjectVar),
-                        (URI) bindings.getValue(propertyVar),
-                        bindings.getValue(objectVar),
-                        (Resource) bindings.getValue(graphVar));
+                        (Resource) bindings.getValue(SUBJECT_VAR),
+                        (URI) bindings.getValue(PROPERTY_VAR),
+                        bindings.getValue(OBJECT_VAR),
+                        (Resource) bindings.getValue(GRAPH_VAR));
                 quads.add(quad);
             }
         } finally {

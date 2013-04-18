@@ -22,9 +22,12 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadata;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
@@ -36,18 +39,12 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(NamedGraphMetadataLoader.class);
     
     /**
-     * SPARQL query that gets metadata about named graphs to be processed.
-     * Result contains variables ?gs, ?gp, ?go representing metadata triples.
-     * 
-     * Must be formatted with arguments:
-     * (1) namespace prefixes declaration
+     * SPARQL group graph pattern limiting graphs from which metadata are loaded 
+     * if no source graph restriction is given.
      */
-    private static final String METADATA_QUERY_NO_RESTRICTION = "%1$s"
-            + "\n SELECT DISTINCT ?" + VAR_PREFIX + "gs ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
-            + "\n WHERE {"
-            + "\n   ?" + VAR_PREFIX + "gs <" + ODCS.metadataGraph + "> ?m."
-            + "\n   ?" + VAR_PREFIX + "gs ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
-            + "\n }";
+    protected static final SparqlRestriction DEFAULT_DATA_GRAPH_RESTRICTION = new SparqlRestrictionImpl(
+            "?308ae1cdfa_g <" + ODCS.metadataGraph + "> ?308ae1cdfa_m.",
+            "308ae1cdfa_g");
     
     /**
      * SPARQL query that gets metadata about named graphs to be processed.
@@ -63,10 +60,25 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
      * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
     private static final String METADATA_QUERY_SOURCE_RESTRICTION = "%1$s"
-            + "\n SELECT DISTINCT (?%3$s AS ?" + VAR_PREFIX + "gs) ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
+            + "\n SELECT ?" + VAR_PREFIX + "gs ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
             + "\n WHERE {"
-            + "\n   %2$s"
-            + "\n   ?%3$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
+            + "\n   {"
+            + "\n     SELECT DISTINCT (?%3$s AS ?" + VAR_PREFIX + "gs) ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
+            + "\n     WHERE {"
+            + "\n       %2$s"
+            + "\n       ?%3$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
+            + "\n     }"
+            + "\n   }"
+            + "\n   UNION"
+            + "\n   {"
+            + "\n     SELECT DISTINCT ?" + VAR_PREFIX + "gs"
+            +           " (<" + ODCS.publisherScore + "> AS ?" + VAR_PREFIX + "gp) ?" + VAR_PREFIX + "go"
+            + "\n     WHERE {"
+            + "\n       %2$s"
+            + "\n       ?%3$s <" + ODCS.publishedBy + "> ?" + VAR_PREFIX + "gs."
+            + "\n       ?" + VAR_PREFIX + "gs <" + ODCS.publisherScore + "> ?" + VAR_PREFIX + "go."
+            + "\n     }"
+            + "\n   }"
             + "\n }";
     
     /**
@@ -114,22 +126,22 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
         long startTime = System.currentTimeMillis();
         String query = "";
         try {
-            if (dataSource.getMetadataGraphRestriction() != null
-                    && !ODCSUtils.isNullOrEmpty(dataSource.getMetadataGraphRestriction().getPattern())) {
-                query = String.format(Locale.ROOT, METADATA_QUERY_METADATA_RESTRICTION,
-                        getPrefixDecl(),
-                        dataSource.getMetadataGraphRestriction().getPattern(),
-                        dataSource.getMetadataGraphRestriction().getVar());
-            } else if (dataSource.getNamedGraphRestriction() != null
-                    && !ODCSUtils.isNullOrEmpty(dataSource.getNamedGraphRestriction().getPattern())) {
-                query = String.format(Locale.ROOT, METADATA_QUERY_SOURCE_RESTRICTION,
-                        getPrefixDecl(),
-                        dataSource.getNamedGraphRestriction().getPattern(),
-                        dataSource.getNamedGraphRestriction().getVar());
+            SparqlRestriction restriction;
+            String unformatedQuery;
+            if (!CRBatchUtils.isRestrictionEmpty(dataSource.getMetadataGraphRestriction())) {
+                restriction = dataSource.getMetadataGraphRestriction();
+                unformatedQuery = METADATA_QUERY_METADATA_RESTRICTION;
+            } else if (!CRBatchUtils.isRestrictionEmpty(dataSource.getNamedGraphRestriction())) {
+                restriction = dataSource.getNamedGraphRestriction();
+                unformatedQuery = METADATA_QUERY_SOURCE_RESTRICTION;
             } else {
-                query = String.format(Locale.ROOT, METADATA_QUERY_NO_RESTRICTION, getPrefixDecl());
+                restriction = DEFAULT_DATA_GRAPH_RESTRICTION;
+                unformatedQuery = METADATA_QUERY_SOURCE_RESTRICTION;
             }
-            
+            query = String.format(Locale.ROOT, unformatedQuery,
+                    getPrefixDecl(),
+                    restriction.getPattern(),
+                    restriction.getVar());
             loadMetadataInternal(metadata, query);
         } catch (OpenRDFException e) {
             throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_NG_METADATA, query, dataSource.getName(), e);

@@ -14,7 +14,7 @@ public interface SparqlRestriction {
      * @return SPARQL group graph pattern
      */
     String getPattern();
-
+    
     /**
      * Variable representing the restricted entity in {@link #getPattern()} value.
      * @return SPARQL variable name

@@ -304,9 +304,6 @@ public final class ConfigReader {
      */
     private String preprocessGroupGraphPattern(String groupGraphPattern) {
         String result = groupGraphPattern.trim();
-        // if (result.startsWith("{") && result.endsWith("}")) {
-        // result = result.substring(1, result.length() - 1);
-        // }
         return result;
     }
 

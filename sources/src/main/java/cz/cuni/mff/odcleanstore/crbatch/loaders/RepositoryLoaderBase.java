@@ -22,7 +22,7 @@ public abstract class RepositoryLoaderBase {
      * A random prefix for variables used in SPARQL queries so that they don't conflict
      * with variables used in named graph constraint pattern.
      */
-    protected static final String VAR_PREFIX = "afdc1ea803_";
+    protected static final String VAR_PREFIX = "afdc1ea803_"; 
     
     /** RDF data source. */
     protected final DataSource dataSource;
