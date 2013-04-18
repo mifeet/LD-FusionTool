@@ -84,15 +84,15 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
     /**
      * Loads relevant metadata and adds them to the given metadata collection.
      * Metadata are loaded for named graphs containing triples to be processed and metadata graphs.
-     * @param metadata named graph metadata
+     * @param metadata named graph metadata where loaded metadata are added
      * @throws CRBatchException repository error
      * @see DataSource#getMetadataGraphRestriction()
      */
     public void loadNamedGraphsMetadata(NamedGraphMetadataMap metadata) throws CRBatchException {
         long startTime = System.currentTimeMillis();
         try {
-            metadata = loadBasicMetadata();
-            addPublisherScores(metadata);
+            loadBasicMetadata(metadata);
+            loadPublisherScores(metadata);
         } catch (OpenRDFException e) {
             throw new CRBatchException(CRBatchErrorCodes.QUERY_NG_METADATA, 
                     "Repository error for data source " + dataSource.getName() , e);
@@ -101,7 +101,7 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
                 dataSource.getName(), System.currentTimeMillis() - startTime);
     }
     
-    private NamedGraphMetadataMap loadBasicMetadata() throws OpenRDFException {
+    private void loadBasicMetadata(NamedGraphMetadataMap metadata) throws OpenRDFException {
         String query = String.format(Locale.ROOT, METADATA_QUERY,
                 getPrefixDecl(),
                 dataSource.getNamedGraphRestriction().getPattern(),
@@ -111,7 +111,6 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
         final String propertyVar = VAR_PREFIX + "gp";
         final String objectVar = VAR_PREFIX + "go";
 
-        NamedGraphMetadataMap metadata = new NamedGraphMetadataMap();
         long startTime = System.currentTimeMillis();
         RepositoryConnection connection = dataSource.getRepository().getConnection();
         TupleQueryResult resultSet = null;
@@ -162,11 +161,9 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
             }
             connection.close();
         }
-
-        return metadata;
     }
 
-    private void addPublisherScores(NamedGraphMetadataMap metadata) throws OpenRDFException {
+    private void loadPublisherScores(NamedGraphMetadataMap metadata) throws OpenRDFException {
         Map<String, Double> publisherScores = getPublisherScores(metadata);
         for (NamedGraphMetadata ngMetadata : metadata.listMetadata()) {
             Double publisherScore = calculatePublisherScore(ngMetadata, publisherScores);
