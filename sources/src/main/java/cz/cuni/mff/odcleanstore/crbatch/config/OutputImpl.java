@@ -5,7 +5,7 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import java.io.File;
 
-import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
 
 /**
  * Container of settings for an output of result data.
@@ -13,7 +13,7 @@ import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
  */
 public class OutputImpl implements Output {
 
-    private final EnumOutputFormat format;
+    private final EnumSerializationFormat format;
     private final File fileLocation;
     private File sameAsFileLocation;
     private Long splitByBytes;
@@ -22,13 +22,13 @@ public class OutputImpl implements Output {
      * @param format output format
      * @param fileLocation output file location
      */
-    public OutputImpl(EnumOutputFormat format, File fileLocation) {
+    public OutputImpl(EnumSerializationFormat format, File fileLocation) {
         this.format = format;
         this.fileLocation = fileLocation;
     }
     
     @Override
-    public EnumOutputFormat getFormat() {
+    public EnumSerializationFormat getFormat() {
         return format;
     }
 

@@ -19,7 +19,7 @@ public class CloseableRDFWriterFactory {
      * @return RDF writer
      * @throws IOException I/O error
      */
-    public CloseableRDFWriter createRDFWriter(EnumOutputFormat format, OutputStream outputStream) throws IOException {
+    public CloseableRDFWriter createRDFWriter(EnumSerializationFormat format, OutputStream outputStream) throws IOException {
         switch (format) {
         case RDF_XML:
             return new RdfXmlCloseableRDFWriter(outputStream);
@@ -40,7 +40,7 @@ public class CloseableRDFWriterFactory {
      * @return RDF writer
      * @throws IOException I/O error
      */
-    public CloseableRDFWriter createSplittingRDFWriter(EnumOutputFormat format, File outputFile, long splitByBytes)
+    public CloseableRDFWriter createSplittingRDFWriter(EnumSerializationFormat format, File outputFile, long splitByBytes)
             throws IOException {
 
         return new SplittingRDFWriter(format, outputFile, splitByBytes, this);

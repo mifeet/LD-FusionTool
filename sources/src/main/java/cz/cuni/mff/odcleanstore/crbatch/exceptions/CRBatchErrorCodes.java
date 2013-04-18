@@ -22,5 +22,8 @@ public final class CRBatchErrorCodes {
     public static final int REPOSITORY_INIT = 16;
     public static final int REPOSITORY_CONFIG = 17;
     public static final int REPOSITORY_UNSUPPORTED = 18;
+    public static final int REPOSITORY_INIT_VIRTUOSO = 19;
+    public static final int REPOSITORY_INIT_FILE = 20;
+    public static final int REPOSITORY_ACCESS = 21;
     // CHECKSTYLE:ON
 }

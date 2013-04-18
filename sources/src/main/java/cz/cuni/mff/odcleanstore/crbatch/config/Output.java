@@ -5,7 +5,7 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import java.io.File;
 
-import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
 
 /**
  * Container of settings for an output of result data.
@@ -16,7 +16,7 @@ public interface Output {
      * Returns format (type) of the output.
      * @return output format
      */
-    EnumOutputFormat getFormat();
+    EnumSerializationFormat getFormat();
 
     /**
      * Returns file where the output should be written.

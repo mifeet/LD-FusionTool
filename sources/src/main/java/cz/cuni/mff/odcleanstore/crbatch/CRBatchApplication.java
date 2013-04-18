@@ -196,6 +196,13 @@ public final class CRBatchApplication {
         case VIRTUOSO:
             checkRequiredDataSourceParam(dataSourceConfig, "host", "port", "username", "password");
             break;
+        case FILE:
+            checkRequiredDataSourceParam(dataSourceConfig, "path");
+            File file = new File(dataSourceConfig.getParams().get("path"));
+            if (!file.isFile() || !file.canRead()) {
+                throw new InvalidInputException("Cannot read input file " + dataSourceConfig.getParams().get("path"));
+            }
+            break;
         default:
             throw new InvalidInputException("Unsupported type of data source: " + dataSourceConfig.getType());
         }

@@ -44,7 +44,7 @@ import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.crbatch.io.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.crbatch.io.CountingOutputStream;
-import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.crbatch.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.BufferSubjectsCollection;
@@ -187,8 +187,9 @@ public class CRBatchExecutor {
     private Collection<DataSource> initializeDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
             throws CRBatchException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
+        RepositoryFactory repositoryFactory = new RepositoryFactory();
         for (DataSourceConfig dataSourceConfig : config) {
-            DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes);
+            DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, repositoryFactory);
             try {
                 dataSource.getRepository().initialize();
                 dataSources.add(dataSource);
@@ -320,7 +321,7 @@ public class CRBatchExecutor {
         return writers;
     }
 
-    private static CloseableRDFWriter createOutputWriter(File file, EnumOutputFormat outputFormat, Long splitByBytes)
+    private static CloseableRDFWriter createOutputWriter(File file, EnumSerializationFormat outputFormat, Long splitByBytes)
             throws IOException {
 
         CRBatchUtils.ensureParentsExists(file);

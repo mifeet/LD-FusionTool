@@ -35,7 +35,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     // CHECKSTYLE:ON
 
     private final CloseableRDFWriterFactory writerFactory;
-    private final EnumOutputFormat outputFormat;
+    private final EnumSerializationFormat outputFormat;
     private final SplitFileNameGenerator fileNameGenrator;
     private final long splitByBytes;
     private final ArrayList<NamespaceDeclaration> namespaceDeclarations = new ArrayList<NamespaceDeclaration>();
@@ -52,7 +52,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
      * @param writerFactory factory for underlying RDF writers used to do the actual serialization 
      * @throws IOException I/O error
      */
-    public SplittingRDFWriter(EnumOutputFormat outputFormat, File outputFile, long splitByBytes,
+    public SplittingRDFWriter(EnumSerializationFormat outputFormat, File outputFile, long splitByBytes,
             CloseableRDFWriterFactory writerFactory)
             throws IOException {
         this.writerFactory = writerFactory;

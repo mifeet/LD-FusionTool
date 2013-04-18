@@ -26,7 +26,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.xml.PrefixXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.PropertyXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.RestrictionXml;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
-import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.crbatch.util.NamespacePrefixExpander;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
@@ -218,7 +218,7 @@ public final class ConfigReader {
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(type, dataSourceXml.getName());
         
         for (ParamXml param : dataSourceXml.getParams()) {
-            dataSourceConfig.getParams().put(param.getName(), param.getValue());
+            dataSourceConfig.getParams().put(param.getName().toLowerCase(), param.getValue());
         }
         
         SparqlRestriction namedGraphResriction = extractGraphRestriction(dataSourceXml.getGraphRestriction());
@@ -232,14 +232,10 @@ public final class ConfigReader {
 
     private Output extractOutput(OutputXml outputXml) throws InvalidInputException {
         String formatString = extractParamByName(outputXml.getParams(), "format");
-        EnumOutputFormat format;
-        if ("ntriples".equalsIgnoreCase(formatString) || "n3".equalsIgnoreCase(formatString)) {
-            format = EnumOutputFormat.N3;
-        } else if ("rdf/xml".equalsIgnoreCase(formatString) || "rdfxml".equalsIgnoreCase(formatString)) {
-            format = EnumOutputFormat.RDF_XML;
-        } else if (formatString == null) {
+        EnumSerializationFormat format = EnumSerializationFormat.parseFormat(formatString);
+        if (formatString == null) {
             throw new InvalidInputException("Output format must be specified");
-        } else {
+        } else if (format == null) {
             throw new InvalidInputException("Unknown output format " + formatString);
         }
 

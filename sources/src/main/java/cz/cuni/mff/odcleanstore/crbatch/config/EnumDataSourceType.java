@@ -9,7 +9,10 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
  */
 public enum EnumDataSourceType {
     /** Virtuoso JDBC connection. */
-    VIRTUOSO;
+    VIRTUOSO,
+    
+    /** File. */
+    FILE;
     /*
     SPARQL,
     TYPE*/
