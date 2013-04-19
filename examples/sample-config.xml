@@ -62,7 +62,7 @@
       <!-- Base URI for loaded data; (optional, defaults is URI representing the file) -->
       <Param name="baseuri" value="http://example.com" />
       
-      <!-- Serialization format of the file; accepted values are 'ntriples' and 'rdf/xml';
+      <!-- Serialization format of the file; accepted values are 'ntriples', 'trig' and 'rdf/xml';
 	      (optional, format is recognized from file extension if not given) -->
       <Param name="format" value="ntriples"/>
     </DataSource>
@@ -130,7 +130,7 @@
       <!-- Path to the output file (required) -->
       <Param name="file" value="output/out.n3"/>
       
-      <!-- Format of the output file; accepted values are 'ntriples' and 'rdf/xml'; (required) -->
+      <!-- Format of the output file; accepted values are 'ntriples', 'trig' and 'rdf/xml'; (required) -->
       <Param name="format" value="ntriples"/>
       
       <!-- If set, output will be split into files with the given maximum size in megabytes; n-th file will have suffix -n; (optional) -->
@@ -138,6 +138,11 @@
       
       <!-- Path to file where owl:sameAs links used in conflict resolution shall be written (optional) -->
       <Param name="sameAsFile" value="output/sameAsLinks.n3"/>
+      
+      <!-- URI of named graph where Conflict Resolution metadata will be placed in the output;
+	       applicable only for output formats which support named graphs (e.g. TriG);
+		   (optional; if ommitted, no metadata will be written) -->
+      <Param name="metadataContext" value="http://opendata.cz/infrastructure/odcleanstore/metadata" />
     </Output>
   </Outputs>
 </Config>

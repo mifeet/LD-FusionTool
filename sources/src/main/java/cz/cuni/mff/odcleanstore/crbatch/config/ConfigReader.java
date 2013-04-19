@@ -10,6 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.openrdf.model.URI;
+import org.openrdf.model.impl.ValueFactoryImpl;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 
@@ -253,7 +255,7 @@ public final class ConfigReader {
         if (sameAsLocationString != null) {
             output.setSameAsFileLocation(new File(sameAsLocationString));
         }
-        
+
         String splitByMB = extractParamByName(outputXml.getParams(), "splitByMB");
         if (splitByMB != null) {
             final String errorMessage = "Value of splitByMB for output is not a valid number";
@@ -263,6 +265,12 @@ public final class ConfigReader {
             }
             output.setSplitByBytes(value * CRBatchUtils.MB_BYTES);
         }
+        
+        String metadataContext = extractParamByName(outputXml.getParams(), "metadataContext");
+        if (metadataContext != null) {
+            URI uri = convertToURI(metadataContext, "metadataContext is not a valid URI");
+            output.setMetadataContext(uri);
+        }
 
         return output;
     }
@@ -271,6 +279,14 @@ public final class ConfigReader {
         try {
             return Long.parseLong(str);
         } catch (NumberFormatException e) {
+            throw new InvalidInputException(errorMessage, e);
+        }
+    }
+    
+    private URI convertToURI(String str, String errorMessage) throws InvalidInputException {
+        try {
+            return ValueFactoryImpl.getInstance().createURI(str);
+        } catch (IllegalArgumentException e) {
             throw new InvalidInputException(errorMessage, e);
         }
     }

@@ -5,6 +5,8 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import java.io.File;
 
+import org.openrdf.model.URI;
+
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
 
 /**
@@ -12,11 +14,11 @@ import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
  * @author Jan Michelfeit
  */
 public class OutputImpl implements Output {
-
     private final EnumSerializationFormat format;
     private final File fileLocation;
-    private File sameAsFileLocation;
-    private Long splitByBytes;
+    private File sameAsFileLocation = null;
+    private Long splitByBytes = null;
+    private URI metadataContext = null;
     
     /**
      * @param format output format
@@ -61,5 +63,18 @@ public class OutputImpl implements Output {
      */
     public void setSplitByBytes(Long splitByBytes) {
         this.splitByBytes = splitByBytes;
+    }
+    
+    @Override
+    public URI getMetadataContext() {
+        return metadataContext; 
+    }
+
+    /**
+     * Sets value for {@link #getMetadataContext()}.
+     * @param metadataContext see {@link #getMetadataContext()}
+     */
+    public void setMetadataContext(URI metadataContext) {
+        this.metadataContext = metadataContext;
     }
 }

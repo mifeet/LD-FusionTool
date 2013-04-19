@@ -160,7 +160,7 @@ public class ConfigImpl implements Config {
     public void setMaxOutputTriples(Long maxOutputTriples) {
         this.maxOutputTriples = maxOutputTriples;
     }
-
+    
     @Override
     public Integer getQueryTimeout() {
         return ConfigConstants.DEFAULT_QUERY_TIMEOUT;

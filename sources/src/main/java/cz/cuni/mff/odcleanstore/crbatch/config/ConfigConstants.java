@@ -36,7 +36,7 @@ public final class ConfigConstants {
     /**
      * Default prefix of named graphs and URIs where query results and metadata in the output are placed.
      */
-    public static final String DEFAULT_RESULT_DATA_URI_PREFIX = ODCS.getURI() + "query/";
+    public static final String DEFAULT_RESULT_DATA_URI_PREFIX = ODCS.getURI() + "CR/";
     
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .

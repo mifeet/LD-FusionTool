@@ -18,7 +18,12 @@ public enum EnumSerializationFormat {
     /**
      * File in N3.
      */
-    N3(RDFFormat.N3);
+    N3(RDFFormat.N3),
+    
+    /**
+     * File in TriG.
+     */
+    TRIG(RDFFormat.TRIG);
     
     private RDFFormat sesameFormat;
     private EnumSerializationFormat(RDFFormat sesameFormat) {
@@ -40,12 +45,16 @@ public enum EnumSerializationFormat {
      * @return converted value or null
      */
     public static EnumSerializationFormat parseFormat(String str) {
-        if ("ntriples".equalsIgnoreCase(str) || "n3".equalsIgnoreCase(str)) {
+        if ("ntriples".equalsIgnoreCase(str)) {
             return EnumSerializationFormat.N3;
         } else if ("rdf/xml".equalsIgnoreCase(str) || "rdfxml".equalsIgnoreCase(str)) {
             return EnumSerializationFormat.RDF_XML;
         } else {
-            return null; 
+            try {
+                return valueOf(str.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
         }
     }
 }

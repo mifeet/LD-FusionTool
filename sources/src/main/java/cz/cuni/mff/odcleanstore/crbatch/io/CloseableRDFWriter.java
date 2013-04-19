@@ -8,6 +8,7 @@ import java.util.Iterator;
 
 import org.openrdf.model.Statement;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 
 /**
@@ -18,18 +19,32 @@ import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 public interface CloseableRDFWriter extends Closeable {
     /**
      * Write RDF data.
-     * @param statements statements to write
+     * @param quads statements to write
      * @throws IOException I/O error
      */
-    void write(Iterator<Statement> statements) throws IOException;
+    void writeQuads(Iterator<Statement> quads) throws IOException;
     
     /**
-     * Write a single RDF statement.
-     * @param statement statement to write
+     * Write a single quad.
+     * @param quad statement to write
      * @throws IOException I/O error
      */
-    void write(Statement statement) throws IOException;
-
+    void write(Statement quad) throws IOException;
+    
+    /**
+     * Write quads resolved by Conflict Resolution.
+     * @param resolvedQuads {@link CRQuad CRQUads} to write
+     * @throws IOException I/O error
+     */
+    void writeCRQuads(Iterator<CRQuad> resolvedQuads) throws IOException;
+    
+    /**
+     * Write a single CRQuad.
+     * @param crQuad CRQuad to write
+     * @throws IOException I/O error
+     */
+    void write(CRQuad crQuad) throws IOException;
+    
     /**
      * Add a namespace prefix.
      * Note that this call may have no effect for some writers. 

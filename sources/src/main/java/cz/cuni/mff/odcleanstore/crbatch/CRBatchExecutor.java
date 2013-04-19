@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.RepositoryException;
@@ -29,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfig;
+import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfigImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
 import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
@@ -151,8 +153,7 @@ public class CRBatchExecutor {
 
                 // Write result to output
                 for (CloseableRDFWriter writer : rdfWriters) {
-                    Iterator<Statement> resolvedTriplesIterator = crQuadsAsStatements(resolvedQuads.iterator());
-                    writer.write(resolvedTriplesIterator);
+                    writer.writeCRQuads(resolvedQuads.iterator());
                 }
             }
             LOG.info(String.format("Written %,d resolved quads", outputTriples));
@@ -286,6 +287,7 @@ public class CRBatchExecutor {
             CloseableRDFWriter writer = createOutputWriter(
                     output.getFileLocation(),
                     output.getFormat(),
+                    output.getMetadataContext(),
                     output.getSplitByBytes());
             writers.add(writer);
             writeNamespaceDeclarations(writer, nsPrefixes);
@@ -293,21 +295,21 @@ public class CRBatchExecutor {
         return writers;
     }
 
-    private static CloseableRDFWriter createOutputWriter(File file, EnumSerializationFormat outputFormat, Long splitByBytes)
-            throws IOException {
+    private static CloseableRDFWriter createOutputWriter(File file, EnumSerializationFormat outputFormat, 
+            URI metadataContext, Long splitByBytes) throws IOException {
 
         CRBatchUtils.ensureParentsExists(file);
         if (splitByBytes == null) {
-            return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, new FileOutputStream(file));
+            return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, metadataContext, new FileOutputStream(file));
         } else {
-            return RDF_WRITER_FACTORY.createSplittingRDFWriter(outputFormat, file, splitByBytes);
+            return RDF_WRITER_FACTORY.createSplittingRDFWriter(outputFormat, metadataContext, file, splitByBytes);
         }
     }
     
     private static ConflictResolver createConflictResolver(
             Config config, NamedGraphMetadataMap namedGraphsMetadata, URIMappingIterable uriMapping) {
 
-        ConflictResolutionConfig crConfig = new ConflictResolutionConfig(
+        ConflictResolutionConfig crConfig = new ConflictResolutionConfigImpl(
                 config.getAgreeCoeficient(),
                 config.getScoreIfUnknown(),
                 config.getNamedGraphScoreWeight(),
@@ -380,15 +382,6 @@ public class CRBatchExecutor {
         }
     }
     
-    private static Iterator<Statement> crQuadsAsStatements(Iterator<CRQuad> crQuads) {
-        return ConvertingIterator.decorate(crQuads, new GenericConverter<CRQuad, Statement>() {
-            @Override
-            public Statement convert(CRQuad object) {
-                return object.getQuad();
-            }
-        });
-    }
-
     private static void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
         for (Map.Entry<String, String> entry : nsPrefixes.entrySet()) {
             writer.addNamespace(entry.getKey(), entry.getValue());
@@ -432,6 +425,7 @@ public class CRBatchExecutor {
                 CloseableRDFWriter writer = createOutputWriter(
                         output.getSameAsFileLocation(),
                         output.getFormat(),
+                        output.getMetadataContext(),
                         output.getSplitByBytes());
                 writers.add(writer);
                 writer.addNamespace("owl", OWL.getURI());
@@ -455,7 +449,7 @@ public class CRBatchExecutor {
             for (CloseableRDFWriter writer : writers) {
                 Iterator<String> uriIterator = uriMapping.iterator();
                 Iterator<Statement> sameAsTripleIterator = ConvertingIterator.decorate(uriIterator, uriToTripleConverter);
-                writer.write(sameAsTripleIterator);
+                writer.writeQuads(sameAsTripleIterator);
             }
 
             LOG.info("Written owl:sameAs links");
