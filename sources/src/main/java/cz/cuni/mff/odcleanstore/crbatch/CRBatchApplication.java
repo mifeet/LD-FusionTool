@@ -2,7 +2,11 @@ package cz.cuni.mff.odcleanstore.crbatch;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -116,8 +120,14 @@ public final class CRBatchApplication {
         }
 
         System.out.println("----------------------------");
-        System.out.printf("CR-batch executed in %.3f s\n",
-                (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
+        
+        long runTime = System.currentTimeMillis() - startTime;
+        final long hourMs = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
+        DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
+        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        System.out.printf("CR-batch executed in %2d:%s \n",
+                runTime / hourMs,
+                timeFormat.format(new Date(runTime)));
     }
     
     private static ApplicationArgs parseArgs(String[] args) throws InvalidInputException {
