@@ -12,8 +12,8 @@ public enum EnumDataSourceType {
     VIRTUOSO,
     
     /** File. */
-    FILE;
-    /*
-    SPARQL,
-    TYPE*/
+    FILE,
+    
+    /** SPARQL endpoint. */
+    SPARQL
 }

@@ -11,7 +11,9 @@ import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.repository.sparql.SPARQLRepository;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.sail.Sail;
 import org.openrdf.sail.memory.MemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
+import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
  * Factory class for RDF {@link Repository repositories}.
@@ -45,6 +48,9 @@ public final class RepositoryFactory {
             String username = dataSourceConfig.getParams().get("username");
             String password = dataSourceConfig.getParams().get("password");
             return createVirtuosoRepository(name, host, port, username, password);
+        case SPARQL:
+            String endpointUrl = dataSourceConfig.getParams().get("endpointurl");
+            return createSparqlRepository(name, endpointUrl);
         case FILE:
             String path = dataSourceConfig.getParams().get("path");
             String format = dataSourceConfig.getParams().get("format");
@@ -93,7 +99,7 @@ public final class RepositoryFactory {
         }
 
         URI context = ValueFactoryImpl.getInstance().createURI(baseURI);
-        Repository repository = new SailRepository(new MemoryStore()); // TODO cache
+        Repository repository = new SailRepository(createSail());
         try {
             RepositoryConnection connection = null;
             repository.initialize();
@@ -114,6 +120,11 @@ public final class RepositoryFactory {
         }
         LOG.debug("Initialized file repository {}", dataSourceName);
         return repository;
+    }
+
+    private Sail createSail() {
+        MemoryStore store = new MemoryStore(); // TODO file-backed store if file caching is enabled?
+        return store;
     }
 
     /**
@@ -141,8 +152,32 @@ public final class RepositoryFactory {
             throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_VIRTUOSO,
                     "Error when initializing repository for " + dataSourceName, e);
         }
-        
+
         LOG.debug("Initialized Virtuoso repository {}", dataSourceName);
+        return repository;
+    }
+
+    /**
+     * Creates a repository backed by a SPARQL endpoint.
+     * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
+     * @param dataSourceName data source name (for logging)
+     * @param endpointUrl SPARQL endpoint URL
+     * @return initialized repository
+     * @throws CRBatchException error creating repository
+     */
+    public Repository createSparqlRepository(String dataSourceName, String endpointUrl) throws CRBatchException {
+        if (ODCSUtils.isNullOrEmpty(endpointUrl)) {
+            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_CONFIG,
+                    "Missing required parameters for data source " + dataSourceName);
+        }
+        Repository repository = new SPARQLRepository(endpointUrl);
+        try {
+            repository.initialize();
+        } catch (RepositoryException e) {
+            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_SPARQL,
+                    "Error when initializing repository for " + dataSourceName, e);
+        }
+        LOG.debug("Initialized SPARQL repository {}", dataSourceName);
         return repository;
     }
 }

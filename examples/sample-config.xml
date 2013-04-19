@@ -12,8 +12,7 @@
   
   <!-- Definitions of data sources; multiple <DataSource> children can be given; (required) -->
   <DataSources>
-    <!-- Definition of a data source of type "virtuoso"; connects to an Openlink Virtuoso
-	     database instance using JDBC -->
+    <!-- Data source of type "virtuoso"; connects to an Openlink Virtuoso database instance using JDBC -->
     <DataSource type="virtuoso" name="virtuoso_local">
       <!-- Hostname for the Virtuoso database instance; (required) -->
       <Param name="host" value="localhost" />
@@ -46,14 +45,35 @@
 		UNION { SELECT ?m WHERE { GRAPH ?m {?a odcs:publisherScore ?b}} }
       </MetadataGraphRestriction>
     </DataSource>
+
+ 	<!-- Data source representing a SPARQL endpoint -->    
+    <DataSource type="sparql">
+      <!-- URL of the SPARQL endpoint; (required)) -->
+      <Param name="endpointUrl" value="http://localhost:8890/sparql" />
+      
+      <!-- <GraphRestriction /> and <MetadataGraphRestriction /> can optionally be used here as well -->
+    </DataSource>
+    
+    <!-- Data source loading RDF data from a file -->
+    <DataSource type="file">
+      <!-- Path to the source file; (required) -->
+      <Param name="path" value="data.rdf" />
+      
+      <!-- Base URI for loaded data; (optional, defaults is URI representing the file) -->
+      <Param name="baseuri" value="http://example.com" />
+      
+      <!-- Serialization format of the file; accepted values are 'ntriples' and 'rdf/xml';
+	      (optional, format is recognized from file extension if not given) -->
+      <Param name="format" value="ntriples"/>
+    </DataSource>
   </DataSources>
   
-  <!-- Definition of data processing settings (optional) -->
+  <!-- Definition of data processing settings; (optional) -->
   <DataProcessing>
-    <!-- Path to file where all canonical URIs after conflict resolution are written, one URI per line (optional) -->
+    <!-- Path to file where all canonical URIs after conflict resolution are written, one URI per line; (optional) -->
     <Param name="canonicalUriOutputFile" value="output/canonicalUris.txt" />
       
-    <!-- Path to file which contains URIs preferred for canonical URIs, one URI per line (optional) -->
+    <!-- Path to file which contains URIs preferred for canonical URIs, one URI per line; (optional) -->
     <Param name="canonicalUriInputFile" value="output/canonicalUris.txt" />
       
     <!-- Maximum number of triples in the result; Conflict Resolution will stop after the given number 

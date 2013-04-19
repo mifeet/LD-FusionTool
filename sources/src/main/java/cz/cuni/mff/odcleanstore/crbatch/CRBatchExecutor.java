@@ -35,6 +35,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMapping;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
@@ -100,11 +101,7 @@ public class CRBatchExecutor {
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
             final boolean isTransitive = config.getSeedResourceRestriction() != null;
             if (isTransitive) {
-                queuedSubjects = new BufferSubjectsCollection(collectionFactory.<String>createSet());
-                while (seedSubjects.hasNext()) {
-                    String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());
-                    queuedSubjects.add(canonicalURI); // only store canonical URIs to save space
-                }
+                queuedSubjects = createBufferSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
                 seedSubjects.close();
             } else {
                 queuedSubjects = seedSubjects;
@@ -185,6 +182,21 @@ public class CRBatchExecutor {
         }
     }
 
+    private UriCollection createBufferSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
+            LargeCollectionFactory collectionFactory) throws CRBatchException {
+        Set<String> buffer = collectionFactory.<String>createSet();
+        UriCollection queuedSubjects = new BufferSubjectsCollection(buffer);
+        while (seedSubjects.hasNext()) {
+            String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());
+            queuedSubjects.add(canonicalURI); // only store canonical URIs to save space
+        }
+        if (LOG.isDebugEnabled()) {
+            // only when debug is enabled, this may be expensive when using file cache
+            LOG.debug(String.format("CR-batch: loaded %,d seed resources", buffer.size()));
+        } 
+        return queuedSubjects;
+    }
+
     private Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
             throws CRBatchException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
@@ -243,7 +255,7 @@ public class CRBatchExecutor {
     
     private LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
         if (config.getEnableFileCache()) {
-            return new MapdbCollectionFactory(new File("."));
+            return new MapdbCollectionFactory(CRBatchUtils.getCacheDirectory());
         } else {
             return new LargeCollectionFactory() {
                 @Override

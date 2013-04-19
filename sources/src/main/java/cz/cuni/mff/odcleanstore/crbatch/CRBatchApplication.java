@@ -58,10 +58,6 @@ public final class CRBatchApplication {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        // Repository myRepository = new SailRepository(new MemoryStore());
-        // Repository myRepository = new SPARQLRepository("http://localhost:8890/sparql");
-        // con.add(file, baseURI, RDFFormat.RDFXML);
-
         ApplicationArgs parsedArgs;
         try {
             parsedArgs = parseArgs(args);
@@ -125,7 +121,7 @@ public final class CRBatchApplication {
         final long hourMs = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
         DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
         timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        System.out.printf("CR-batch executed in %2d:%s \n",
+        System.out.printf("CR-batch executed in %d:%s \n",
                 runTime / hourMs,
                 timeFormat.format(new Date(runTime)));
     }
@@ -211,6 +207,9 @@ public final class CRBatchApplication {
         case VIRTUOSO:
             checkRequiredDataSourceParam(dataSourceConfig, "host", "port", "username", "password");
             break;
+        case SPARQL:
+            checkRequiredDataSourceParam(dataSourceConfig, "endpointurl");
+            break;
         case FILE:
             checkRequiredDataSourceParam(dataSourceConfig, "path");
             File file = new File(dataSourceConfig.getParams().get("path"));
@@ -245,6 +244,7 @@ public final class CRBatchApplication {
         for (DataSourceConfig dsConfigImmutable : config.getDataSources()) {
             DataSourceConfigImpl dsConfig = (DataSourceConfigImpl) dsConfigImmutable;
             switch (dsConfig.getType()) {
+            case SPARQL:
             case VIRTUOSO:
                 // Use ODCS default if appropriate
                 if (CRBatchUtils.isRestrictionEmpty(dsConfig.getMetadataGraphRestriction())) {
