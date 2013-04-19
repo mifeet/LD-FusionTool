@@ -9,15 +9,14 @@ import org.openrdf.model.Statement;
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
-import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject)
  * from multiple data sources.
  * @author Jan Michelfeit
- * @see QuadLoader
+ * @see RepositoryQuadLoader
  */
-public class FederatedQuadLoader implements Closeable {
+public class FederatedQuadLoader implements QuadLoader {
     private final Collection<QuadLoader> quadLoaders;
 
     /**
@@ -28,7 +27,7 @@ public class FederatedQuadLoader implements Closeable {
     public FederatedQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
         quadLoaders = new ArrayList<QuadLoader>();
         for (DataSource source : dataSources) {
-            QuadLoader loader = new QuadLoader(source, alternativeURINavigator);
+            QuadLoader loader = new RepositoryQuadLoader(source, alternativeURINavigator);
             quadLoaders.add(loader);
         }
     }
@@ -42,10 +41,16 @@ public class FederatedQuadLoader implements Closeable {
      */
     public Collection<Statement> getQuadsForURI(String uri) throws CRBatchException {
         Collection<Statement> quads = new ArrayList<Statement>();
-        for (QuadLoader loader : quadLoaders) {
-            loader.loadQuadsForURI(uri, quads);
-        }
+        loadQuadsForURI(uri, quads);
         return quads;
+    }
+    
+
+    @Override
+    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws CRBatchException {
+        for (QuadLoader loader : quadLoaders) {
+            loader.loadQuadsForURI(uri, quadCollection);
+        }
     }
 
     @Override

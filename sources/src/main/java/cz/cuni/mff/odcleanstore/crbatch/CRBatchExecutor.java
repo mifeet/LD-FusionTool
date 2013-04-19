@@ -50,6 +50,8 @@ import cz.cuni.mff.odcleanstore.crbatch.loaders.BufferSubjectsCollection;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.FederatedQuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.FederatedSeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphMetadataLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.QuadLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.RepositoryQuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.SameAsLinkLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.UriCollection;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
@@ -81,7 +83,7 @@ public class CRBatchExecutor {
      */
     public void runCRBatch(Config config) throws CRBatchException, IOException, ConflictResolutionException {
         LargeCollectionFactory collectionFactory = createLargeCollectionFactory(config);
-        FederatedQuadLoader quadLoader = null;
+        QuadLoader quadLoader = null;
         UriCollection queuedSubjects = null;
         List<CloseableRDFWriter> rdfWriters = null;
         Collection<DataSource> dataSources = getDataSources(config.getDataSources(), config.getPrefixes());
@@ -120,7 +122,7 @@ public class CRBatchExecutor {
             long outputTriples = 0;
 
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
-            quadLoader = new FederatedQuadLoader(dataSources, alternativeURINavigator);
+            quadLoader = createQuadLoader(dataSources, alternativeURINavigator);
             while (queuedSubjects.hasNext()) {
                 String uri = queuedSubjects.next();
                 String canonicalURI = uriMapping.getCanonicalURI(uri);
@@ -132,7 +134,7 @@ public class CRBatchExecutor {
                 resolvedCanonicalURIs.add(canonicalURI);
 
                 // Load quads for the given subject
-                Collection<Statement> quads = quadLoader.getQuadsForURI(canonicalURI);
+                Collection<Statement> quads = getQuads(quadLoader, canonicalURI);
 
                 // Resolve conflicts
                 Collection<CRQuad> resolvedQuads = conflictResolver.resolveConflicts(quads);
@@ -232,7 +234,13 @@ public class CRBatchExecutor {
         FederatedSeedSubjectsLoader loader = new FederatedSeedSubjectsLoader(dataSources);
         return loader.getTripleSubjectsCollection(seedResourceRestriction);
     }
-
+    
+    private Collection<Statement> getQuads(QuadLoader quadLoader, String canonicalURI) throws CRBatchException {
+        Collection<Statement> quads = new ArrayList<Statement>();
+        quadLoader.loadQuadsForURI(canonicalURI, quads);
+        return quads;
+    }
+    
     private LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
         if (config.getEnableFileCache()) {
             return new MapdbCollectionFactory(new File("."));
@@ -250,22 +258,61 @@ public class CRBatchExecutor {
             };
         }
     }
-
-    private void addDiscoveredObjects(UriCollection queuedSubjects, Collection<CRQuad> resolvedQuads,
-            URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
-        for (CRQuad crQuad : resolvedQuads) {
-            String uri = CRBatchUtils.getNodeURI(crQuad.getQuad().getObject());
-            if (uri == null) {
-                // a literal or something, skip it
-                continue;
-            }
-            // only add canonical URIs to save space
-            String canonicalURI = uriMapping.getCanonicalURI(uri);
-            if (!resolvedCanonicalURIs.contains(canonicalURI)) {
-                // only add new URIs
-                queuedSubjects.add(canonicalURI);
-            }
+    
+    private QuadLoader createQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
+        if (dataSources.size() == 1) {
+            return new RepositoryQuadLoader(dataSources.iterator().next(), alternativeURINavigator);
+        } else {
+            return new FederatedQuadLoader(dataSources, alternativeURINavigator);
         }
+    }
+    
+    private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs, Map<String, String> nsPrefixes)
+            throws IOException {
+        List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
+        for (Output output : outputs) {
+            CloseableRDFWriter writer = createOutputWriter(
+                    output.getFileLocation(),
+                    output.getFormat(),
+                    output.getSplitByBytes());
+            writers.add(writer);
+            writeNamespaceDeclarations(writer, nsPrefixes);
+        }
+        return writers;
+    }
+
+    private static CloseableRDFWriter createOutputWriter(File file, EnumSerializationFormat outputFormat, Long splitByBytes)
+            throws IOException {
+
+        CRBatchUtils.ensureParentsExists(file);
+        if (splitByBytes == null) {
+            return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, new FileOutputStream(file));
+        } else {
+            return RDF_WRITER_FACTORY.createSplittingRDFWriter(outputFormat, file, splitByBytes);
+        }
+    }
+    
+    private static ConflictResolver createConflictResolver(
+            Config config, NamedGraphMetadataMap namedGraphsMetadata, URIMappingIterable uriMapping) {
+
+        ConflictResolutionConfig crConfig = new ConflictResolutionConfig(
+                config.getAgreeCoeficient(),
+                config.getScoreIfUnknown(),
+                config.getNamedGraphScoreWeight(),
+                config.getPublisherScoreWeight(),
+                config.getMaxDateDifference());
+
+        ConflictResolverFactory conflictResolverFactory = new ConflictResolverFactory(
+                config.getResultDataURIPrefix() + ODCSInternal.queryResultGraphUriInfix,
+                crConfig,
+                new AggregationSpec());
+
+        ConflictResolver conflictResolver = conflictResolverFactory.createResolver(
+                config.getAggregationSpec(),
+                namedGraphsMetadata,
+                uriMapping);
+
+        return conflictResolver;
     }
 
     private static Set<String> getPreferredURIs(AggregationSpec aggregationSpec, File canonicalURIsInputFile) throws IOException {
@@ -303,38 +350,24 @@ public class CRBatchExecutor {
         preferredURIs.addAll(multivalueProperties);
         return preferredURIs;
     }
-
-    private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs, Map<String, String> nsPrefixes)
-            throws IOException {
-        List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
-        for (Output output : outputs) {
-            CloseableRDFWriter writer = createOutputWriter(
-                    output.getFileLocation(),
-                    output.getFormat(),
-                    output.getSplitByBytes());
-            writers.add(writer);
-            writeNamespaceDeclarations(writer, nsPrefixes);
-        }
-        return writers;
-    }
-
-    private static CloseableRDFWriter createOutputWriter(File file, EnumSerializationFormat outputFormat, Long splitByBytes)
-            throws IOException {
-
-        CRBatchUtils.ensureParentsExists(file);
-        if (splitByBytes == null) {
-            return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, new FileOutputStream(file));
-        } else {
-            return RDF_WRITER_FACTORY.createSplittingRDFWriter(outputFormat, file, splitByBytes);
+    
+    private void addDiscoveredObjects(UriCollection queuedSubjects, Collection<CRQuad> resolvedQuads,
+            URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
+        for (CRQuad crQuad : resolvedQuads) {
+            String uri = CRBatchUtils.getNodeURI(crQuad.getQuad().getObject());
+            if (uri == null) {
+                // a literal or something, skip it
+                continue;
+            }
+            // only add canonical URIs to save space
+            String canonicalURI = uriMapping.getCanonicalURI(uri);
+            if (!resolvedCanonicalURIs.contains(canonicalURI)) {
+                // only add new URIs
+                queuedSubjects.add(canonicalURI);
+            }
         }
     }
-
-    private static void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
-        for (Map.Entry<String, String> entry : nsPrefixes.entrySet()) {
-            writer.addNamespace(entry.getKey(), entry.getValue());
-        }
-    }
-
+    
     private static Iterator<Statement> crQuadsAsStatements(Iterator<CRQuad> crQuads) {
         return ConvertingIterator.decorate(crQuads, new GenericConverter<CRQuad, Statement>() {
             @Override
@@ -344,27 +377,10 @@ public class CRBatchExecutor {
         });
     }
 
-    private static ConflictResolver createConflictResolver(
-            Config config, NamedGraphMetadataMap namedGraphsMetadata, URIMappingIterable uriMapping) {
-
-        ConflictResolutionConfig crConfig = new ConflictResolutionConfig(
-                config.getAgreeCoeficient(),
-                config.getScoreIfUnknown(),
-                config.getNamedGraphScoreWeight(),
-                config.getPublisherScoreWeight(),
-                config.getMaxDateDifference());
-
-        ConflictResolverFactory conflictResolverFactory = new ConflictResolverFactory(
-                config.getResultDataURIPrefix() + ODCSInternal.queryResultGraphUriInfix,
-                crConfig,
-                new AggregationSpec());
-
-        ConflictResolver conflictResolver = conflictResolverFactory.createResolver(
-                config.getAggregationSpec(),
-                namedGraphsMetadata,
-                uriMapping);
-
-        return conflictResolver;
+    private static void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
+        for (Map.Entry<String, String> entry : nsPrefixes.entrySet()) {
+            writer.addNamespace(entry.getKey(), entry.getValue());
+        }
     }
 
     private static void writeCanonicalURIs(Set<String> resolvedCanonicalURIs, File outputFile) throws IOException {

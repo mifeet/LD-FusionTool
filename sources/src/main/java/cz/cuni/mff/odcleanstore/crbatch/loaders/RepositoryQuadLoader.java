@@ -20,15 +20,11 @@ import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.crbatch.urimapping.AlternativeURINavigator;
-import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
-import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
-import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject)
@@ -36,17 +32,8 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
  * given owl:sameAs alternatives.
  * @author Jan Michelfeit
  */
-public class QuadLoader extends RepositoryLoaderBase implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(QuadLoader.class);
-    
-    /**
-     * SPARQL group graph pattern limiting graphs from which links are loaded
-     * if no source graph restriction is given.
-     */
-    protected static final SparqlRestriction DEFAULT_DATA_GRAPH_RESTRICTION = new SparqlRestrictionImpl(
-            "{ SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_g <" + ODCS.metadataGraph + "> ?308ae1cdfa_m} }"
-                    + "\n UNION { SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_a <" + ODCS.attachedGraph + "> ?308ae1cdfa_g} }",
-            "308ae1cdfa_g");
+public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLoader {
+    private static final Logger LOG = LoggerFactory.getLogger(RepositoryQuadLoader.class);
     
     /**
      * SPARQL query that gets all quads having the given uri as their subject.
@@ -103,7 +90,7 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * @param dataSource an initialized data source
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      */
-    public QuadLoader(DataSource dataSource, AlternativeURINavigator alternativeURINavigator) {
+    public RepositoryQuadLoader(DataSource dataSource, AlternativeURINavigator alternativeURINavigator) {
         super(dataSource);
         this.alternativeURINavigator = alternativeURINavigator;
     }
@@ -117,14 +104,15 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * @throws CRBatchException error
      * @see DataSource#getNamedGraphRestriction()
      */
+    @Override
     public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws CRBatchException {
         long startTime = System.currentTimeMillis();
 
         SparqlRestriction restriction;
-        if (!CRBatchUtils.isRestrictionEmpty(dataSource.getNamedGraphRestriction())) {
+        if (dataSource.getNamedGraphRestriction() != null) {
             restriction = dataSource.getNamedGraphRestriction();
         } else {
-            restriction = DEFAULT_DATA_GRAPH_RESTRICTION;
+            restriction = EMPTY_RESTRICTION;
         }
         
         List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
