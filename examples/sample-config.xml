@@ -29,19 +29,21 @@
       
       <!-- SPARQL group graph pattern which limits named graphs from which data to process are obtained;
            attribute var specifies which variable represents the named graph in the pattern;
-           optional (if not given, data are processed) -->
+           optional (if not given, all data are processed) -->
       <GraphRestriction var="g">
-        {select ?g where {?g odcs:metadataGraph ?m}}
-		 UNION {select ?g where {?a odcs:attachedGraph ?g}}
+        { SELECT ?g WHERE {?g odcs:metadataGraph ?m} }
+		UNION { SELECT ?g WHERE {?a odcs:attachedGraph ?g} }
       </GraphRestriction>
     
-      <!-- SPARQL group graph pattern which specifies additional named graphs from which metadata and 
+      <!-- SPARQL group graph pattern which specifies named graphs from which metadata and 
 	       owl:sameAs links are loaded; contents of these graphs are considered in conflict resolution
 		   (e.g. owl:sameAs links for identity resolution) but contents are not included in the output;
            attribute var specifies which variable represents the named graph in the pattern;
-          optional -->
-      <MetadataGraphRestriction var="g">
-        ?g odcs:generatedGraph ?a
+          optional (if not given, statements about named graphs containing data to process are loaded) -->
+      <MetadataGraphRestriction var="m">
+        { SELECT ?m WHERE {?a odcs:metadataGraph ?m} }
+		UNION { SELECT ?m WHERE {?a odcs:generatedGraph ?m} }
+		UNION { SELECT ?m WHERE { GRAPH ?m {?a odcs:publisherScore ?b}} }
       </MetadataGraphRestriction>
     </DataSource>
   </DataSources>

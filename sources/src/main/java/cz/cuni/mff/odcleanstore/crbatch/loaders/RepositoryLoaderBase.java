@@ -7,12 +7,13 @@ import java.util.Map;
 
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 
 /**
  * @author Jan Michelfeit
  */
 public abstract class RepositoryLoaderBase {
-
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
      */
@@ -22,7 +23,14 @@ public abstract class RepositoryLoaderBase {
      * A random prefix for variables used in SPARQL queries so that they don't conflict
      * with variables used in named graph constraint pattern.
      */
-    protected static final String VAR_PREFIX = "afdc1ea803_"; 
+    protected static final String VAR_PREFIX = "afdc1ea803_";
+    
+    /**
+     * An empty restriction. 
+     * To be used when no other restriction is given. 
+     * Variable name is a random string to avoid conflicts.
+     */
+    protected static final SparqlRestriction EMPTY_RESTRICTION = new SparqlRestrictionImpl("", "308ae1cdfa_x");
     
     /** RDF data source. */
     protected final DataSource dataSource;

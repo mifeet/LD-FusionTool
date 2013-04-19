@@ -38,13 +38,8 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(NamedGraphMetadataLoader.class);
     
-    /**
-     * SPARQL group graph pattern limiting graphs from which metadata are loaded 
-     * if no source graph restriction is given.
-     */
-    protected static final SparqlRestriction DEFAULT_DATA_GRAPH_RESTRICTION = new SparqlRestrictionImpl(
-            "?308ae1cdfa_g <" + ODCS.metadataGraph + "> ?308ae1cdfa_m.",
-            "308ae1cdfa_g");
+    private static final SparqlRestriction DEFAULT_METADATA_RESTRICTION = new SparqlRestrictionImpl(
+            "GRAPH ?308ae1cdfa_x { ?308ae1cdfa_s ?308ae1cdfa_p ?308ae1cdfa_o}", "308ae1cdfa_x");
     
     /**
      * SPARQL query that gets metadata about named graphs to be processed.
@@ -56,8 +51,6 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
      * (1) namespace prefixes declaration
      * (2) named graph restriction pattern
      * (3) named graph restriction variable
-     * 
-     * Note: Graphs without metadata are included too because at least odcs:metadataGraph value is expected.
      */
     private static final String METADATA_QUERY_SOURCE_RESTRICTION = "%1$s"
             + "\n SELECT ?" + VAR_PREFIX + "gs ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
@@ -135,7 +128,7 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
                 restriction = dataSource.getNamedGraphRestriction();
                 unformatedQuery = METADATA_QUERY_SOURCE_RESTRICTION;
             } else {
-                restriction = DEFAULT_DATA_GRAPH_RESTRICTION;
+                restriction = DEFAULT_METADATA_RESTRICTION;
                 unformatedQuery = METADATA_QUERY_SOURCE_RESTRICTION;
             }
             query = String.format(Locale.ROOT, unformatedQuery,

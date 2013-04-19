@@ -288,9 +288,11 @@ public final class ConfigReader {
             return null;
         }
         String pattern = preprocessGroupGraphPattern(restrictionXml.getValue());
-        if (ODCSUtils.isNullOrEmpty(pattern)) {
-            return null;
-        } else if (restrictionXml.getVar() == null) {
+        
+        //if (pattern.isEmpty()) {
+        //    return null;
+        //}
+        if (restrictionXml.getVar() == null) {
             return new SparqlRestrictionImpl(pattern, defaultVarName);
         } else {
             return new SparqlRestrictionImpl(pattern, restrictionXml.getVar());

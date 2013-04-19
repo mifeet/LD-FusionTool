@@ -13,12 +13,10 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
-import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
@@ -28,15 +26,6 @@ import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 public class SameAsLinkLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkLoader.class);
     
-    /**
-     * SPARQL group graph pattern limiting graphs from which links are loaded
-     * if no source graph restriction is given.
-     */
-    protected static final SparqlRestriction DEFAULT_DATA_GRAPH_RESTRICTION = new SparqlRestrictionImpl(
-            "{ SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_g <" + ODCS.metadataGraph + "> ?308ae1cdfa_m} }"
-                    + "\n UNION { SELECT ?308ae1cdfa_g WHERE {?308ae1cdfa_a <" + ODCS.attachedGraph + "> ?308ae1cdfa_g} }",
-            "308ae1cdfa_g");
-
     /**
      * SPARQL query that gets owl:sameAs links from relevant payload graphs.
      * Variable {@link #ngRestrictionVar} represents the named graph.
@@ -74,24 +63,25 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
         long linkCount = 0;
         
         // Load links from processed data
-        SparqlRestriction restriction;
-        if (!CRBatchUtils.isRestrictionEmpty(dataSource.getNamedGraphRestriction())) {
-            restriction = dataSource.getNamedGraphRestriction();
+        SparqlRestriction namedGraphRestriction;
+        if (dataSource.getNamedGraphRestriction() != null) {
+            namedGraphRestriction = dataSource.getNamedGraphRestriction();
         } else {
-            restriction = DEFAULT_DATA_GRAPH_RESTRICTION;
+            namedGraphRestriction = EMPTY_RESTRICTION;
         }
         String dataQuery = String.format(Locale.ROOT, SAMEAS_QUERY,
                 getPrefixDecl(),
-                restriction.getPattern(),
-                restriction.getVar());
+                namedGraphRestriction.getPattern(),
+                namedGraphRestriction.getVar());
         try {
             linkCount += loadSameAsLinks(uriMapping, dataQuery);
         } catch (OpenRDFException e) {
             throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, dataQuery, dataSource.getName(), e);
         }
 
-        // Load links from metadata graphs
-        if (!CRBatchUtils.isRestrictionEmpty(dataSource.getMetadataGraphRestriction())) {
+        // Load links from metadata graphs;
+        // if namedGraphRestriction was empty than this is not necessary because all links were loaded above 
+        if (dataSource.getMetadataGraphRestriction() != null && !CRBatchUtils.isRestrictionEmpty(namedGraphRestriction)) { 
             String metadataQuery = String.format(Locale.ROOT, SAMEAS_QUERY,
                     getPrefixDecl(),
                     dataSource.getMetadataGraphRestriction().getPattern(),

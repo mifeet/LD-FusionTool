@@ -12,10 +12,14 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
+import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * The main entry point of the application.
@@ -77,6 +81,7 @@ public final class CRBatchApplication {
         try {
             config = ConfigReader.parseConfigXml(configFile);
             checkValidInput(config);
+            setupDefaultRestrictions(config);
         } catch (InvalidInputException e) {
             System.err.println("Error in config file:");
             System.err.println("  " + e.getMessage());
@@ -215,6 +220,40 @@ public final class CRBatchApplication {
             if (dataSourceConfig.getParams().get(requiredParam) == null) {
                 throw new InvalidInputException("Missing required parameter '" + requiredParam
                         + "' for data source " + dataSourceConfig);
+            }
+        }
+    }
+    
+    /**
+     * Sets up SPARQL restrictions in config if none are given.
+     * This step is mostly for performance reasons, e.g. loading metadata from a large
+     * RDF data source without a restriction on metadata graphs is to demanding.
+     * @param config
+     */
+    private static void setupDefaultRestrictions(Config config) {
+        final String varPrefix = "c6fa378ae1_"; // some random string to avoid collisions
+        for (DataSourceConfig dsConfigImmutable : config.getDataSources()) {
+            DataSourceConfigImpl dsConfig = (DataSourceConfigImpl) dsConfigImmutable;
+            switch (dsConfig.getType()) {
+            case VIRTUOSO:
+                // Use ODCS default if appropriate
+                if (CRBatchUtils.isRestrictionEmpty(dsConfig.getMetadataGraphRestriction())) {
+                    // { SELECT ?m WHERE {?g odcs:metadataGraph ?m} }
+                    // UNION { SELECT ?m WHERE {?m odcs:generatedGraph 1} }
+                    // UNION { SELECT ?m WHERE { GRAPH ?m {?p odcs:publisherScore ?s}} }
+                    String pattern = " { SELECT ?" + varPrefix + "m"
+                            + "\n        WHERE {?" + varPrefix + "g <" + ODCS.metadataGraph + "> ?" + varPrefix + "m} }"
+                            + "\n      UNION " + "{ SELECT ?" + varPrefix + "m"
+                            + "\n        WHERE {?" + varPrefix + "m <" + ODCS.generatedGraph + "> 1} }"
+                            + "\n      UNION { SELECT ?" + varPrefix + "m"
+                            + "\n        WHERE { GRAPH ?" + varPrefix + "m {"
+                            + "\n                ?" + varPrefix + "p <" + ODCS.publisherScore + "> ?" + varPrefix + "s} } }";
+                    dsConfig.setMetadataGraphRestriction(new SparqlRestrictionImpl(pattern, varPrefix + "m"));
+                }
+                break;
+            default:
+                // do nothing
+                break;
             }
         }
     }
