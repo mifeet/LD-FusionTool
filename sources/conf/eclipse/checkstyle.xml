@@ -208,7 +208,11 @@
         <module name="InnerAssignment"/>
         <module name="MagicNumber"/>
         <module name="MissingSwitchDefault"/>
-        <module name="RedundantThrows"/>
+        <module name="RedundantThrows">
+            <property name="allowUnchecked" value="true"/>
+            <property name="suppressLoadErrors" value="true"/>
+        </module>
+        <module name="FallThrough"/>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
 
@@ -231,7 +235,6 @@
 		    <property name="format" value="todo:|TODO:|@todo|@TODO|FIXME"/>
 		</module>-->
         <module name="UpperEll"/>
-
     </module>
 
 </module>
