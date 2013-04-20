@@ -52,7 +52,6 @@ public class AlternativeURINavigator {
     }
 
     private Map<String, List<String>> findAlternativeURIs() {
-        // TODO: more efficient memory usage?
         HashMap<String, List<String>> alternativeURIMap = new HashMap<String, List<String>>();
 
         for (String mappedURI : uriMapping) {
@@ -60,6 +59,7 @@ public class AlternativeURINavigator {
             List<String> alternativeURIs = alternativeURIMap.get(canonicalURI);
             if (alternativeURIs == null) {
                 alternativeURIs = new ArrayList<String>();
+                alternativeURIs.add(canonicalURI); // don't forget canonical URI, it won't show up in the iteration
                 alternativeURIMap.put(canonicalURI, alternativeURIs);
             }
             alternativeURIs.add(mappedURI);
