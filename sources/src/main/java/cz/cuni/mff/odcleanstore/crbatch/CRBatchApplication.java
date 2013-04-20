@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -248,16 +249,15 @@ public final class CRBatchApplication {
             case VIRTUOSO:
                 // Use ODCS default if appropriate
                 if (CRBatchUtils.isRestrictionEmpty(dsConfig.getMetadataGraphRestriction())) {
-                    // { SELECT ?m WHERE {?g odcs:metadataGraph ?m} }
-                    // UNION { SELECT ?m WHERE {?m odcs:generatedGraph 1} }
-                    // UNION { SELECT ?m WHERE { GRAPH ?m {?p odcs:publisherScore ?s}} }
-                    String pattern = " { SELECT ?" + varPrefix + "m"
-                            + "\n        WHERE {?" + varPrefix + "g <" + ODCS.metadataGraph + "> ?" + varPrefix + "m} }"
-                            + "\n      UNION " + "{ SELECT ?" + varPrefix + "m"
-                            + "\n        WHERE {?" + varPrefix + "m <" + ODCS.generatedGraph + "> 1} }"
-                            + "\n      UNION { SELECT ?" + varPrefix + "m"
-                            + "\n        WHERE { GRAPH ?" + varPrefix + "m {"
-                            + "\n                ?" + varPrefix + "p <" + ODCS.publisherScore + "> ?" + varPrefix + "s} } }";
+                    // { GRAPH ?m {?x odcs:source ?y} }
+                    //   UNION { GRAPH ?m {?x odcs:score ?y} }
+                    //   UNION { GRAPH ?m {?x odcs:publisherScore ?y} }
+                    //   UNION { ?m odcs:generatedGraph 1 }
+                    String graphPattern = "{ GRAPH ?" + varPrefix + "m {?" + varPrefix + "x <%s> ?" + varPrefix + "y} }";
+                    String pattern = String.format(Locale.ROOT, graphPattern, ODCS.source)
+                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.score)
+                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.publisherScore)
+                            + "\n  UNION { ?" + varPrefix + "m <" + ODCS.generatedGraph + "> 1}";
                     dsConfig.setMetadataGraphRestriction(new SparqlRestrictionImpl(pattern, varPrefix + "m"));
                 }
                 break;

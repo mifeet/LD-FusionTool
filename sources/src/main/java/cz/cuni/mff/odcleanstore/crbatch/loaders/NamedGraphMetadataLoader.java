@@ -30,6 +30,7 @@ import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchQueryException;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
+import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
  * Loads URIs and metadata of named graphs to be processed.
@@ -62,7 +63,7 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
             + "\n       ?%3$s ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go."
             + "\n     }"
             + "\n   }"
-            + "\n   UNION"
+            + "\n   UNION" // TODO
             + "\n   {"
             + "\n     SELECT DISTINCT ?" + VAR_PREFIX + "gs"
             +           " (<" + ODCS.publisherScore + "> AS ?" + VAR_PREFIX + "gp) ?" + VAR_PREFIX + "go"
@@ -93,6 +94,7 @@ public class NamedGraphMetadataLoader extends RepositoryLoaderBase {
             + "\n   %2$s" 
             + "\n   GRAPH ?%3$s {" 
             + "\n     ?" + VAR_PREFIX + "gs ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
+            + "\n     FILTER (?" + VAR_PREFIX + "gp != <" + OWL.sameAs + ">)"
             + "\n   }"
             + "\n }";
 
