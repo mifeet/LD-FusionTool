@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import virtuoso.sesame2.driver.VirtuosoRepository;
 import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfig;
+import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfigImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
 import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
@@ -311,7 +312,7 @@ public class CRBatchExecutor {
     private static ConflictResolver createConflictResolver(
             Config config, NamedGraphMetadataMap namedGraphsMetadata, URIMappingIterable uriMapping) {
 
-        ConflictResolutionConfig crConfig = new ConflictResolutionConfig(
+        ConflictResolutionConfig crConfig = new ConflictResolutionConfigImpl(
                 config.getAgreeCoeficient(),
                 config.getScoreIfUnknown(),
                 config.getNamedGraphScoreWeight(),
