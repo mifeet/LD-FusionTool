@@ -40,9 +40,8 @@
            attribute var specifies which variable represents the named graph in the pattern;
           optional (if not given, statements about named graphs containing data to process are loaded) -->
       <MetadataGraphRestriction var="m">
-        { SELECT ?m WHERE {?a odcs:metadataGraph ?m} }
-		UNION { SELECT ?m WHERE {?a odcs:generatedGraph ?m} }
-		UNION { SELECT ?m WHERE { GRAPH ?m {?a odcs:publisherScore ?b}} }
+        { GRAPH ?m {?x ?p ?y FILTER (?p IN (odcs:score, odcs:publisherScore, odcs:source))} }
+        UNION { ?m odcs:generatedGraph 1 }
       </MetadataGraphRestriction>
     </DataSource>
 

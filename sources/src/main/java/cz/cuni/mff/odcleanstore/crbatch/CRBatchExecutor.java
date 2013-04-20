@@ -119,7 +119,7 @@ public class CRBatchExecutor {
             boolean checkMaxOutputTriples = config.getMaxOutputTriples() != null && config.getMaxOutputTriples() >= 0;
             long maxOutputTriples = checkMaxOutputTriples ? config.getMaxOutputTriples() : -1;
             long outputTriples = 0;
-
+            long inputTriples = 0;
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
             quadLoader = createQuadLoader(dataSources, alternativeURINavigator);
             while (queuedSubjects.hasNext()) {
@@ -134,6 +134,7 @@ public class CRBatchExecutor {
 
                 // Load quads for the given subject
                 Collection<Statement> quads = getQuads(quadLoader, canonicalURI);
+                inputTriples += quads.size();
 
                 // Resolve conflicts
                 Collection<CRQuad> resolvedQuads = conflictResolver.resolveConflicts(quads);
@@ -156,7 +157,7 @@ public class CRBatchExecutor {
                     writer.writeCRQuads(resolvedQuads.iterator());
                 }
             }
-            LOG.info(String.format("Written %,d resolved quads", outputTriples));
+            LOG.info(String.format("Processed %,d quads which were resolved to %,d output quads.", inputTriples, outputTriples));
 
             writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
             writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes(), ValueFactoryImpl.getInstance());
