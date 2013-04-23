@@ -170,6 +170,16 @@ public class CRBatchExecutor {
                     Iterator<Statement> resolvedTriplesIterator = crQuadsAsStatements(resolvedQuads.iterator());
                     writer.write(resolvedTriplesIterator);
                 }
+                
+                // Somehow helps Virtuoso release connections.
+                // Without call to Thread.sleep(), application may fail with
+                // "No buffer space available (maximum connections reached?)"
+                // exception for too many named graphs.
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
             }
             LOG.info(String.format("Written %,d resolved quads", outputTriples));
             

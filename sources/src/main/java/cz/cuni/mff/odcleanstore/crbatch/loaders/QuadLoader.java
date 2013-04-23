@@ -16,7 +16,6 @@ import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQueryResult;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,7 +130,6 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
             + "\n }";
 
     private final AlternativeURINavigator alternativeURINavigator;
-    private RepositoryConnection connection;
 
     /**
      * Creates a new instance.
@@ -202,9 +200,10 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
         final String graphVar = VAR_PREFIX + "g";
 
         long startTime = System.currentTimeMillis();
-        RepositoryConnection connection = getConnection();
-        TupleQueryResult resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery).evaluate();
+        RepositoryConnection connection = getRepository().getConnection();
+        TupleQueryResult resultSet = null;
         try {
+            resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery).evaluate();
             LOG.trace("CR-batch: Quads query took {} ms", System.currentTimeMillis() - startTime);
 
             ValueFactory valueFactory = getRepository().getValueFactory();
@@ -218,27 +217,14 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
                 quads.add(quad);
             }
         } finally {
-            resultSet.close();
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            connection.close();
         }
-    }
-    
-    private RepositoryConnection getConnection() throws RepositoryException {
-        if (connection == null) {
-            connection = getRepository().getConnection();
-        }
-        return connection;
     }
     
     @Override
     public void close() throws IOException {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (RepositoryException e) {
-                throw new IOException(e);
-            } finally {
-                connection = null;
-            }
-        }
     }
 }
