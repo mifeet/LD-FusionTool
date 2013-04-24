@@ -151,6 +151,7 @@ public class QuadLoader extends RepositoryLoaderBase implements Closeable {
      * @throws CRBatchException error
      */
     public Collection<Statement> getQuadsForURI(String uri) throws CRBatchException {
+        uri = uri.trim(); // issue #2 hotfix
         long startTime = System.currentTimeMillis();
         List<Statement> result = new ArrayList<Statement>();
         try {
