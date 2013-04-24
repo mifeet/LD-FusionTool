@@ -8,6 +8,7 @@ import java.util.Map;
 import org.openrdf.repository.Repository;
 
 import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.crbatch.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 
@@ -21,14 +22,17 @@ public final class DataSourceImpl implements DataSource {
     private final SparqlRestriction namedGraphRestriction;
     private final SparqlRestriction metadataGraphRestriction;
     private final String label;
+    private final EnumDataSourceType type;
 
     private DataSourceImpl(Repository repository, Map<String, String> prefixes,
-            SparqlRestriction namedGraphRestriction, SparqlRestriction metadataGraphRestriction, String label) {
+            SparqlRestriction namedGraphRestriction, SparqlRestriction metadataGraphRestriction, String label,
+            EnumDataSourceType type) {
         this.repository = repository;
         this.prefixes = prefixes;
         this.namedGraphRestriction = namedGraphRestriction;
         this.metadataGraphRestriction = metadataGraphRestriction;
         this.label = label;
+        this.type = type;
     }
 
     /**
@@ -50,7 +54,8 @@ public final class DataSourceImpl implements DataSource {
                 prefixes,
                 config.getNamedGraphRestriction(),
                 config.getMetadataGraphRestriction(),
-                label);
+                label,
+                config.getType());
     }
 
     @Override
@@ -81,5 +86,10 @@ public final class DataSourceImpl implements DataSource {
     @Override
     public String toString() {
         return getName();
+    }
+
+    @Override
+    public EnumDataSourceType getType() {
+        return type;
     }
 }

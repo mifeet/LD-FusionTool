@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.openrdf.repository.Repository;
 
+import cz.cuni.mff.odcleanstore.crbatch.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 
 /**
@@ -44,4 +45,10 @@ public interface DataSource {
      * @return label
      */
     String getName();
+    
+    /**
+     * Returns type of the data source.
+     * @return type of the data source
+     */
+    EnumDataSourceType getType();
 }

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.crbatch.DataSource;
+import cz.cuni.mff.odcleanstore.crbatch.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchErrorCodes;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -177,6 +178,14 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
             }
         } finally {
             resultSet.close();
+            if (dataSource.getType() == EnumDataSourceType.VIRTUOSO) {
+                // Issue #1 fix ("Too many open statements") - Virtuoso doesn't release resources properly
+                try {
+                    closeConnection();
+                } catch (RepositoryException e) {
+                    // ignore
+                }
+            }
         }
     }
     
@@ -186,17 +195,23 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
         }
         return connection;
     }
-    
-    @Override
-    public void close() throws IOException {
+
+    private void closeConnection() throws RepositoryException {
         if (connection != null) {
             try {
                 connection.close();
-            } catch (RepositoryException e) {
-                throw new IOException(e);
             } finally {
                 connection = null;
             }
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            closeConnection();
+        } catch (RepositoryException e) {
+            throw new IOException(e);
         }
     }
 }

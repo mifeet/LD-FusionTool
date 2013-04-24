@@ -31,15 +31,12 @@ import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfig;
 import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfigImpl;
-import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
-import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
-import cz.cuni.mff.odcleanstore.conflictresolution.NamedGraphMetadataMap;
+import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMapping;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.crbatch.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
 import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
@@ -90,6 +87,7 @@ public class CRBatchExecutor {
         UriCollection queuedSubjects = null;
         List<CloseableRDFWriter> rdfWriters = null;
         Collection<DataSource> dataSources = getDataSources(config.getDataSources(), config.getPrefixes());
+        boolean hasVirtuosoSource = hasVirtuosoSource(config.getDataSources());
         try {
             // Load source named graphs metadata
             NamedGraphMetadataMap namedGraphsMetadata = getMetadata(dataSources);
@@ -156,6 +154,8 @@ public class CRBatchExecutor {
                 for (CloseableRDFWriter writer : rdfWriters) {
                     writer.writeCRQuads(resolvedQuads.iterator());
                 }
+                
+                fixVirtuosoOpenedStatements(hasVirtuosoSource);
             }
             LOG.info(String.format("Processed %,d quads which were resolved to %,d output quads.", inputTriples, outputTriples));
 
@@ -457,6 +457,28 @@ public class CRBatchExecutor {
         } finally {
             for (CloseableRDFWriter writer : writers) {
                 writer.close();
+            }
+        }
+    }
+
+    private boolean hasVirtuosoSource(List<DataSourceConfig> sources) {
+        for (DataSourceConfig sourceConfig : sources) {
+            if (sourceConfig.getType() == EnumDataSourceType.VIRTUOSO) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private void fixVirtuosoOpenedStatements(boolean hasVirtuosoSource) {
+        if (hasVirtuosoSource) {
+            // Somehow helps Virtuoso release connections. Without call to Thread.sleep(),
+            // application may fail with "No buffer space available (maximum connections reached?)"
+            // exception for too many named graphs.
+            try {
+                Thread.sleep(2);
+            } catch (InterruptedException e) {
+                // ignore
             }
         }
     }
