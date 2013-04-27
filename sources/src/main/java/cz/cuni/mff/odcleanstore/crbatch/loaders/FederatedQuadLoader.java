@@ -1,6 +1,5 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -54,18 +53,18 @@ public class FederatedQuadLoader implements QuadLoader {
     }
 
     @Override
-    public void close() throws IOException {
-        IOException exception = null;
+    public void close() throws CRBatchException {
+        CRBatchException exception = null;
         for (QuadLoader loader : quadLoaders) {
             try {
                 loader.close();
-            } catch (IOException e) {
+            } catch (CRBatchException e) {
                 exception = e;
             }
         }
+        quadLoaders.clear();
         if (exception != null) {
             throw exception;
         }
-        quadLoaders.clear();
     }
 }

@@ -11,21 +11,22 @@ import java.util.List;
 import java.util.Map;
 
 import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationType;
-import cz.cuni.mff.odcleanstore.crbatch.config.xml.AggregationXml;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.ConfigXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.ConflictResolutionXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.DataSourceXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.OutputXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.ParamXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.PrefixXml;
+import cz.cuni.mff.odcleanstore.crbatch.config.xml.PropertyResolutionStrategyXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.PropertyXml;
+import cz.cuni.mff.odcleanstore.crbatch.config.xml.ResolutionStrategyXml;
 import cz.cuni.mff.odcleanstore.crbatch.config.xml.RestrictionXml;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
@@ -38,6 +39,8 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
  * @author Jan Michelfeit
  */
 public final class ConfigReader {
+    private static final ValueFactory VALUE_FACTORY = ValueFactoryImpl.getInstance();
+    
     /**
      * Parses the given configuration file and produces returns the contained configuration as an {@link Config} instance.
      * @param configFile configuration XMl file
@@ -87,10 +90,15 @@ public final class ConfigReader {
         }
         
         // Conflict resolution settings
+        NamespacePrefixExpander prefixExpander = new NamespacePrefixExpander(config.getPrefixes());
         if (configXml.getConflictResolution() != null) {
-            config.setAggregationSpec(extractAggregationSpec(configXml.getConflictResolution()));
-        } else {
-            config.setAggregationSpec(new AggregationSpec());
+            ConflictResolutionXml crXml = configXml.getConflictResolution();
+            if (crXml.getDefaultResolutionStrategy() != null) {
+                config.setDefaultResolutionStrategy(extractResolutionStrategy(crXml.getDefaultResolutionStrategy()));
+            } 
+            config.setPropertyResolutionStrategies(extractPropertyResolutionStrategies(
+                    crXml.getPropertyResolutionStrategies(),
+                    prefixExpander));
         }
 
         // Outputs
@@ -100,11 +108,43 @@ public final class ConfigReader {
         }
         config.setOutputs(outputs);
         
-        // Expand prefixes in CR settings
-        NamespacePrefixExpander prefixExpander = new NamespacePrefixExpander(config.getPrefixes());
-        config.setAggregationSpec(prefixExpander.expandPropertyNames(config.getAggregationSpec()));
-
         return config;
+    }
+
+    /**
+     * @param propertyResolutionStrategies
+     * @param prefixExpander
+     * @return
+     * @throws InvalidInputException
+     */
+    private Map<URI, ResolutionStrategy> extractPropertyResolutionStrategies(
+            List<PropertyResolutionStrategyXml> propertyResolutionStrategies,
+            NamespacePrefixExpander prefixExpander)
+            throws InvalidInputException {
+        Map<URI, ResolutionStrategy> result = new HashMap<URI, ResolutionStrategy>(propertyResolutionStrategies.size());
+        for (PropertyResolutionStrategyXml strategyXml : propertyResolutionStrategies) {
+            ResolutionStrategy strategy = extractResolutionStrategy(strategyXml);
+            for (PropertyXml propertyXml : strategyXml.getProperties()) {
+                URI uri = VALUE_FACTORY.createURI(prefixExpander.expandPrefix(propertyXml.getId()));
+                result.put(uri, strategy);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param strategyXml
+     * @return
+     */
+    private ResolutionStrategy extractResolutionStrategy(ResolutionStrategyXml strategyXml) {
+        ResolutionStrategyImpl strategy = new ResolutionStrategyImpl();
+        strategy.setResolutionFunctionName(strategyXml.getResolutionFunctionName());
+        strategy.setCardinality(strategyXml.getCardinality());
+        strategy.setAggregationErrorStrategy(strategyXml.getAggregationErrorStrategy());
+        if (strategyXml.getParams() != null) {
+            strategy.setParams(extractAllParams(strategyXml.getParams()));
+        }
+        return strategy;
     }
 
     private String extractParamByName(List<ParamXml> params, String name) {
@@ -115,6 +155,14 @@ public final class ConfigReader {
         }
         return null;
     }
+    
+    private Map<String, String> extractAllParams(List<ParamXml> params) {
+        Map<String, String> result = new HashMap<String, String>(params.size());
+        for (ParamXml param : params) {
+            result.put(param.getName(), param.getValue());
+        }
+        return result;
+    }
 
     private Map<String, String> extractPrefixes(List<PrefixXml> prefixes) {
         Map<String, String> prefixMap = new HashMap<String, String>();
@@ -122,62 +170,6 @@ public final class ConfigReader {
             prefixMap.put(prefixXml.getId(), prefixXml.getNamespace());
         }
         return prefixMap;
-    }
-
-    private AggregationSpec extractAggregationSpec(ConflictResolutionXml conflictResolutionXml) throws InvalidInputException {
-        AggregationSpec aggregationSpec = new AggregationSpec();
-        if (conflictResolutionXml.getDefaultAggregation() != null) {
-            extractAggregationDefaultSettings(conflictResolutionXml.getDefaultAggregation(), aggregationSpec);
-        }
-        if (conflictResolutionXml.getPropertyAggregations() != null) {
-            for (AggregationXml aggregationSetting : conflictResolutionXml.getPropertyAggregations()) {
-                extractAggregationPropertySettings(aggregationSetting, aggregationSpec);
-            }
-        }
-        return aggregationSpec;
-    }
-
-    private void extractAggregationDefaultSettings(List<ParamXml> defaultSettings, AggregationSpec aggregationSpec)
-            throws InvalidInputException {
-
-        for (ParamXml defaultParam : defaultSettings) {
-            if ("defaultMultivalue".equalsIgnoreCase(defaultParam.getName())) {
-                boolean value = Boolean.parseBoolean(defaultParam.getValue());
-                aggregationSpec.setDefaultMultivalue(value);
-            } else if ("defaultAggregation".equalsIgnoreCase(defaultParam.getName())) {
-                try {
-                    EnumAggregationType value = EnumAggregationType.valueOf(defaultParam.getValue());
-                    aggregationSpec.setDefaultAggregation(value);
-                } catch (Exception e) {
-                    throw new InvalidInputException("Invalid value " + defaultParam.getValue()
-                            + " for default aggregation method", e);
-                }
-            } else if ("aggregationErrorStrategy".equalsIgnoreCase(defaultParam.getName())) {
-                try {
-                    EnumAggregationErrorStrategy value = EnumAggregationErrorStrategy.valueOf(defaultParam.getValue());
-                    aggregationSpec.setErrorStrategy(value);
-                } catch (Exception e) {
-                    throw new InvalidInputException("Invalid value " + defaultParam.getValue()
-                            + " for aggregation error strategy", e);
-                }
-            } else {
-                throw new InvalidInputException("Unknown parameter " + defaultParam.getName()
-                        + " used as default conflict resoulution setting");
-            }
-        }
-    }
-
-    private void extractAggregationPropertySettings(AggregationXml aggregationSetting, AggregationSpec aggregationSpec) {
-        if (aggregationSetting.getType() != null) {
-            for (PropertyXml property : aggregationSetting.getProperties()) {
-                aggregationSpec.getPropertyAggregations().put(property.getId(), aggregationSetting.getType());
-            }
-        }
-        if (aggregationSetting.getMultivalue() != null) {
-            for (PropertyXml property : aggregationSetting.getProperties()) {
-                aggregationSpec.getPropertyMultivalue().put(property.getId(), aggregationSetting.getMultivalue());
-            }
-        }
     }
 
     private void extractDataProcessingParams(List<ParamXml> params, ConfigImpl config) throws InvalidInputException {

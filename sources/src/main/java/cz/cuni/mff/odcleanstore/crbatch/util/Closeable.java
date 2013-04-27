@@ -3,18 +3,18 @@
  */
 package cz.cuni.mff.odcleanstore.crbatch.util;
 
-import java.io.IOException;
 
 
 /**
  * A resource that can be (and should be) closed after it is no longer needed.
+ * @param <X> type of exception thrown by interface methods
  * @author Jan Michelfeit
  */
-public interface Closeable {
+public interface Closeable<X extends Exception> {
     /**
      * Releases any resources associated with this object.
      * If the object is already closed then invoking this method has no effect.
-     * @throws IOException I/O error
+     * @throws X exception
      */
-    void close() throws IOException;
+    void close() throws X;
 }

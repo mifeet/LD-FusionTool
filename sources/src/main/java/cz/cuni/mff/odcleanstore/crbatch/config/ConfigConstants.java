@@ -56,11 +56,6 @@ public final class ConfigConstants {
     public static final double SCORE_IF_UNKNOWN = 1;
     
     /**
-     * Weight of the named graph score.
-     */
-    public static final double NAMED_GRAPH_SCORE_WEIGHT = 0.8;
-    
-    /**
      * Weight of the publisher score.
      */
     public static final double PUBLISHER_SCORE_WEIGHT = 0.2;

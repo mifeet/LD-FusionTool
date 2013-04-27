@@ -10,7 +10,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
+import org.openrdf.model.URI;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 
 /**
  * Container of configuration values.
@@ -24,7 +27,9 @@ public class ConfigImpl implements Config {
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
     private Map<String, String> prefixes = new HashMap<String, String>();
-    private AggregationSpec aggregationSpec;
+    private ResolutionStrategy defaultResolutionStrategy = new ResolutionStrategyImpl();
+    private Map<URI, ResolutionStrategy> propertyResolutionStrategies = new HashMap<URI, ResolutionStrategy>();
+    
     private File canonicalURIsOutputFile = 
             new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
     private File canonicalURIsInputFile;
@@ -97,16 +102,31 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public AggregationSpec getAggregationSpec() {
-        return aggregationSpec;
+    public
+    ResolutionStrategy getDefaultResolutionStrategy() {
+        return defaultResolutionStrategy;
     }
     
     /**
-     * Sets aggregation settings for conflict resolution.
-     * @param aggregationSpec aggregation settings
+     * Setter for value of {@link #getDefaultResolutionStrategy()}.
+     * @param strategy conflict resolution strategy
      */
-    public void setAggregationSpec(AggregationSpec aggregationSpec) {
-        this.aggregationSpec = aggregationSpec;
+    public void setDefaultResolutionStrategy(ResolutionStrategy strategy) {
+        this.defaultResolutionStrategy = strategy;
+    }
+    
+    @Override
+    public
+    Map<URI, ResolutionStrategy> getPropertyResolutionStrategies() {
+        return propertyResolutionStrategies;
+    }
+    
+    /**
+     * Setter for value of {@link #getDefaultResolutionStrategy()}.
+     * @param strategies per-property conflict resolution strategies
+     */
+    public void setPropertyResolutionStrategies(Map<URI, ResolutionStrategy> strategies) {
+        this.propertyResolutionStrategies = strategies;
     }
     
     @Override
@@ -174,11 +194,6 @@ public class ConfigImpl implements Config {
     @Override
     public Double getScoreIfUnknown() {
         return ConfigConstants.SCORE_IF_UNKNOWN;
-    }
-
-    @Override
-    public Double getNamedGraphScoreWeight() {
-        return ConfigConstants.NAMED_GRAPH_SCORE_WEIGHT;
     }
 
     @Override

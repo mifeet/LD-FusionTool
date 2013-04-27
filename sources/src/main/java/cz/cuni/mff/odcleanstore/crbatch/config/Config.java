@@ -4,7 +4,9 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
+import org.openrdf.model.URI;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 
 /**
  * Encapsulation of CR-batch configuration.
@@ -37,11 +39,17 @@ public interface Config {
     List<Output> getOutputs();
 
     /**
-     * Aggregation settings for conflict resolution.
-     * URIs in the settings must have expanded namespace prefixes.
-     * @return aggregation settings
+     * Default conflict resolution strategy.
+     * @return resolution strategy
      */
-    AggregationSpec getAggregationSpec();
+    ResolutionStrategy getDefaultResolutionStrategy();
+    
+    /**
+     * Conflicts resolution strategy settings for individual properties.
+     * Key is the property URI (must have expanded namespace prefix), value the actual strategy.
+     * @return map of resolution strategies indexed by property URIs 
+     */
+    Map<URI, ResolutionStrategy> getPropertyResolutionStrategies();
     
     /**
      * Database queries timeout.
@@ -62,12 +70,6 @@ public interface Config {
      * @return default score
      */
     Double getScoreIfUnknown();
-
-    /**
-     * Weight of the named graph score.
-     * @return named graph score weight
-     */
-    Double getNamedGraphScoreWeight();
 
     /**
      * Weight of the publisher score.

@@ -15,7 +15,7 @@ import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFWriterFactory;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 
 
 /**
@@ -51,9 +51,9 @@ public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter
     }
     
     @Override
-    public final void writeCRQuads(Iterator<CRQuad> resolvedQuads) throws IOException {
-        while (resolvedQuads.hasNext()) {
-            write(resolvedQuads.next().getQuad());
+    public final void writeCRQuads(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
+        while (resolvedStatements.hasNext()) {
+            write(resolvedStatements.next().getStatement());
         } 
     }
     

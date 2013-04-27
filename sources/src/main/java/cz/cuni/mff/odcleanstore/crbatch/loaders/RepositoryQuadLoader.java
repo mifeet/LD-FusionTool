@@ -1,6 +1,5 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -207,11 +206,11 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() throws CRBatchException {
         try {
-            closeConnection();
+        closeConnection();
         } catch (RepositoryException e) {
-            throw new IOException(e);
+            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
         }
     }
 }

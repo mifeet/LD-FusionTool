@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import org.openrdf.rio.RDFWriterFactory;
 import org.openrdf.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 
 /**
  * Implementation of {@link CloseableRDFWriter} for RDF/XML output format.
@@ -29,7 +29,7 @@ public class RdfXmlCloseableRDFWriter extends SesameCloseableRDFWriterBase {
     }
 
     @Override
-    public void write(CRQuad crQuad) throws IOException {
-        write(crQuad.getQuad());
+    public void write(ResolvedStatement resolvedStatement) throws IOException {
+        write(resolvedStatement.getStatement());
     }
 }

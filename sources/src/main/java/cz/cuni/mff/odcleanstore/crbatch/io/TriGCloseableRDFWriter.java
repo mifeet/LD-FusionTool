@@ -6,13 +6,14 @@ package cz.cuni.mff.odcleanstore.crbatch.io;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.RDFWriterFactory;
 import org.openrdf.rio.trig.TriGWriterFactory;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
@@ -39,19 +40,19 @@ public class TriGCloseableRDFWriter extends SesameCloseableRDFWriterBase {
     }
     
     @Override
-    public void write(CRQuad crQuad) throws IOException {
-        write(crQuad.getQuad());
+    public void write(ResolvedStatement resolvedStatement) throws IOException {
+        write(resolvedStatement.getStatement());
         if (metadataGraphURI != null) {
             write(VALUE_FACTORY.createStatement(
-                    crQuad.getQuad().getContext(),
+                    resolvedStatement.getStatement().getContext(),
                     QUALITY_PROPERTY,
-                    VALUE_FACTORY.createLiteral(crQuad.getQuality()),
+                    VALUE_FACTORY.createLiteral(resolvedStatement.getConfidence()),
                     metadataGraphURI));
-            for (String sourceNamedGraph : crQuad.getSourceNamedGraphURIs()) {
+            for (Resource sourceNamedGraph : resolvedStatement.getSourceGraphNames()) {
                 write(VALUE_FACTORY.createStatement(
-                        crQuad.getQuad().getContext(),
+                        resolvedStatement.getStatement().getContext(),
                         SOURCE_GRAPH_PROPERTY,
-                        VALUE_FACTORY.createURI(sourceNamedGraph),
+                        sourceNamedGraph,
                         metadataGraphURI));
             }
         }

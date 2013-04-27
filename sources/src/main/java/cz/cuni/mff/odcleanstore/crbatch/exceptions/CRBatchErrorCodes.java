@@ -26,5 +26,6 @@ public final class CRBatchErrorCodes {
     public static final int REPOSITORY_INIT_FILE = 20;
     public static final int REPOSITORY_ACCESS = 21;
     public static final int REPOSITORY_INIT_SPARQL = 22;
+    public static final int REPOSITORY_CLOSE = 23;
     // CHECKSTYLE:ON
 }

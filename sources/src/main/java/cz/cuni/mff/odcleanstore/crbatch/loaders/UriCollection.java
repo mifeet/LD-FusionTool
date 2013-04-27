@@ -1,5 +1,7 @@
 package cz.cuni.mff.odcleanstore.crbatch.loaders;
 
+import java.io.IOException;
+
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
 
@@ -7,7 +9,7 @@ import cz.cuni.mff.odcleanstore.crbatch.util.Closeable;
  * Simple closeable collection of URIs.
  * @author Jan Michelfeit
  */
-public interface UriCollection extends Closeable {
+public interface UriCollection extends Closeable<IOException> {
     /**
      * Returns {@code true} if the collection has more elements.
      * @return {@code true} if the collection has more elements

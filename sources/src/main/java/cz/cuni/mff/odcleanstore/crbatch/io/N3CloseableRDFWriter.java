@@ -9,7 +9,8 @@ import java.io.OutputStream;
 import org.openrdf.rio.RDFWriterFactory;
 import org.openrdf.rio.n3.N3WriterFactory;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+
 
 /**
  * Implementation of {@link CloseableRDFWriter} for N3 output format.
@@ -27,7 +28,7 @@ public class N3CloseableRDFWriter extends SesameCloseableRDFWriterBase {
     }
     
     @Override
-    public void write(CRQuad crQuad) throws IOException {
-        write(crQuad.getQuad());
+    public void write(ResolvedStatement resolvedStatement) throws IOException {
+        write(resolvedStatement.getStatement());
     }
 }

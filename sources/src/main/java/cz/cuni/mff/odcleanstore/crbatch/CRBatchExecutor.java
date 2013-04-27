@@ -13,7 +13,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,19 +20,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.TreeModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfig;
-import cz.cuni.mff.odcleanstore.configuration.ConflictResolutionConfigImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
+import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
+import cz.cuni.mff.odcleanstore.conflictresolution.confidence.SourceConfidenceCalculator;
+import cz.cuni.mff.odcleanstore.conflictresolution.confidence.impl._ODCSSourceConfidenceCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.EnumDataSourceType;
@@ -49,7 +54,7 @@ import cz.cuni.mff.odcleanstore.crbatch.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.BufferSubjectsCollection;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.FederatedQuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.FederatedSeedSubjectsLoader;
-import cz.cuni.mff.odcleanstore.crbatch.loaders.NamedGraphMetadataLoader;
+import cz.cuni.mff.odcleanstore.crbatch.loaders.MetadataLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.QuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.RepositoryQuadLoader;
 import cz.cuni.mff.odcleanstore.crbatch.loaders.SameAsLinkLoader;
@@ -90,7 +95,7 @@ public class CRBatchExecutor {
         boolean hasVirtuosoSource = hasVirtuosoSource(config.getDataSources());
         try {
             // Load source named graphs metadata
-            NamedGraphMetadataMap namedGraphsMetadata = getMetadata(dataSources);
+            Model metadata = getMetadata(dataSources);
 
             // Load & resolve owl:sameAs links
             URIMappingIterable uriMapping = getURIMapping(dataSources, config);
@@ -108,7 +113,7 @@ public class CRBatchExecutor {
             }
 
             // Initialize CR
-            ConflictResolver conflictResolver = createConflictResolver(config, namedGraphsMetadata, uriMapping);
+            ConflictResolver conflictResolver = createConflictResolver(config, metadata, uriMapping);
 
             // Initialize output writer
             rdfWriters = createRDFWriters(config.getOutputs(), config.getPrefixes());
@@ -135,7 +140,7 @@ public class CRBatchExecutor {
                 inputTriples += quads.size();
 
                 // Resolve conflicts
-                Collection<CRQuad> resolvedQuads = conflictResolver.resolveConflicts(quads);
+                Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(quads);
                 LOG.info("Resolved {} quads for URI <{}> resulting in {} quads",
                         new Object[] { quads.size(), canonicalURI, resolvedQuads.size() });
 
@@ -222,10 +227,10 @@ public class CRBatchExecutor {
         return dataSources;
     }
     
-    private NamedGraphMetadataMap getMetadata(Collection<DataSource> dataSources) throws CRBatchException {
-        NamedGraphMetadataMap metadata = new NamedGraphMetadataMap();
+    private Model getMetadata(Collection<DataSource> dataSources) throws CRBatchException {
+        Model metadata = new TreeModel();
         for (DataSource source : dataSources) {
-            NamedGraphMetadataLoader loader = new NamedGraphMetadataLoader(source);
+            MetadataLoader loader = new MetadataLoader(source);
             loader.loadNamedGraphsMetadata(metadata);
         }
         return metadata;
@@ -233,7 +238,9 @@ public class CRBatchExecutor {
     
     private URIMappingIterable getURIMapping(Collection<DataSource> dataSources, Config config)
             throws CRBatchException, IOException {
-        Set<String> preferredURIs = getPreferredURIs(config.getAggregationSpec(), config.getCanonicalURIsInputFile());
+        Set<String> preferredURIs = getPreferredURIs(
+                config.getPropertyResolutionStrategies().keySet(), 
+                config.getCanonicalURIsInputFile());
         URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
         for (DataSource source : dataSources) {
             SameAsLinkLoader loader = new SameAsLinkLoader(source);
@@ -308,30 +315,36 @@ public class CRBatchExecutor {
     }
     
     private static ConflictResolver createConflictResolver(
-            Config config, NamedGraphMetadataMap namedGraphsMetadata, URIMappingIterable uriMapping) {
+            Config config, Model metadata, URIMappingIterable uriMapping) {
 
-        ConflictResolutionConfig crConfig = new ConflictResolutionConfigImpl(
+        SourceConfidenceCalculator sourceConfidence = new _ODCSSourceConfidenceCalculator(
+                config.getScoreIfUnknown(), 
+                config.getPublisherScoreWeight());
+        ResolutionFunctionRegistry registry = ResolutionFunctionRegistry.createInitializedWithParams(
+                sourceConfidence, 
                 config.getAgreeCoeficient(),
-                config.getScoreIfUnknown(),
-                config.getNamedGraphScoreWeight(),
-                config.getPublisherScoreWeight(),
-                config.getMaxDateDifference());
+                new DistanceMeasureImpl());
 
-        ConflictResolverFactory conflictResolverFactory = new ConflictResolverFactory(
-                config.getResultDataURIPrefix() + ODCSInternal.queryResultGraphUriInfix,
-                crConfig,
-                new AggregationSpec());
-
-        ConflictResolver conflictResolver = conflictResolverFactory.createResolver(
-                config.getAggregationSpec(),
-                namedGraphsMetadata,
-                uriMapping);
-
+        ConflictResolver conflictResolver = ConflictResolverFactory.configure()
+                .setResolutionFunctionRegistry(registry)
+                .setResolvedGraphsURIPrefix(config.getResultDataURIPrefix() + ODCSInternal.queryResultGraphUriInfix)
+                .setMetadata(metadata)
+                .setURIMapping(uriMapping)
+                .setDefaultResolutionStrategy(config.getDefaultResolutionStrategy())
+                .setPropertyResolutionStrategies(config.getPropertyResolutionStrategies())
+                .create();
+        
+        // TODO: config.getMaxTimeDifference()
+                
         return conflictResolver;
     }
 
-    private static Set<String> getPreferredURIs(AggregationSpec aggregationSpec, File canonicalURIsInputFile) throws IOException {
-        Set<String> preferredURIs = getSettingsPreferredURIs(aggregationSpec);
+    private static Set<String> getPreferredURIs(Set<URI> settingsPreferredURIs, File canonicalURIsInputFile)
+            throws IOException {
+        Set<String> preferredURIs = new HashSet<String>(settingsPreferredURIs.size());
+        for (URI uri : settingsPreferredURIs) {
+            preferredURIs.add(uri.stringValue());
+        }
         if (canonicalURIsInputFile != null) {
             if (canonicalURIsInputFile.isFile() && canonicalURIsInputFile.canRead()) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(
@@ -351,25 +364,11 @@ public class CRBatchExecutor {
         return preferredURIs;
     }
 
-    private static Set<String> getSettingsPreferredURIs(AggregationSpec aggregationSpec) {
-        Set<String> aggregationProperties = aggregationSpec.getPropertyAggregations() == null
-                ? Collections.<String>emptySet()
-                : aggregationSpec.getPropertyAggregations().keySet();
-        Set<String> multivalueProperties = aggregationSpec.getPropertyMultivalue() == null
-                ? Collections.<String>emptySet()
-                : aggregationSpec.getPropertyMultivalue().keySet();
-
-        Set<String> preferredURIs = new HashSet<String>(
-                aggregationProperties.size() + multivalueProperties.size());
-        preferredURIs.addAll(aggregationProperties);
-        preferredURIs.addAll(multivalueProperties);
-        return preferredURIs;
-    }
-    
-    private void addDiscoveredObjects(UriCollection queuedSubjects, Collection<CRQuad> resolvedQuads,
+    private void addDiscoveredObjects(UriCollection queuedSubjects, Collection<ResolvedStatement
+            > resolvedStatements,
             URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
-        for (CRQuad crQuad : resolvedQuads) {
-            String uri = CRBatchUtils.getNodeURI(crQuad.getQuad().getObject());
+        for (ResolvedStatement resolvedStatement : resolvedStatements) {
+            String uri = CRBatchUtils.getNodeURI(resolvedStatement.getStatement().getObject());
             if (uri == null) {
                 // a literal or something, skip it
                 continue;

@@ -14,7 +14,7 @@ import org.openrdf.model.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.CRQuad;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 
 /**
@@ -97,7 +97,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     }
     
     @Override
-    public void writeCRQuads(Iterator<CRQuad> resolvedQuads) throws IOException {
+    public void writeCRQuads(Iterator<ResolvedStatement> resolvedQuads) throws IOException {
         while (resolvedQuads.hasNext()) {
             write(resolvedQuads.next());
         } 
@@ -117,7 +117,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     }
     
     @Override
-    public void write(CRQuad crQuad) throws IOException {
+    public void write(ResolvedStatement crQuad) throws IOException {
         getRDFWriter().write(crQuad);
         checkSizeExceeded();
     }
