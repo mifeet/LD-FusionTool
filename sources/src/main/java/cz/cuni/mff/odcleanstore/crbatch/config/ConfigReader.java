@@ -111,12 +111,6 @@ public final class ConfigReader {
         return config;
     }
 
-    /**
-     * @param propertyResolutionStrategies
-     * @param prefixExpander
-     * @return
-     * @throws InvalidInputException
-     */
     private Map<URI, ResolutionStrategy> extractPropertyResolutionStrategies(
             List<PropertyResolutionStrategyXml> propertyResolutionStrategies,
             NamespacePrefixExpander prefixExpander)
@@ -132,10 +126,6 @@ public final class ConfigReader {
         return result;
     }
 
-    /**
-     * @param strategyXml
-     * @return
-     */
     private ResolutionStrategy extractResolutionStrategy(ResolutionStrategyXml strategyXml) {
         ResolutionStrategyImpl strategy = new ResolutionStrategyImpl();
         strategy.setResolutionFunctionName(strategyXml.getResolutionFunctionName());

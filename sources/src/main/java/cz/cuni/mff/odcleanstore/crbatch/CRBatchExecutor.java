@@ -36,7 +36,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.confidence.SourceConfidenceCalculator;
-import cz.cuni.mff.odcleanstore.conflictresolution.confidence.impl._ODCSSourceConfidenceCalculator;
+import cz.cuni.mff.odcleanstore.conflictresolution.confidence.impl.ODCSSourceConfidenceCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
@@ -317,7 +317,7 @@ public class CRBatchExecutor {
     private static ConflictResolver createConflictResolver(
             Config config, Model metadata, URIMappingIterable uriMapping) {
 
-        SourceConfidenceCalculator sourceConfidence = new _ODCSSourceConfidenceCalculator(
+        SourceConfidenceCalculator sourceConfidence = new ODCSSourceConfidenceCalculator(
                 config.getScoreIfUnknown(), 
                 config.getPublisherScoreWeight());
         ResolutionFunctionRegistry registry = ResolutionFunctionRegistry.createInitializedWithParams(
