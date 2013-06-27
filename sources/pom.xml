@@ -8,7 +8,7 @@
 	<groupId>cz.cuni.mff.odcleanstore.cr</groupId>
 	<artifactId>odcs-cr-batch</artifactId>
 	<name>Conflict Resolution - standalone CR batch</name>
-	<version>0.5.2</version>
+	<version>0.5.3</version>
 
 	<description>Batch processing tool based on Conflict Resolution component from ODCleanStore.</description>
 	<url>https://github.com/mifeet/cr-batch</url>
@@ -75,8 +75,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.openlinksw</groupId>
-			<artifactId>virt_sesame</artifactId>
-			<version>2.6.10</version>
+            <artifactId>virtuoso-sesame</artifactId>
+            <version>7.0.1</version>
 		</dependency>
 		<!-- Dependency for XML configuration parser -->
 		<dependency>
