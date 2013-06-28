@@ -35,10 +35,10 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
-import cz.cuni.mff.odcleanstore.conflictresolution.confidence.SourceConfidenceCalculator;
-import cz.cuni.mff.odcleanstore.conflictresolution.confidence.impl.ODCSSourceConfidenceCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
+import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
+import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.crbatch.config.EnumDataSourceType;
@@ -317,15 +317,15 @@ public class CRBatchExecutor {
     private static ConflictResolver createConflictResolver(
             Config config, Model metadata, URIMappingIterable uriMapping) {
 
-        SourceConfidenceCalculator sourceConfidence = new ODCSSourceConfidenceCalculator(
+        SourceQualityCalculator sourceConfidence = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(), 
                 config.getPublisherScoreWeight());
-        ResolutionFunctionRegistry registry = ResolutionFunctionRegistry.createInitializedWithParams(
+        ResolutionFunctionRegistry registry = ConflictResolverFactory.createInitializedResolutionFunctionRegistry(
                 sourceConfidence, 
                 config.getAgreeCoeficient(),
                 new DistanceMeasureImpl());
 
-        ConflictResolver conflictResolver = ConflictResolverFactory.configure()
+        ConflictResolver conflictResolver = ConflictResolverFactory.configureResolver()
                 .setResolutionFunctionRegistry(registry)
                 .setResolvedGraphsURIPrefix(config.getResultDataURIPrefix() + ODCSInternal.queryResultGraphUriInfix)
                 .setMetadata(metadata)

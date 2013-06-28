@@ -46,7 +46,7 @@ public class TriGCloseableRDFWriter extends SesameCloseableRDFWriterBase {
             write(VALUE_FACTORY.createStatement(
                     resolvedStatement.getStatement().getContext(),
                     QUALITY_PROPERTY,
-                    VALUE_FACTORY.createLiteral(resolvedStatement.getConfidence()),
+                    VALUE_FACTORY.createLiteral(resolvedStatement.getQuality()),
                     metadataGraphURI));
             for (Resource sourceNamedGraph : resolvedStatement.getSourceGraphNames()) {
                 write(VALUE_FACTORY.createStatement(
