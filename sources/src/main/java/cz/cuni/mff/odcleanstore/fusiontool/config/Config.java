@@ -9,7 +9,7 @@ import org.openrdf.model.URI;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 
 /**
- * Encapsulation of CR-batch configuration.
+ * Encapsulation of ODCS-FusionTool configuration.
  * @author Jan Michelfeit
  */
 public interface Config {

@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CRBatchUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 
 /**
  * {@link CloseableRDFWriter} implementation which splits output across several files with the given maximum size.
@@ -71,7 +71,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
             File file = fileNameGenrator.nextFile();
             LOG.info("Creating a new output file: {}", file.getName());
             
-            CRBatchUtils.ensureParentsExists(file);
+            ODCSFusionToolUtils.ensureParentsExists(file);
             currentOutputStream = new CountingOutputStream(new FileOutputStream(file));
             currentRDFWriter = writerFactory.createRDFWriter(outputFormat, metadataContext, currentOutputStream);
 

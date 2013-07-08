@@ -20,9 +20,9 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 
@@ -101,11 +101,11 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
      * be loaded.
      * @param uri searched subject URI
      * @param quadCollection collection to which the result will be added
-     * @throws CRBatchException error
+     * @throws ODCSFusionToolException error
      * @see DataSource#getNamedGraphRestriction()
      */
     @Override
-    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws CRBatchException {
+    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
 
         SparqlRestriction restriction;
@@ -121,7 +121,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
             try {
                 addQuadsFromQuery(query, quadCollection);
             } catch (OpenRDFException e) {
-                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
+                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
             }
         } else {
             Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
@@ -130,13 +130,13 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
                 try {
                     addQuadsFromQuery(query, quadCollection);
                 } catch (OpenRDFException e) {
-                    throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
+                    throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
                 }
             }
         }
 
         if (LOG.isTraceEnabled()) {
-            LOG.trace("CR-batch: Loaded quads for URI {} from source {} in {} ms", new Object[] {
+            LOG.trace("ODCS-FusionTool: Loaded quads for URI {} from source {} in {} ms", new Object[] {
                     uri, dataSource, System.currentTimeMillis() - startTime });
         }
     }
@@ -163,7 +163,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
         RepositoryConnection connection = getConnection();
         TupleQueryResult resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery).evaluate();
         try {
-            LOG.trace("CR-batch: Quads query took {} ms", System.currentTimeMillis() - startTime);
+            LOG.trace("ODCS-FusionTool: Quads query took {} ms", System.currentTimeMillis() - startTime);
 
             ValueFactory valueFactory = dataSource.getRepository().getValueFactory();
             while (resultSet.hasNext()) {
@@ -206,11 +206,11 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
     }
 
     @Override
-    public void close() throws CRBatchException {
+    public void close() throws ODCSFusionToolException {
         try {
         closeConnection();
         } catch (RepositoryException e) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
         }
     }
 }

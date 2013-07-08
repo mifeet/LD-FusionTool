@@ -10,7 +10,7 @@ import org.openrdf.repository.Repository;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 
 /**
  * Container for RDF {@link Repository} and related settings.
@@ -43,10 +43,10 @@ public final class DataSourceImpl implements DataSource {
      * @param prefixes namespace prefixes for use in queries (specially in restriction patterns)
      * @param repositoryFactory repository factory
      * @return RDF data source
-     * @throws CRBatchException invalid configuration
+     * @throws ODCSFusionToolException invalid configuration
      */
     public static DataSource fromConfig(DataSourceConfig config, Map<String, String> prefixes,
-            RepositoryFactory repositoryFactory) throws CRBatchException {
+            RepositoryFactory repositoryFactory) throws ODCSFusionToolException {
         Repository repository = repositoryFactory.createRepository(config);
         String label = config.getName() != null ? config.getName() : config.getType().toString();
         return new DataSourceImpl(

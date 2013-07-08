@@ -14,10 +14,10 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchQueryException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CRBatchUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
@@ -99,19 +99,19 @@ public class MetadataLoader extends RepositoryLoaderBase {
      * Loads relevant metadata and adds them to the given metadata collection.
      * Metadata are loaded for named graphs containing triples to be processed and metadata graphs.
      * @param metadata named graph metadata where loaded metadata are added
-     * @throws CRBatchException repository error
+     * @throws ODCSFusionToolException repository error
      * @see DataSource#getMetadataGraphRestriction()
      */
-    public void loadNamedGraphsMetadata(Model metadata) throws CRBatchException {
+    public void loadNamedGraphsMetadata(Model metadata) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
         String query = "";
         try {
             SparqlRestriction restriction;
             String unformatedQuery;
-            if (!CRBatchUtils.isRestrictionEmpty(dataSource.getMetadataGraphRestriction())) {
+            if (!ODCSFusionToolUtils.isRestrictionEmpty(dataSource.getMetadataGraphRestriction())) {
                 restriction = dataSource.getMetadataGraphRestriction();
                 unformatedQuery = METADATA_QUERY_METADATA_RESTRICTION;
-            } else if (!CRBatchUtils.isRestrictionEmpty(dataSource.getNamedGraphRestriction())) {
+            } else if (!ODCSFusionToolUtils.isRestrictionEmpty(dataSource.getNamedGraphRestriction())) {
                 restriction = dataSource.getNamedGraphRestriction();
                 unformatedQuery = METADATA_QUERY_SOURCE_RESTRICTION;
             } else {
@@ -124,10 +124,10 @@ public class MetadataLoader extends RepositoryLoaderBase {
                     restriction.getVar());
             loadMetadataInternal(metadata, query);
         } catch (OpenRDFException e) {
-            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_NG_METADATA, query, dataSource.getName(), e);
+            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_NG_METADATA, query, dataSource.getName(), e);
         }
         
-        LOG.debug("CR-batch: Metadata loaded from source {} in {} ms", 
+        LOG.debug("ODCS-FusionTool: Metadata loaded from source {} in {} ms", 
                 dataSource.getName(), System.currentTimeMillis() - startTime);
     }
     
@@ -137,7 +137,7 @@ public class MetadataLoader extends RepositoryLoaderBase {
         GraphQueryResult resultSet = null;
         try {
             resultSet = connection.prepareGraphQuery(QueryLanguage.SPARQL, query).evaluate();
-            LOG.debug("CR-batch: Metadata query took {} ms", System.currentTimeMillis() - startTime);
+            LOG.debug("ODCS-FusionTool: Metadata query took {} ms", System.currentTimeMillis() - startTime);
             while (resultSet.hasNext()) {
                 Statement statement = resultSet.next();
                 metadata.add(statement);

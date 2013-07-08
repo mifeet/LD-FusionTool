@@ -3,10 +3,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
 import cz.cuni.mff.odcleanstore.shared.ODCleanStoreException;
 
 /**
- * A general CR-batch exception.
+ * A general ODCS-FusionTool exception.
  * @author Jan Michelfeit
  */
-public class CRBatchException extends ODCleanStoreException {
+public class ODCSFusionToolException extends ODCleanStoreException {
     private static final long serialVersionUID = 3420323334894817996L;
 
     private final Integer errorCode;
@@ -16,7 +16,7 @@ public class CRBatchException extends ODCleanStoreException {
      * @param errorCode code of the error
      * @param cause the cause
      */
-    public CRBatchException(Integer errorCode, Throwable cause) {
+    public ODCSFusionToolException(Integer errorCode, Throwable cause) {
         super(cause);
         this.errorCode = errorCode;
     }
@@ -27,7 +27,7 @@ public class CRBatchException extends ODCleanStoreException {
      * @param message the detail message
      * @param cause the cause
      */
-    public CRBatchException(Integer errorCode, String message, Throwable cause) {
+    public ODCSFusionToolException(Integer errorCode, String message, Throwable cause) {
         super(message, cause);
         this.errorCode = errorCode;
     }
@@ -37,7 +37,7 @@ public class CRBatchException extends ODCleanStoreException {
      * @param errorCode code of the error
      * @param message the detail message
      */
-    public CRBatchException(Integer errorCode, String message) {
+    public ODCSFusionToolException(Integer errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
     }

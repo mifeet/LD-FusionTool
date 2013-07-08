@@ -20,9 +20,9 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CRBatchUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
@@ -51,7 +51,7 @@ public final class ODCSFusionToolApplication {
     }
     
     private static String getUsage() {
-        return "Usage:\n java -jar odcs-cr-batch-<version>.jar [--verbose] <config file>.xml";
+        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] <config file>.xml";
     }
 
     /**
@@ -94,12 +94,12 @@ public final class ODCSFusionToolApplication {
         }
 
         long startTime = System.currentTimeMillis();
-        System.out.println("Starting conflict resolution batch, this may take a while... \n");
+        System.out.println("Starting conflict resolution, this may take a while... \n");
 
         try {
-            ODCSFusionToolExecutor crBatchExecutor = new ODCSFusionToolExecutor();
-            crBatchExecutor.runCRBatch(config);
-        } catch (CRBatchException e) {
+            ODCSFusionToolExecutor odcsFusionToolExecutor = new ODCSFusionToolExecutor();
+            odcsFusionToolExecutor.runFusionTool(config);
+        } catch (ODCSFusionToolException e) {
             System.err.println("Error:");
             System.err.println("  " + e.getMessage());
             if (e.getCause() != null) {
@@ -122,7 +122,7 @@ public final class ODCSFusionToolApplication {
         final long hourMs = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
         DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
         timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        System.out.printf("CR-batch executed in %d:%s \n",
+        System.out.printf("ODCS-FusionTool executed in %d:%s \n",
                 runTime / hourMs,
                 timeFormat.format(new Date(runTime)));
     }
@@ -248,7 +248,7 @@ public final class ODCSFusionToolApplication {
             case SPARQL:
             case VIRTUOSO:
                 // Use ODCS default if appropriate
-                if (CRBatchUtils.isRestrictionEmpty(dsConfig.getMetadataGraphRestriction())) {
+                if (ODCSFusionToolUtils.isRestrictionEmpty(dsConfig.getMetadataGraphRestriction())) {
                     // { GRAPH ?m {?x odcs:source ?y} }
                     //   UNION { GRAPH ?m {?x odcs:score ?y} }
                     //   UNION { GRAPH ?m {?x odcs:publisherScore ?y} }

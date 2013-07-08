@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 public class MapdbCollectionFactory implements LargeCollectionFactory {
     private static final Logger LOG = LoggerFactory.getLogger(MapdbCollectionFactory.class);
     
-    private static final String TEMP_FILE_PREFIX = "cr-batch.db.";
+    private static final String TEMP_FILE_PREFIX = "odcs-fusiontool.db.";
     private static final String TEMP_FILE_SUFFIX = ".tmp";
 
     private final File dbFile;

@@ -1,10 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
 
 /**
- * A general CR-batch exception.
+ * A general ODCS-FusionTool exception.
  * @author Jan Michelfeit
  */
-public class CRBatchQueryException extends CRBatchException {
+public class ODCSFusionToolQueryException extends ODCSFusionToolException {
     private static final long serialVersionUID = 3420323334894817996L;
 
     private final String query;
@@ -16,7 +16,7 @@ public class CRBatchQueryException extends CRBatchException {
      * @param sourceName data source name
      * @param cause the cause
      */
-    public CRBatchQueryException(Integer errorCode, String query, String sourceName, Throwable cause) {
+    public ODCSFusionToolQueryException(Integer errorCode, String query, String sourceName, Throwable cause) {
         super(errorCode, "Repository query error for source " + sourceName, cause);
         this.query = query;
     }

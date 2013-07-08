@@ -17,10 +17,10 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchQueryException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CRBatchUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 
 /**
  * Loads subjects of triples to be processed.
@@ -79,10 +79,10 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      *      or null to iterate all subjects
      * @return collection of subjects of relevant triples
-     * @throws CRBatchException query error or when seed resource restriction variable and named graph restriction variable are
+     * @throws ODCSFusionToolException query error or when seed resource restriction variable and named graph restriction variable are
      *         the same
      */
-    public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws CRBatchException {
+    public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
 
         SparqlRestriction graphRestriction = dataSource.getNamedGraphRestriction() != null 
@@ -94,8 +94,8 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 
                 
         if (graphRestriction.getVar().equals(seedRestriction.getVar())) {
-            throw new CRBatchException(
-                    CRBatchErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
+            throw new ODCSFusionToolException(
+                    ODCSFusionToolErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
                     "Source named graph restriction and seed resource restrictions need to use different"
                             + " variables in SPARQL patterns, both using ?" + seedRestriction.getVar());
         }
@@ -107,7 +107,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 seedRestriction.getPattern(),
                 seedRestriction.getVar());
         UriCollection result = new UriCollectionImpl(query, dataSource);
-        LOG.debug("CR-batch: Triple subjects collection initialized in {} ms", System.currentTimeMillis() - startTime);
+        LOG.debug("ODCS-FusionTool: Triple subjects collection initialized in {} ms", System.currentTimeMillis() - startTime);
         return result;
     }
     
@@ -124,28 +124,28 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
          * @param query query that retrieves subjects from the database; the query must return
          *        the subjects as the first variable in the results
          * @param repository an initialized RDF repository
-         * @throws CRBatchException error
+         * @throws ODCSFusionToolException error
          */
-        protected UriCollectionImpl(String query, DataSource dataSource) throws CRBatchException {
+        protected UriCollectionImpl(String query, DataSource dataSource) throws ODCSFusionToolException {
             try {
                 this.connection = dataSource.getRepository().getConnection();
                 this.subjectsResultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
             } catch (OpenRDFException e) {
                 close();
-                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
+                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
             }
 
             next = getNextResult();
         }
         
-        private String getNextResult() throws CRBatchException {
+        private String getNextResult() throws ODCSFusionToolException {
             try {
                 String subjectVar = subjectsResultSet.getBindingNames().get(0);
                 while (subjectsResultSet.hasNext()) {
                     BindingSet bindings = subjectsResultSet.next();
                     
                     Value subject = bindings.getValue(subjectVar);
-                    String uri = CRBatchUtils.getNodeURI(subject);
+                    String uri = ODCSFusionToolUtils.getNodeURI(subject);
                     if (uri != null) {
                         return uri;
                     }
@@ -154,7 +154,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 return null;
             } catch (OpenRDFException e) {
                 close();
-                throw new CRBatchException(CRBatchErrorCodes.TRIPLE_SUBJECT_ITERATION,
+                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.TRIPLE_SUBJECT_ITERATION,
                         "Database error while iterating over triple subjects.", e);
             }
         }
@@ -171,10 +171,10 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
         /**
          * Returns an element from the collection and removes it from the collection.
          * @return the removed element
-         * @throws CRBatchException error
+         * @throws ODCSFusionToolException error
          */
         @Override
-        public String next() throws CRBatchException {
+        public String next() throws ODCSFusionToolException {
             if (subjectsResultSet == null) {
                 throw new IllegalStateException("The collection is empty");
             }

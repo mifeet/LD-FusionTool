@@ -30,7 +30,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ResolutionStrategyXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.RestrictionXml;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CRBatchUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
@@ -245,7 +245,7 @@ public final class ConfigReader {
             if (value <= 0) {
                 throw new InvalidInputException(errorMessage);
             }
-            output.setSplitByBytes(value * CRBatchUtils.MB_BYTES);
+            output.setSplitByBytes(value * ODCSFusionToolUtils.MB_BYTES);
         }
         
         String metadataContext = extractParamByName(outputXml.getParams(), "metadataContext");

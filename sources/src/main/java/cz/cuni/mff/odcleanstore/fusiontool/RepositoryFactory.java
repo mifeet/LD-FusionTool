@@ -20,8 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import virtuoso.sesame2.driver.VirtuosoRepository;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
@@ -37,9 +37,9 @@ public final class RepositoryFactory {
      * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
      * @param dataSourceConfig data source configuration
      * @return initialized repository
-     * @throws CRBatchException error creating repository
+     * @throws ODCSFusionToolException error creating repository
      */
-    public Repository createRepository(DataSourceConfig dataSourceConfig) throws CRBatchException {
+    public Repository createRepository(DataSourceConfig dataSourceConfig) throws ODCSFusionToolException {
         String name = dataSourceConfig.toString();
         switch (dataSourceConfig.getType()) {
         case VIRTUOSO:
@@ -57,7 +57,7 @@ public final class RepositoryFactory {
             String baseURI = dataSourceConfig.getParams().get("baseuri");
             return createFileRepository(name, path, format, baseURI);
         default:
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
                     + dataSourceConfig.getType() + " is not supported");
         }
     }
@@ -70,17 +70,17 @@ public final class RepositoryFactory {
      * @param format serialization format (see {@link EnumSerializationFormat})
      * @param baseURI base URI
      * @return initialized repository
-     * @throws CRBatchException error loading data from file
+     * @throws ODCSFusionToolException error loading data from file
      */
     public Repository createFileRepository(String dataSourceName, String path, String format, String baseURI)
-            throws CRBatchException {
+            throws ODCSFusionToolException {
         if (path == null) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_CONFIG,
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Missing required parameter for data source " + dataSourceName);
         }
         File file = new File(path);
         if (!file.isFile() || !file.canRead()) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_FILE, "Cannot read input file " + path);
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_FILE, "Cannot read input file " + path);
         }
         if (baseURI == null) {
             baseURI = file.toURI().toString();
@@ -88,7 +88,7 @@ public final class RepositoryFactory {
 
         EnumSerializationFormat serializationFormat = EnumSerializationFormat.parseFormat(format);
         if (format != null && serializationFormat == null) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_CONFIG,
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Unknown serialization format " + format + " for data source " + dataSourceName);
         }
         RDFFormat sesameFormat;
@@ -115,7 +115,7 @@ public final class RepositoryFactory {
             } catch (RepositoryException e2) {
                 // ignore
             }
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_FILE,
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_FILE,
                     "Cannot load data to repository for source " + dataSourceName, e);
         }
         LOG.debug("Initialized file repository {}", dataSourceName);
@@ -136,12 +136,12 @@ public final class RepositoryFactory {
      * @param username connection username
      * @param password connection password
      * @return initialized repository
-     * @throws CRBatchException error creating repository
+     * @throws ODCSFusionToolException error creating repository
      */
     public Repository createVirtuosoRepository(String dataSourceName, String host, String port,
-            String username, String password) throws CRBatchException {
+            String username, String password) throws ODCSFusionToolException {
         if (host == null || port == null) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_CONFIG,
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Missing required parameters for data source " + dataSourceName);
         }
         String connectionString = "jdbc:virtuoso://" + host + ":" + port + "/CHARSET=UTF-8";
@@ -149,7 +149,7 @@ public final class RepositoryFactory {
         try {
             repository.initialize();
         } catch (RepositoryException e) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_VIRTUOSO,
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_VIRTUOSO,
                     "Error when initializing repository for " + dataSourceName, e);
         }
 
@@ -163,18 +163,18 @@ public final class RepositoryFactory {
      * @param dataSourceName data source name (for logging)
      * @param endpointUrl SPARQL endpoint URL
      * @return initialized repository
-     * @throws CRBatchException error creating repository
+     * @throws ODCSFusionToolException error creating repository
      */
-    public Repository createSparqlRepository(String dataSourceName, String endpointUrl) throws CRBatchException {
+    public Repository createSparqlRepository(String dataSourceName, String endpointUrl) throws ODCSFusionToolException {
         if (ODCSUtils.isNullOrEmpty(endpointUrl)) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_CONFIG,
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Missing required parameters for data source " + dataSourceName);
         }
         Repository repository = new SPARQLRepository(endpointUrl);
         try {
             repository.initialize();
         } catch (RepositoryException e) {
-            throw new CRBatchException(CRBatchErrorCodes.REPOSITORY_INIT_SPARQL,
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_SPARQL,
                     "Error when initializing repository for " + dataSourceName, e);
         }
         LOG.debug("Initialized SPARQL repository {}", dataSourceName);

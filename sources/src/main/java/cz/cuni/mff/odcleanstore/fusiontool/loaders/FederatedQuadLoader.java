@@ -6,7 +6,7 @@ import java.util.Collection;
 import org.openrdf.model.Statement;
 
 import cz.cuni.mff.odcleanstore.fusiontool.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 
 /**
@@ -35,10 +35,10 @@ public class FederatedQuadLoader implements QuadLoader {
      * Returns quads having the given uri or one of its owl:sameAs alternatives as their subject.
      * @param uri searched subject URI
      * @return quads having the given uri or one of its owl:sameAs alternatives as their subject.
-     * @throws CRBatchException error
+     * @throws ODCSFusionToolException error
      * @see #getQuadsForURI(String)
      */
-    public Collection<Statement> getQuadsForURI(String uri) throws CRBatchException {
+    public Collection<Statement> getQuadsForURI(String uri) throws ODCSFusionToolException {
         Collection<Statement> quads = new ArrayList<Statement>();
         loadQuadsForURI(uri, quads);
         return quads;
@@ -46,19 +46,19 @@ public class FederatedQuadLoader implements QuadLoader {
     
 
     @Override
-    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws CRBatchException {
+    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException {
         for (QuadLoader loader : quadLoaders) {
             loader.loadQuadsForURI(uri, quadCollection);
         }
     }
 
     @Override
-    public void close() throws CRBatchException {
-        CRBatchException exception = null;
+    public void close() throws ODCSFusionToolException {
+        ODCSFusionToolException exception = null;
         for (QuadLoader loader : quadLoaders) {
             try {
                 loader.close();
-            } catch (CRBatchException e) {
+            } catch (ODCSFusionToolException e) {
                 exception = e;
             }
         }

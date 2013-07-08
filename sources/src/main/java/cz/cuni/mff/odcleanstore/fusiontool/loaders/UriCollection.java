@@ -2,7 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import java.io.IOException;
 
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
 
 /**
@@ -19,9 +19,9 @@ public interface UriCollection extends Closeable<IOException> {
     /**
      * Returns an element from the collection (in no particular order) and removes it.
      * @return the removed element
-     * @throws CRBatchException error
+     * @throws ODCSFusionToolException error
      */
-    String next() throws CRBatchException;
+    String next() throws ODCSFusionToolException;
     
     /**
      * Adds a new URI to the collection. 

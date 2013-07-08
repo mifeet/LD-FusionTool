@@ -44,7 +44,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
@@ -62,9 +62,9 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.util.GenericConverter;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
@@ -80,13 +80,13 @@ public class ODCSFusionToolExecutor {
     private static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory();
 
     /**
-     * Performs the actual CR-batch task according to the given configuration.
+     * Performs the actual ODCS-FusionTool task according to the given configuration.
      * @param config global configuration
-     * @throws CRBatchException general batch error
+     * @throws ODCSFusionToolException general fusion error
      * @throws IOException I/O error when writing results
      * @throws ConflictResolutionException conflict resolution error
      */
-    public void runCRBatch(Config config) throws CRBatchException, IOException, ConflictResolutionException {
+    public void runFusionTool(Config config) throws ODCSFusionToolException, IOException, ConflictResolutionException {
         LargeCollectionFactory collectionFactory = createLargeCollectionFactory(config);
         QuadLoader quadLoader = null;
         UriCollection queuedSubjects = null;
@@ -193,7 +193,7 @@ public class ODCSFusionToolExecutor {
     }
 
     private UriCollection createBufferSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
-            LargeCollectionFactory collectionFactory) throws CRBatchException {
+            LargeCollectionFactory collectionFactory) throws ODCSFusionToolException {
         Set<String> buffer = collectionFactory.<String>createSet();
         UriCollection queuedSubjects = new BufferSubjectsCollection(buffer);
         while (seedSubjects.hasNext()) {
@@ -202,20 +202,20 @@ public class ODCSFusionToolExecutor {
         }
         if (LOG.isDebugEnabled()) {
             // only when debug is enabled, this may be expensive when using file cache
-            LOG.debug(String.format("CR-batch: loaded %,d seed resources", buffer.size()));
+            LOG.debug(String.format("ODCS-FusionTool: loaded %,d seed resources", buffer.size()));
         } 
         return queuedSubjects;
     }
 
     private Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
-            throws CRBatchException {
+            throws ODCSFusionToolException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
         RepositoryFactory repositoryFactory = new RepositoryFactory();
         for (DataSourceConfig dataSourceConfig : config) {
             try {
                 DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, repositoryFactory);
                 dataSources.add(dataSource);
-            } catch (CRBatchException e) {
+            } catch (ODCSFusionToolException e) {
                 // clean up already initialized repositories
                 for (DataSource initializedDataSource : dataSources) {
                     try {
@@ -230,7 +230,7 @@ public class ODCSFusionToolExecutor {
         return dataSources;
     }
     
-    private Model getMetadata(Collection<DataSource> dataSources) throws CRBatchException {
+    private Model getMetadata(Collection<DataSource> dataSources) throws ODCSFusionToolException {
         Model metadata = new TreeModel();
         for (DataSource source : dataSources) {
             MetadataLoader loader = new MetadataLoader(source);
@@ -240,7 +240,7 @@ public class ODCSFusionToolExecutor {
     }
     
     private URIMappingIterable getURIMapping(Collection<DataSource> dataSources, Config config)
-            throws CRBatchException, IOException {
+            throws ODCSFusionToolException, IOException {
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(), 
                 config.getCanonicalURIsInputFile());
@@ -254,12 +254,12 @@ public class ODCSFusionToolExecutor {
     
 
     private UriCollection getSeedSubjects(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
-            throws CRBatchException { 
+            throws ODCSFusionToolException { 
         FederatedSeedSubjectsLoader loader = new FederatedSeedSubjectsLoader(dataSources);
         return loader.getTripleSubjectsCollection(seedResourceRestriction);
     }
     
-    private Collection<Statement> getQuads(QuadLoader quadLoader, String canonicalURI) throws CRBatchException {
+    private Collection<Statement> getQuads(QuadLoader quadLoader, String canonicalURI) throws ODCSFusionToolException {
         Collection<Statement> quads = new ArrayList<Statement>();
         quadLoader.loadQuadsForURI(canonicalURI, quads);
         return quads;
@@ -267,7 +267,7 @@ public class ODCSFusionToolExecutor {
     
     private LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
         if (config.getEnableFileCache()) {
-            return new MapdbCollectionFactory(CRBatchUtils.getCacheDirectory());
+            return new MapdbCollectionFactory(ODCSFusionToolUtils.getCacheDirectory());
         } else {
             return new LargeCollectionFactory() {
                 @Override
@@ -309,7 +309,7 @@ public class ODCSFusionToolExecutor {
     private static CloseableRDFWriter createOutputWriter(File file, EnumSerializationFormat outputFormat, 
             URI metadataContext, Long splitByBytes) throws IOException {
 
-        CRBatchUtils.ensureParentsExists(file);
+        ODCSFusionToolUtils.ensureParentsExists(file);
         if (splitByBytes == null) {
             return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, metadataContext, new FileOutputStream(file));
         } else {
@@ -371,7 +371,7 @@ public class ODCSFusionToolExecutor {
             > resolvedStatements,
             URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
-            String uri = CRBatchUtils.getNodeURI(resolvedStatement.getStatement().getObject());
+            String uri = ODCSFusionToolUtils.getNodeURI(resolvedStatement.getStatement().getObject());
             if (uri == null) {
                 // a literal or something, skip it
                 continue;
@@ -396,7 +396,7 @@ public class ODCSFusionToolExecutor {
             return;
         }
         if (!outputFile.exists() || outputFile.canWrite()) {
-            CRBatchUtils.ensureParentsExists(outputFile);
+            ODCSFusionToolUtils.ensureParentsExists(outputFile);
             CountingOutputStream outputStream = new CountingOutputStream(new FileOutputStream(outputFile));
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"));
             try {
@@ -408,7 +408,7 @@ public class ODCSFusionToolExecutor {
             }
             LOG.info(String.format("Written %,d canonical URIs (total size %s)",
                     resolvedCanonicalURIs.size(),
-                    CRBatchUtils.humanReadableSize(outputStream.getByteCount())));
+                    ODCSFusionToolUtils.humanReadableSize(outputStream.getByteCount())));
         } else {
             LOG.error("Cannot write canonical URIs to '{}'", outputFile.getPath());
             // Intentionally do not throw an exception

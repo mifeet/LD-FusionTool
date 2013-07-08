@@ -14,7 +14,7 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
  * 
  * @author Jan Michelfeit
  */
-public final class CRBatchUtils {
+public final class ODCSFusionToolUtils {
     /** Time unit 60. */
     public static final int TIME_UNIT_60 = 60;
     
@@ -94,6 +94,6 @@ public final class CRBatchUtils {
     }
 
     /** Disable constructor for a utility class. */
-    private CRBatchUtils() {
+    private ODCSFusionToolUtils() {
     }
 }

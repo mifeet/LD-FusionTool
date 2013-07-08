@@ -13,10 +13,10 @@ import org.slf4j.LoggerFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.CRBatchQueryException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CRBatchUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
@@ -56,9 +56,9 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
     /**
      * Loads owl:sameAs links from relevant named graphs and adds them to the given canonical URI mapping.
      * @param uriMapping URI mapping where loaded links will be added
-     * @throws CRBatchException repository error
+     * @throws ODCSFusionToolException repository error
      */
-    public void loadSameAsMappings(URIMappingImpl uriMapping) throws CRBatchException {
+    public void loadSameAsMappings(URIMappingImpl uriMapping) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
         long linkCount = 0;
         
@@ -76,12 +76,12 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
         try {
             linkCount += loadSameAsLinks(uriMapping, dataQuery);
         } catch (OpenRDFException e) {
-            throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, dataQuery, dataSource.getName(), e);
+            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_SAMEAS, dataQuery, dataSource.getName(), e);
         }
 
         // Load links from metadata graphs;
         // if namedGraphRestriction was empty than this is not necessary because all links were loaded above 
-        if (dataSource.getMetadataGraphRestriction() != null && !CRBatchUtils.isRestrictionEmpty(namedGraphRestriction)) { 
+        if (dataSource.getMetadataGraphRestriction() != null && !ODCSFusionToolUtils.isRestrictionEmpty(namedGraphRestriction)) { 
             String metadataQuery = String.format(Locale.ROOT, SAMEAS_QUERY,
                     getPrefixDecl(),
                     dataSource.getMetadataGraphRestriction().getPattern(),
@@ -89,11 +89,11 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             try {
                 linkCount += loadSameAsLinks(uriMapping, metadataQuery);
             } catch (OpenRDFException e) {
-                throw new CRBatchQueryException(CRBatchErrorCodes.QUERY_SAMEAS, metadataQuery, dataSource.getName(), e);
+                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_SAMEAS, metadataQuery, dataSource.getName(), e);
             }
         }
 
-        LOG.debug(String.format("CR-batch: loaded & resolved %,d owl:sameAs links from source %s in %d ms",
+        LOG.debug(String.format("ODCS-FusionTool: loaded & resolved %,d owl:sameAs links from source %s in %d ms",
                     linkCount, dataSource.getName(), System.currentTimeMillis() - startTime));
     }
 
@@ -107,7 +107,7 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
         TupleQueryResult resultSet = null;
         try {
             resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
-            LOG.debug("CR-batch: Query for owl:sameAs links took {} ms", System.currentTimeMillis() - startTime);
+            LOG.debug("ODCS-FusionTool: Query for owl:sameAs links took {} ms", System.currentTimeMillis() - startTime);
             while (resultSet.hasNext()) {
                 BindingSet bindings = resultSet.next();
                 String uri1 = bindings.getValue(var1).stringValue();

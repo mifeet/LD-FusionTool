@@ -1,15 +1,15 @@
 package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
 
 /**
- * Error codes used in CR-Batch.
+ * Error codes used in ODCS-FusionTool.
  * The purpose of error codes is to identify the place in code where an error occurred.
  *
  * @author Jan Michelfeit
  */
-public final class CRBatchErrorCodes {
+public final class ODCSFusionToolErrorCodes {
     
     /** Disable constructor for a utility class. */
-    private CRBatchErrorCodes() {
+    private ODCSFusionToolErrorCodes() {
     }
 
     // CHECKSTYLE:OFF
