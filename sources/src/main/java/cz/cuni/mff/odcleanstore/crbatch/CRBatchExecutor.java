@@ -186,6 +186,9 @@ public class CRBatchExecutor {
                     LOG.error("Error when closing repository");
                 }
             }
+            if (collectionFactory != null) {
+                collectionFactory.close();
+            }
         }
     }
 
