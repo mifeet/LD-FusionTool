@@ -6,11 +6,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>cz.cuni.mff.odcleanstore.cr</groupId>
-	<artifactId>odcs-cr-batch</artifactId>
-	<name>Conflict Resolution - standalone CR batch</name>
-	<version>0.5-SNAPSHOT</version>
+	<artifactId>odcs-fusion-tool</artifactId>
+	<name>ODCS-FusionTool</name>
+	<version>0.6-SNAPSHOT</version>
 
-	<description>Batch processing tool based on Conflict Resolution component from ODCleanStore.</description>
+	<description>Standalone RDF fusion tool based on the ODCleanStore Conflict Resolution component.</description>
 	<url>https://github.com/mifeet/cr-batch</url>
 	<developers>
 		<developer>
