@@ -5,6 +5,7 @@ package cz.cuni.mff.odcleanstore.crbatch.config.xml;
 
 import java.util.List;
 
+import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 
@@ -15,25 +16,19 @@ import org.simpleframework.xml.Root;
  */
 @Root(name = "ConflictResolution")
 public class ConflictResolutionXml {
-    @ElementList(name = "Params", required = false)
-    private List<ParamXml> params;
+    @Element(name = "DefaultStrategy", required = false)
+    private ResolutionStrategyXml defaultResolutionStrategy;
+    
+    @ElementList(name = "ResolutionStrategy", required = false, inline = true, empty = false)
+    private List<PropertyResolutionStrategyXml> propertyResolutionStrategies;
 
-    @ElementList(name = "DefaultAggregation", required = false)
-    private List<ParamXml> defaultAggregation;
-
-    @ElementList(name = "PropertyAggregations", required = false)
-    private List<AggregationXml> propertyAggregations;
-
-    public List<ParamXml> getParams() {
-        return params;
+    public ResolutionStrategyXml getDefaultResolutionStrategy() {
+        return defaultResolutionStrategy;
     }
 
-    public List<ParamXml> getDefaultAggregation() {
-        return defaultAggregation;
+    public List<PropertyResolutionStrategyXml> getPropertyResolutionStrategies() {
+        return propertyResolutionStrategies;
     }
 
-    public List<AggregationXml> getPropertyAggregations() {
-        return propertyAggregations;
-    }
 
 }

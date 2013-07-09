@@ -2,7 +2,7 @@ package cz.cuni.mff.odcleanstore.crbatch.urimapping;
 
 import java.util.Iterator;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMapping;
+import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 
 /**
  * Extends {@link URIMapping} with ability to iterate over all URIs for which a mapping is explicitly defined. 

@@ -50,4 +50,9 @@ public class CRBatchException extends ODCleanStoreException {
     public Integer getErrorCode() {
         return errorCode;
     }
+    
+    @Override
+    public String getMessage() {
+        return "(" + getErrorCode() + ") " + super.getMessage(); 
+    }
 }

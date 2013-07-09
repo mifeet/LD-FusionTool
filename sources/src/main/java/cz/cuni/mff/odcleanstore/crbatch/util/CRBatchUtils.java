@@ -6,6 +6,7 @@ import org.openrdf.model.BNode;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
@@ -25,6 +26,9 @@ public final class CRBatchUtils {
     
     /** Number of bytes in a gigabyte. */
     public static final long GB_BYTES = 1024 * 1024 * 1024;
+    
+    /** Default cache directory. */
+    public static final File CACHE_DIRECTORY = new File(".");
 
     /**
      * Returns an URI representing the given node or null if it is not a resource.
@@ -67,6 +71,26 @@ public final class CRBatchUtils {
      */
     public static void ensureParentsExists(File file) {
         file.getAbsoluteFile().getParentFile().mkdirs();
+    }
+        
+    /**
+     * Returns directory for cache files. Creates one if it doesn't exist yet.
+     * @see #CACHE_DIRECTORY
+     * @return directory
+     */
+    public static File getCacheDirectory() {
+        File dir = CACHE_DIRECTORY;
+        ensureParentsExists(dir);
+        return dir;
+    }
+    
+    /**
+     * Returns true if the given restriction is null or its pattern is empty.
+     * @param restriction SPARQL restriction
+     * @return true if the given restriction is null or its pattern is empty
+     */
+    public static boolean isRestrictionEmpty(SparqlRestriction restriction) {
+        return restriction == null || ODCSUtils.isNullOrEmpty(restriction.getPattern());
     }
 
     /** Disable constructor for a utility class. */

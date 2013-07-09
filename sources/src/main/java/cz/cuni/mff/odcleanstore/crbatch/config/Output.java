@@ -5,7 +5,9 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import java.io.File;
 
-import cz.cuni.mff.odcleanstore.crbatch.io.EnumOutputFormat;
+import org.openrdf.model.URI;
+
+import cz.cuni.mff.odcleanstore.crbatch.io.EnumSerializationFormat;
 
 /**
  * Container of settings for an output of result data.
@@ -16,7 +18,7 @@ public interface Output {
      * Returns format (type) of the output.
      * @return output format
      */
-    EnumOutputFormat getFormat();
+    EnumSerializationFormat getFormat();
 
     /**
      * Returns file where the output should be written.
@@ -35,4 +37,12 @@ public interface Output {
      * @return maximum size of one output file in bytes; null means do not split the file
      */
     Long getSplitByBytes();
+    
+    
+    /**
+     * URI of named graph where Conflict Resolution metadata will be placed in the output.
+     * (if the serialization format supports named graphs). If null, no metadata will be written
+     * @return URI of named graph where CR metadata will be placed or null
+     */
+    URI getMetadataContext();
 }

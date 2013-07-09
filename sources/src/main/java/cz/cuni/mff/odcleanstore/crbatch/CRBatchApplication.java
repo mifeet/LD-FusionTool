@@ -2,7 +2,12 @@ package cz.cuni.mff.odcleanstore.crbatch;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -11,10 +16,15 @@ import org.simpleframework.xml.core.PersistenceException;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.crbatch.config.Config;
 import cz.cuni.mff.odcleanstore.crbatch.config.ConfigReader;
+import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.crbatch.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.crbatch.config.Output;
+import cz.cuni.mff.odcleanstore.crbatch.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.CRBatchException;
 import cz.cuni.mff.odcleanstore.crbatch.exceptions.InvalidInputException;
+import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
+import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * The main entry point of the application.
@@ -49,10 +59,6 @@ public final class CRBatchApplication {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-            //Repository myRepository = new SailRepository(new MemoryStore());
-            //Repository myRepository = new SPARQLRepository("http://localhost:8890/sparql");
-            //con.add(file, baseURI, RDFFormat.RDFXML);
-        
         ApplicationArgs parsedArgs;
         try {
             parsedArgs = parseArgs(args);
@@ -76,6 +82,7 @@ public final class CRBatchApplication {
         try {
             config = ConfigReader.parseConfigXml(configFile);
             checkValidInput(config);
+            setupDefaultRestrictions(config);
         } catch (InvalidInputException e) {
             System.err.println("Error in config file:");
             System.err.println("  " + e.getMessage());
@@ -110,8 +117,14 @@ public final class CRBatchApplication {
         }
 
         System.out.println("----------------------------");
-        System.out.printf("CR-batch executed in %.3f s\n",
-                (System.currentTimeMillis() - startTime) / (double) ODCSUtils.MILLISECONDS);
+        
+        long runTime = System.currentTimeMillis() - startTime;
+        final long hourMs = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
+        DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
+        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        System.out.printf("CR-batch executed in %d:%s \n",
+                runTime / hourMs,
+                timeFormat.format(new Date(runTime)));
     }
     
     private static ApplicationArgs parseArgs(String[] args) throws InvalidInputException {
@@ -136,12 +149,6 @@ public final class CRBatchApplication {
             throw new InvalidInputException("Result data URI prefix must be a valid URI, '" + config.getResultDataURIPrefix()
                     + "' given");
         }
-        for (Output output : config.getOutputs()) {
-            if (output.getFileLocation().exists() && !output.getFileLocation().canWrite()) {
-                System.out.println(output.getFileLocation().getAbsolutePath());
-                throw new InvalidInputException("Cannot write to output file " + output.getFileLocation().getPath());
-            }
-        }
         for (Map.Entry<String, String> prefixEntry : config.getPrefixes().entrySet()) {
             if (!prefixEntry.getKey().isEmpty() && !ODCSUtils.isValidNamespacePrefix(prefixEntry.getKey())) {
                 throw new InvalidInputException("Invalid namespace prefix '" + prefixEntry.getKey() + "'");
@@ -150,32 +157,115 @@ public final class CRBatchApplication {
                 throw new InvalidInputException("Invalid namespace prefix definition for URI '" + prefixEntry.getValue() + "'");
             }
         }
-        if (!ODCSUtils.isValidSparqlVar(config.getNamedGraphRestriction().getVar())) {
-            throw new InvalidInputException(
-                    "Variable name specified in source graphs restriction must be a valid SPARQL identifier, '"
-                            + config.getNamedGraphRestriction().getVar() + "' given");
-        }
-        if (config.getOntologyGraphRestriction() != null
-                && !ODCSUtils.isValidSparqlVar(config.getOntologyGraphRestriction().getVar())) {
-            throw new InvalidInputException(
-                    "Variable name specified in ontology graphs restriction must be a valid SPARQL identifier, '"
-                            + config.getOntologyGraphRestriction().getVar() + "' given");
-        }
         if (config.getSeedResourceRestriction() != null
                 && !ODCSUtils.isValidSparqlVar(config.getSeedResourceRestriction().getVar())) {
             throw new InvalidInputException(
                     "Variable name specified in seed resources restriction must be a valid SPARQL identifier, '"
                             + config.getSeedResourceRestriction().getVar() + "' given");
         }   
+       
+        // Check data Source settings
+        for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
+            checkDataSourceValidInput(dataSourceConfig, config);
+        }
+        
+        // Check output settings
+        for (Output output : config.getOutputs()) {
+            if (output.getFileLocation().exists() && !output.getFileLocation().canWrite()) {
+                System.out.println(output.getFileLocation().getAbsolutePath());
+                throw new InvalidInputException("Cannot write to output file " + output.getFileLocation().getPath());
+            }
+        }
+
+        // intentionally do not check canonical URI files
+    }
+
+    private static void checkDataSourceValidInput(DataSourceConfig dataSourceConfig, Config config) throws InvalidInputException {
+        if (!ODCSUtils.isValidSparqlVar(dataSourceConfig.getNamedGraphRestriction().getVar())) {
+            throw new InvalidInputException(
+                    "Variable name specified in source graphs restriction must be a valid SPARQL identifier, '"
+                            + dataSourceConfig.getNamedGraphRestriction().getVar() 
+                            + "' given for data source " + dataSourceConfig);
+        }
+        if (dataSourceConfig.getMetadataGraphRestriction() != null
+                && !ODCSUtils.isValidSparqlVar(dataSourceConfig.getMetadataGraphRestriction().getVar())) {
+            throw new InvalidInputException(
+                    "Variable name specified in ontology graphs restriction must be a valid SPARQL identifier, '"
+                            + dataSourceConfig.getMetadataGraphRestriction().getVar() 
+                            + "' given for data source " + dataSourceConfig);
+        }
         if (config.getSeedResourceRestriction() != null
-                && config.getNamedGraphRestriction().getVar().equals(config.getSeedResourceRestriction().getVar())) {
-            String message = "SPARQL variable used in source named graph restriction (<GraphsRestriction var=\"...\" />) "
+                && dataSourceConfig.getNamedGraphRestriction().getVar().equals(
+                        config.getSeedResourceRestriction().getVar())) {
+            String message = "SPARQL variable used in source named graph restriction (<GraphRestriction var=\"...\" />) "
                     + "and variable used in seed resource restriction (<SeedResourceRestriction var=\"...\" />)"
-                    + " must be different, but both are set to ?" + config.getNamedGraphRestriction().getVar() + "."
+                    + " must be different, but both are set to ?" + config.getSeedResourceRestriction().getVar() + "."
                     + "\nNote that any other variables used in the two restriction patterns should be also different.";
             throw new InvalidInputException(message);
         }
-        // intentionally do not check canonical URI files
+        
+        switch (dataSourceConfig.getType()) {
+        case VIRTUOSO:
+            checkRequiredDataSourceParam(dataSourceConfig, "host", "port", "username", "password");
+            break;
+        case SPARQL:
+            checkRequiredDataSourceParam(dataSourceConfig, "endpointurl");
+            break;
+        case FILE:
+            checkRequiredDataSourceParam(dataSourceConfig, "path");
+            File file = new File(dataSourceConfig.getParams().get("path"));
+            if (!file.isFile() || !file.canRead()) {
+                throw new InvalidInputException("Cannot read input file " + dataSourceConfig.getParams().get("path"));
+            }
+            break;
+        default:
+            throw new InvalidInputException("Unsupported type of data source: " + dataSourceConfig.getType());
+        }
+    }
+
+    private static void checkRequiredDataSourceParam(DataSourceConfig dataSourceConfig, String... requiredParams)
+            throws InvalidInputException {
+        
+        for (String requiredParam : requiredParams) {
+            if (dataSourceConfig.getParams().get(requiredParam) == null) {
+                throw new InvalidInputException("Missing required parameter '" + requiredParam
+                        + "' for data source " + dataSourceConfig);
+            }
+        }
+    }
+    
+    /**
+     * Sets up SPARQL restrictions in config if none are given.
+     * This step is mostly for performance reasons, e.g. loading metadata from a large
+     * RDF data source without a restriction on metadata graphs is to demanding.
+     * @param config
+     */
+    private static void setupDefaultRestrictions(Config config) {
+        final String varPrefix = "c6fa378ae1_"; // some random string to avoid collisions
+        for (DataSourceConfig dsConfigImmutable : config.getDataSources()) {
+            DataSourceConfigImpl dsConfig = (DataSourceConfigImpl) dsConfigImmutable;
+            switch (dsConfig.getType()) {
+            case SPARQL:
+            case VIRTUOSO:
+                // Use ODCS default if appropriate
+                if (CRBatchUtils.isRestrictionEmpty(dsConfig.getMetadataGraphRestriction())) {
+                    // { GRAPH ?m {?x odcs:source ?y} }
+                    //   UNION { GRAPH ?m {?x odcs:score ?y} }
+                    //   UNION { GRAPH ?m {?x odcs:publisherScore ?y} }
+                    //   UNION { ?m odcs:generatedGraph 1 }
+                    String graphPattern = "{ GRAPH ?" + varPrefix + "m {?" + varPrefix + "x <%s> ?" + varPrefix + "y} }";
+                    String pattern = String.format(Locale.ROOT, graphPattern, ODCS.source)
+                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.score)
+                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.publisherScore)
+                            + "\n  UNION { ?" + varPrefix + "m <" + ODCS.generatedGraph + "> 1}";
+                    dsConfig.setMetadataGraphRestriction(new SparqlRestrictionImpl(pattern, varPrefix + "m"));
+                }
+                break;
+            default:
+                // do nothing
+                break;
+            }
+        }
     }
 
     /** Disable constructor. */

@@ -2,31 +2,29 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
+import org.openrdf.model.URI;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 
 /**
  * Encapsulation of CR-batch configuration.
  * @author Jan Michelfeit
  */
-public interface Config extends QueryConfig {
+public interface Config {
     /**
-     * Virtuoso database connection string.
-     * @return database connection string
+     * Map of namespace prefixes that can be used (e.g. in SPARQL expressions or aggregation settings).
+     * Key is the prefix, value the expanded URI.
+     * @return map of namespace prefixes
      */
-    String getDatabaseConnectionString();
-
+    Map<String, String> getPrefixes();
+    
     /**
-     * Username for database connection.
-     * @return username
-     */
-    String getDatabaseUsername(); 
-
-    /**
-     * Password for database connection.
-     * @return password
-     */
-    String getDatabasePassword();
+     * List of data sources.
+     * @return list of data sources.
+     */ 
+    List<DataSourceConfig> getDataSources();
     
     /**
      * Prefix of named graphs and URIs where query results and metadata in the output are placed.
@@ -41,11 +39,17 @@ public interface Config extends QueryConfig {
     List<Output> getOutputs();
 
     /**
-     * Aggregation settings for conflict resolution.
-     * URIs in the settings must have expanded namespace prefixes.
-     * @return aggregation settings
+     * Default conflict resolution strategy.
+     * @return resolution strategy
      */
-    AggregationSpec getAggregationSpec();
+    ResolutionStrategy getDefaultResolutionStrategy();
+    
+    /**
+     * Conflicts resolution strategy settings for individual properties.
+     * Key is the property URI (must have expanded namespace prefix), value the actual strategy.
+     * @return map of resolution strategies indexed by property URIs 
+     */
+    Map<URI, ResolutionStrategy> getPropertyResolutionStrategies();
     
     /**
      * Database queries timeout.
@@ -66,12 +70,6 @@ public interface Config extends QueryConfig {
      * @return default score
      */
     Double getScoreIfUnknown();
-
-    /**
-     * Weight of the named graph score.
-     * @return named graph score weight
-     */
-    Double getNamedGraphScoreWeight();
 
     /**
      * Weight of the publisher score.
@@ -113,4 +111,12 @@ public interface Config extends QueryConfig {
      * @return maximum number of triples in the result or null for no limit
      */
     Long getMaxOutputTriples();
+    
+    /**
+     * SPARQL restriction on URI resources which are initially loaded and processed.
+     * If given, triples having matching resources and triples reachable from them are processed. All data
+     * from matching input graphs are processed otherwise.
+     * @return SPARQL restriction (group graph pattern) or null  
+     */
+    SparqlRestriction getSeedResourceRestriction();
 }

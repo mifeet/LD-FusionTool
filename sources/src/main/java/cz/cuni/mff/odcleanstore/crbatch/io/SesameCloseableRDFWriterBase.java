@@ -11,16 +11,18 @@ import java.io.Writer;
 import java.util.Iterator;
 
 import org.openrdf.model.Statement;
+import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFWriter;
 import org.openrdf.rio.RDFWriterFactory;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 
 
 /**
  * @author Jan Michelfeit
  */
 public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter {
-    private final RDFWriter rdfWriter;
+    private final RDFHandler rdfWriter;
     private final Writer outputWriter;
     
     /**
@@ -49,14 +51,21 @@ public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter
     }
     
     @Override
-    public void write(Iterator<Statement> statements) throws IOException {
-        while (statements.hasNext()) {
-            write(statements.next());
-        }
+    public final void writeCRQuads(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
+        while (resolvedStatements.hasNext()) {
+            write(resolvedStatements.next().getStatement());
+        } 
+    }
+    
+    @Override
+    public final void writeQuads(Iterator<Statement> quads) throws IOException {
+        while (quads.hasNext()) {
+            write(quads.next());
+        } 
     }
 
     @Override
-    public void write(Statement statement) throws IOException {
+    public final void write(Statement statement) throws IOException {
         try {
             rdfWriter.handleStatement(statement);
         } catch (RDFHandlerException e) {

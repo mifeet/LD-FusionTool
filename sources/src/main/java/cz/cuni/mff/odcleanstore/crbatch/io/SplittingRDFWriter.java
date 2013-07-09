@@ -10,9 +10,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.crbatch.util.CRBatchUtils;
 
 /**
@@ -35,7 +37,8 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     // CHECKSTYLE:ON
 
     private final CloseableRDFWriterFactory writerFactory;
-    private final EnumOutputFormat outputFormat;
+    private final EnumSerializationFormat outputFormat;
+    private final URI metadataContext;
     private final SplitFileNameGenerator fileNameGenrator;
     private final long splitByBytes;
     private final ArrayList<NamespaceDeclaration> namespaceDeclarations = new ArrayList<NamespaceDeclaration>();
@@ -46,17 +49,19 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
      * Creates a new RDF writer which splits output across several files with approximate
      * maximum size given in splitByBytes. 
      * @param outputFormat serialization format
+     * @param metadataContext URI of named graph where CR metadata will be placed 
+     *        (if the serialization format supports named graphs)
      * @param outputFile base file path for output files; n-th file will have suffix -n
      * @param splitByBytes approximate maximum size of each output file in bytes 
      *      (the size is approximate, because after the limit is exceeded, some data may be written to close the file properly)
      * @param writerFactory factory for underlying RDF writers used to do the actual serialization 
      * @throws IOException I/O error
      */
-    public SplittingRDFWriter(EnumOutputFormat outputFormat, File outputFile, long splitByBytes,
-            CloseableRDFWriterFactory writerFactory)
-            throws IOException {
+    public SplittingRDFWriter(EnumSerializationFormat outputFormat, URI metadataContext, File outputFile,
+            long splitByBytes, CloseableRDFWriterFactory writerFactory) throws IOException {
         this.writerFactory = writerFactory;
         this.outputFormat = outputFormat;
+        this.metadataContext = metadataContext;
         this.fileNameGenrator = new SplitFileNameGenerator(outputFile);
         this.splitByBytes = splitByBytes;
     }
@@ -68,7 +73,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
             
             CRBatchUtils.ensureParentsExists(file);
             currentOutputStream = new CountingOutputStream(new FileOutputStream(file));
-            currentRDFWriter = writerFactory.createRDFWriter(outputFormat, currentOutputStream);
+            currentRDFWriter = writerFactory.createRDFWriter(outputFormat, metadataContext, currentOutputStream);
 
             // Do not forget namespace declarations whose definitions were in the previous files
             for (NamespaceDeclaration ns : namespaceDeclarations) {
@@ -90,17 +95,30 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
         getRDFWriter().addNamespace(prefix, uri);
         checkSizeExceeded();
     }
-
+    
     @Override
-    public void write(Iterator<Statement> statements) throws IOException {
-        while (statements.hasNext()) {
-            write(statements.next());
-        }
+    public void writeCRQuads(Iterator<ResolvedStatement> resolvedQuads) throws IOException {
+        while (resolvedQuads.hasNext()) {
+            write(resolvedQuads.next());
+        } 
+    }
+    
+    @Override
+    public void writeQuads(Iterator<Statement> quads) throws IOException {
+        while (quads.hasNext()) {
+            write(quads.next());
+        } 
     }
 
     @Override
-    public void write(Statement statement) throws IOException {
-        getRDFWriter().write(statement);
+    public void write(Statement quad) throws IOException {
+        getRDFWriter().write(quad);
+        checkSizeExceeded();
+    }
+    
+    @Override
+    public void write(ResolvedStatement crQuad) throws IOException {
+        getRDFWriter().write(crQuad);
         checkSizeExceeded();
     }
 

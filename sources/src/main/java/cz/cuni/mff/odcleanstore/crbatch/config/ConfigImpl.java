@@ -3,13 +3,17 @@ package cz.cuni.mff.odcleanstore.crbatch.config;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
+import org.openrdf.model.URI;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 
 /**
  * Container of configuration values.
@@ -18,16 +22,14 @@ import cz.cuni.mff.odcleanstore.conflictresolution.AggregationSpec;
 public class ConfigImpl implements Config {
     private static final DateFormat CANONICAL_FILE_SUFFIS_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss");
     
-    private String databaseConnectionString;
-    private String databaseUsername;
-    private String databasePassword;
-    private SparqlRestriction namedGraphRestriction;
-    private SparqlRestriction ontologyGraphRestriction;
+    private List<DataSourceConfig> dataSources = Collections.emptyList();
     private SparqlRestriction seedResourceRestriction;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
     private Map<String, String> prefixes = new HashMap<String, String>();
-    private AggregationSpec aggregationSpec;
+    private ResolutionStrategy defaultResolutionStrategy = new ResolutionStrategyImpl();
+    private Map<URI, ResolutionStrategy> propertyResolutionStrategies = new HashMap<URI, ResolutionStrategy>();
+    
     private File canonicalURIsOutputFile = 
             new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
     private File canonicalURIsInputFile;
@@ -35,68 +37,18 @@ public class ConfigImpl implements Config {
     private Long maxOutputTriples = null;
 
     @Override
-    public String getDatabaseConnectionString() {
-        return databaseConnectionString;
-    }
-
-    /**
-     * @param databaseConnectionString the databaseConnectionString to set
-     */
-    public void setDatabaseConnectionString(String databaseConnectionString) {
-        this.databaseConnectionString = databaseConnectionString;
-    }
-
-    @Override
-    public String getDatabaseUsername() {
-        return databaseUsername;
-    }
-
-    /**
-     * @param databaseUsername the databaseUsername to set
-     */
-    public void setDatabaseUsername(String databaseUsername) {
-        this.databaseUsername = databaseUsername;
-    }
-
-    @Override
-    public String getDatabasePassword() {
-        return databasePassword;
-    }
-
-    /**
-     * @param databasePassword the databasePassword to set
-     */
-    public void setDatabasePassword(String databasePassword) {
-        this.databasePassword = databasePassword;
-    }
-
-    @Override
-    public SparqlRestriction getNamedGraphRestriction() {
-        return namedGraphRestriction;
+    public List<DataSourceConfig> getDataSources() {
+        return dataSources;
     }
     
     /**
-     * Sets SPARQL group graph pattern limiting source payload named graphs.
-     * @param restriction SPARQL group graph pattern
-     * @see #getNamedGraphRestrictionPattern()
+     * Sets data source settings.
+     * @param dataSources settings for data sources
      */
-    public void setNamedGraphRestriction(SparqlRestriction restriction) {
-        this.namedGraphRestriction = restriction;
+    public void setDataSources(List<DataSourceConfig> dataSources) {
+        this.dataSources = dataSources;
     }
     
-    @Override
-    public SparqlRestriction getOntologyGraphRestriction() {
-        return ontologyGraphRestriction;
-    }
-    
-    /**
-     * Sets value for {@link #getOntologyGraphRestrictionPattern()}.
-     * @param restriction SPARQL group graph pattern
-     */
-    public void setOntologyGraphRestriction(SparqlRestriction restriction) {
-        this.ontologyGraphRestriction = restriction;
-    }
-
     @Override
     public SparqlRestriction getSeedResourceRestriction() {
         return seedResourceRestriction;
@@ -150,16 +102,31 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public AggregationSpec getAggregationSpec() {
-        return aggregationSpec;
+    public
+    ResolutionStrategy getDefaultResolutionStrategy() {
+        return defaultResolutionStrategy;
     }
     
     /**
-     * Sets aggregation settings for conflict resolution.
-     * @param aggregationSpec aggregation settings
+     * Setter for value of {@link #getDefaultResolutionStrategy()}.
+     * @param strategy conflict resolution strategy
      */
-    public void setAggregationSpec(AggregationSpec aggregationSpec) {
-        this.aggregationSpec = aggregationSpec;
+    public void setDefaultResolutionStrategy(ResolutionStrategy strategy) {
+        this.defaultResolutionStrategy = strategy;
+    }
+    
+    @Override
+    public
+    Map<URI, ResolutionStrategy> getPropertyResolutionStrategies() {
+        return propertyResolutionStrategies;
+    }
+    
+    /**
+     * Setter for value of {@link #getDefaultResolutionStrategy()}.
+     * @param strategies per-property conflict resolution strategies
+     */
+    public void setPropertyResolutionStrategies(Map<URI, ResolutionStrategy> strategies) {
+        this.propertyResolutionStrategies = strategies;
     }
     
     @Override
@@ -213,7 +180,7 @@ public class ConfigImpl implements Config {
     public void setMaxOutputTriples(Long maxOutputTriples) {
         this.maxOutputTriples = maxOutputTriples;
     }
-
+    
     @Override
     public Integer getQueryTimeout() {
         return ConfigConstants.DEFAULT_QUERY_TIMEOUT;
@@ -227,11 +194,6 @@ public class ConfigImpl implements Config {
     @Override
     public Double getScoreIfUnknown() {
         return ConfigConstants.SCORE_IF_UNKNOWN;
-    }
-
-    @Override
-    public Double getNamedGraphScoreWeight() {
-        return ConfigConstants.NAMED_GRAPH_SCORE_WEIGHT;
     }
 
     @Override

@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import org.openrdf.rio.RDFWriterFactory;
 import org.openrdf.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+
 /**
  * Implementation of {@link CloseableRDFWriter} for RDF/XML output format.
  * @author Jan Michelfeit
@@ -24,5 +26,10 @@ public class RdfXmlCloseableRDFWriter extends SesameCloseableRDFWriterBase {
      */
     public RdfXmlCloseableRDFWriter(OutputStream outputStream) throws IOException {
         super(outputStream, WRITER_FACTORY);
+    }
+
+    @Override
+    public void write(ResolvedStatement resolvedStatement) throws IOException {
+        write(resolvedStatement.getStatement());
     }
 }
