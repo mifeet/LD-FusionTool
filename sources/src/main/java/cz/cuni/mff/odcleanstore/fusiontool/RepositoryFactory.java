@@ -15,6 +15,7 @@ import org.openrdf.repository.sparql.SPARQLRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.sail.Sail;
 import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
@@ -31,6 +33,15 @@ import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
  */
 public final class RepositoryFactory {
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryFactory.class);
+    
+    private boolean enableFileCache;
+    
+    /**
+     * @param enableFileCache if true, a file cache may be used for some types of repositories (FILE repository, as of now) 
+     */
+    public RepositoryFactory(boolean enableFileCache) {
+        this.enableFileCache = enableFileCache;
+    }
 
     /**
      * Creates a {@link Repository} based on the given configuration.
@@ -122,9 +133,12 @@ public final class RepositoryFactory {
         return repository;
     }
 
-    private Sail createSail() {
-        MemoryStore store = new MemoryStore(); // TODO file-backed store if file caching is enabled?
-        return store;
+    private Sail createSail() { 
+        if (enableFileCache) {
+            return new NativeStore(ODCSFusionToolUtils.getCacheDirectory()); // TODO use only for large files
+        } else {
+            return new MemoryStore();
+        }
     }
 
     /**
