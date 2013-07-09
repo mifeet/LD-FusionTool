@@ -79,8 +79,8 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      *      or null to iterate all subjects
      * @return collection of subjects of relevant triples
-     * @throws ODCSFusionToolException query error or when seed resource restriction variable and named graph restriction variable are
-     *         the same
+     * @throws ODCSFusionToolException query error or when seed resource restriction variable and named graph
+     *      restriction variable are the same
      */
     public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
@@ -132,7 +132,8 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 this.subjectsResultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
             } catch (OpenRDFException e) {
                 close();
-                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
+                throw new ODCSFusionToolQueryException(
+                        ODCSFusionToolErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
             }
 
             next = getNextResult();

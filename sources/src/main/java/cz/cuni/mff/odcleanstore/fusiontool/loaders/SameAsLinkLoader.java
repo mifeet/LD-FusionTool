@@ -89,7 +89,8 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             try {
                 linkCount += loadSameAsLinks(uriMapping, metadataQuery);
             } catch (OpenRDFException e) {
-                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_SAMEAS, metadataQuery, dataSource.getName(), e);
+                throw new ODCSFusionToolQueryException(
+                        ODCSFusionToolErrorCodes.QUERY_SAMEAS, metadataQuery, dataSource.getName(), e);
             }
         }
 

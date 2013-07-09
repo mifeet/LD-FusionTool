@@ -69,9 +69,9 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
- * Processed RDF data loaded from database with Conflict Resolution and writes the output to a file.
- * Conflict resolution includes resolution of owl:sameAs link, resolution of instance-level conflicts;
- * quality & provenance information is not written to the output (as of now).
+ * Fuses RDF data loaded from RDF sources using ODCS Conflict Resolution and writes the output to RDF outputs.
+ * Conflict resolution includes resolution of owl:sameAs link, resolution of instance-level conflicts.
+ * See sample configuration files (sample-config-full.xml) for overview of all processing options.
  * @author Jan Michelfeit
  */
 public class ODCSFusionToolExecutor {
@@ -339,9 +339,6 @@ public class ODCSFusionToolExecutor {
                 .setDefaultResolutionStrategy(config.getDefaultResolutionStrategy())
                 .setPropertyResolutionStrategies(config.getPropertyResolutionStrategies())
                 .create();
-        
-        // TODO: config.getMaxTimeDifference()
-                
         return conflictResolver;
     }
 
