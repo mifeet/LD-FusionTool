@@ -107,7 +107,8 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
     @Override
     public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
-
+        uri = uri.trim(); // issue #2 fix
+        
         SparqlRestriction restriction;
         if (dataSource.getNamedGraphRestriction() != null) {
             restriction = dataSource.getNamedGraphRestriction();
