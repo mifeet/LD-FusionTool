@@ -91,8 +91,7 @@ public class ODCSFusionToolExecutor {
         QuadLoader quadLoader = null;
         UriCollection queuedSubjects = null;
         List<CloseableRDFWriter> rdfWriters = null;
-        Collection<DataSource> dataSources = getDataSources(
-                config.getDataSources(), config.getPrefixes(), config.getEnableFileCache());
+        Collection<DataSource> dataSources = getDataSources(config.getDataSources(), config.getPrefixes());
         boolean hasVirtuosoSource = hasVirtuosoSource(config.getDataSources());
         try {
             // Load source named graphs metadata
@@ -208,12 +207,10 @@ public class ODCSFusionToolExecutor {
         return queuedSubjects;
     }
 
-    private Collection<DataSource> getDataSources(
-            List<DataSourceConfig> config, Map<String, String> prefixes, boolean enableFileCache)
+    private Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
             throws ODCSFusionToolException {
-        
         List<DataSource> dataSources = new ArrayList<DataSource>();
-        RepositoryFactory repositoryFactory = new RepositoryFactory(enableFileCache);
+        RepositoryFactory repositoryFactory = new RepositoryFactory();
         for (DataSourceConfig dataSourceConfig : config) {
             try {
                 DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, repositoryFactory);
