@@ -42,13 +42,14 @@ import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualit
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
+import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
-import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferSubjectsCollection;
@@ -292,31 +293,16 @@ public class ODCSFusionToolExecutor {
     }
     
     private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs, Map<String, String> nsPrefixes)
-            throws IOException {
+            throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         for (Output output : outputs) {
-            CloseableRDFWriter writer = createOutputWriter(
-                    output.getFileLocation(),
-                    output.getFormat(),
-                    output.getMetadataContext(),
-                    output.getSplitByBytes());
+            CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(output);
             writers.add(writer);
             writeNamespaceDeclarations(writer, nsPrefixes);
         }
         return writers;
     }
 
-    private static CloseableRDFWriter createOutputWriter(File file, EnumSerializationFormat outputFormat, 
-            URI metadataContext, Long splitByBytes) throws IOException {
-
-        ODCSFusionToolUtils.ensureParentsExists(file);
-        if (splitByBytes == null) {
-            return RDF_WRITER_FACTORY.createRDFWriter(outputFormat, metadataContext, new FileOutputStream(file));
-        } else {
-            return RDF_WRITER_FACTORY.createSplittingRDFWriter(outputFormat, metadataContext, file, splitByBytes);
-        }
-    }
-    
     private static ConflictResolver createConflictResolver(
             Config config, Model metadata, URIMappingIterable uriMapping) {
 
@@ -413,20 +399,21 @@ public class ODCSFusionToolExecutor {
     }
 
     private static void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs,
-            Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException {
+            Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException, ODCSFusionToolException {
 
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         try {
             // Create output writers
             for (Output output : outputs) {
-                if (output.getSameAsFileLocation() == null) {
+                if (output.getType() != EnumOutputType.FILE || output.getParams().get(Output.SAME_AS_FILE_PARAM) == null) {
                     continue;
                 }
-                CloseableRDFWriter writer = createOutputWriter(
-                        output.getSameAsFileLocation(),
-                        output.getFormat(),
-                        output.getMetadataContext(),
-                        output.getSplitByBytes());
+                
+                OutputImpl sameAsOutput = new OutputImpl(EnumOutputType.FILE, output.toString() + "-sameAs");
+                sameAsOutput.getParams().put(Output.PATH_PARAM, output.getParams().get(Output.SAME_AS_FILE_PARAM));
+                sameAsOutput.getParams().put(Output.FORMAT_PARAM, output.getParams().get(Output.FORMAT_PARAM));
+                sameAsOutput.getParams().put(Output.SPLIT_BY_MB_PARAM, output.getParams().get(Output.SPLIT_BY_MB_PARAM));
+                CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(sameAsOutput);
                 writers.add(writer);
                 writer.addNamespace("owl", OWL.getURI());
                 writeNamespaceDeclarations(writer, nsPrefixes);

@@ -123,10 +123,10 @@
   
   <!-- Definitions of where the output shall be written; multiple <Output> children may be given; (required) -->
   <Outputs>
-    <!-- Definition of output to a file (currently the only supported output type) -->
-    <Output type="file">
+    <!-- Definition of output to a file -->
+    <Output type="file" name="n3-output">
       <!-- Path to the output file (required) -->
-      <Param name="file" value="output/out.n3"/>
+      <Param name="path" value="output/out.n3"/>
       
       <!-- Format of the output file; accepted values are 'ntriples', 'trig' and 'rdf/xml'; (required) -->
       <Param name="format" value="ntriples"/>
@@ -139,8 +139,59 @@
       
       <!-- URI of named graph where Conflict Resolution metadata will be placed in the output;
            applicable only for output formats which support named graphs (e.g. TriG);
-           (optional; if ommitted, no metadata will be written) -->
+           (optional; if ommitted, no metadata will be written; use only if dataContext is not set) -->
       <Param name="metadataContext" value="http://opendata.cz/infrastructure/odcleanstore/metadata" />
+      
+      <!-- URI of named graph where resolved quads will be placed in the output;
+           applicable only for output formats which support named graphs (e.g. TriG);
+           if set, no metadata will be written (overrides metadataContext parameter);
+           (optional; if ommitted, each quad is placed in a unique named graph) -->
+      <!--<Param name="dataContext" value="http://opendata.cz/infrastructure/odcleanstore/result" />-->
+    </Output>
+    
+    <!-- Definition of output to a Virtuoso database instance using JDBC -->
+    <Output type="virtuoso">
+      <!-- Hostname for the Virtuoso database instance; (required) -->
+      <Param name="host" value="localhost" />
+    
+      <!-- Connection port; (required) -->
+      <Param name="port" value="1111" />
+    
+      <!-- Connection username; the user account needs write permission (required) -->
+      <Param name="username" value="dba" />
+    
+      <!-- Connection password; (required) -->
+      <Param name="password" value="dba" />
+      
+      <!-- URI of named graph where Conflict Resolution metadata will be placed in the output;
+           (optional; if ommitted, no metadata will be written; use only if dataContext is not set) -->
+      <!--<Param name="metadataContext" value="http://opendata.cz/infrastructure/odcleanstore/metadata" />-->
+      
+      <!-- URI of named graph where resolved quads will be placed in the output;
+           if set, no metadata will be written (overrides metadataContext parameter);
+           (optional; if ommitted, each quad is placed in a unique named graph) -->
+      <Param name="dataContext" value="http://opendata.cz/infrastructure/odcleanstore/result" />
+    </Output>
+
+     <!-- Definition of output to a SPARQL endpoint -->    
+    <Output type="sparql">
+      <!-- URL of the SPARQL endpoint; (required)) -->
+      <Param name="endpointUrl" value="http://localhost:8890/sparql-auth" />
+      
+      <!-- Connection username; the user account needs SPARQL Update permission (optional) -->
+      <Param name="username" value="dba" />
+    
+      <!-- Connection password; (optional) -->
+      <Param name="password" value="dba" />
+      
+      <!-- URI of named graph where Conflict Resolution metadata will be placed in the output;
+           (optional; if ommitted, no metadata will be written; use only if dataContext is not set) -->
+      <!--<Param name="metadataContext" value="http://opendata.cz/infrastructure/odcleanstore/metadata" />-->
+      
+      <!-- URI of named graph where resolved quads will be placed in the output;
+           if set, no metadata will be written (overrides metadataContext parameter);
+           (optional; if ommitted, each quad is placed in a unique named graph) -->
+      <Param name="dataContext" value="http://opendata.cz/infrastructure/odcleanstore/result" />
     </Output>
   </Outputs>
 </Config>

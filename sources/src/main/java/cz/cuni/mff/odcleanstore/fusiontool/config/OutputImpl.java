@@ -3,78 +3,74 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
-import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.openrdf.model.URI;
-
-import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 
 /**
  * Container of settings for an output of result data.
  * @author Jan Michelfeit
  */
 public class OutputImpl implements Output {
-    private final EnumSerializationFormat format;
-    private final File fileLocation;
-    private File sameAsFileLocation = null;
-    private Long splitByBytes = null;
-    private URI metadataContext = null;
+    private final EnumOutputType type;
+    private final String name;
+    private final Map<String, String> params = new HashMap<String, String>();
+    private URI metadataContext;
+    private URI dataContext;
     
     /**
-     * @param format output format
-     * @param fileLocation output file location
+     * @param type output type
+     * @param name human-readable name or null
      */
-    public OutputImpl(EnumSerializationFormat format, File fileLocation) {
-        this.format = format;
-        this.fileLocation = fileLocation;
-    }
-    
-    @Override
-    public EnumSerializationFormat getFormat() {
-        return format;
+    public OutputImpl(EnumOutputType type, String name) {
+        this.type = type;
+        this.name = name;
     }
 
     @Override
-    public File getFileLocation() {
-        return fileLocation;
+    public EnumOutputType getType() {
+        return type;
     }
     
     @Override
-    public File getSameAsFileLocation() {
-        return sameAsFileLocation;
+    public String getName() {
+        return name; 
     }
     
-    /**
-     * Sets value for {@link #getSameAsFileLocation()}.
-     * @param sameAsFileLocation output file for owl:sameAs links
-     */
-    public void setSameAsFileLocation(File sameAsFileLocation) {
-        this.sameAsFileLocation = sameAsFileLocation;
+    @Override
+    public Map<String, String> getParams() {
+        return params;
     }
 
-    @Override
-    public Long getSplitByBytes() {
-        return splitByBytes; 
-    }
-    
-    /**
-     * Sets value for {@link #getSplitByBytes()}.
-     * @param splitByBytes maximum size of one output file in bytes
-     */
-    public void setSplitByBytes(Long splitByBytes) {
-        this.splitByBytes = splitByBytes;
-    }
-    
     @Override
     public URI getMetadataContext() {
-        return metadataContext; 
+        return metadataContext;
     }
-
+    
     /**
      * Sets value for {@link #getMetadataContext()}.
-     * @param metadataContext see {@link #getMetadataContext()}
+     * @param metadataContext named graph URI
      */
     public void setMetadataContext(URI metadataContext) {
         this.metadataContext = metadataContext;
+    }
+    
+    @Override
+    public URI getDataContext() {
+        return dataContext;
+    }
+    
+    /**
+     * Sets value for {@link #getDataContext()}.
+     * @param dataContext named graph URI
+     */
+    public void setDataContext(URI dataContext) {
+        this.dataContext = dataContext;
+    }
+    
+    @Override
+    public String toString() {
+        return name != null ? name : type.toString();
     }
 }

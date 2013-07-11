@@ -39,6 +39,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     private final CloseableRDFWriterFactory writerFactory;
     private final EnumSerializationFormat outputFormat;
     private final URI metadataContext;
+    private final URI dataContext;
     private final SplitFileNameGenerator fileNameGenrator;
     private final long splitByBytes;
     private final ArrayList<NamespaceDeclaration> namespaceDeclarations = new ArrayList<NamespaceDeclaration>();
@@ -49,19 +50,22 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
      * Creates a new RDF writer which splits output across several files with approximate
      * maximum size given in splitByBytes. 
      * @param outputFormat serialization format
-     * @param metadataContext URI of named graph where CR metadata will be placed 
-     *        (if the serialization format supports named graphs)
      * @param outputFile base file path for output files; n-th file will have suffix -n
      * @param splitByBytes approximate maximum size of each output file in bytes 
      *      (the size is approximate, because after the limit is exceeded, some data may be written to close the file properly)
-     * @param writerFactory factory for underlying RDF writers used to do the actual serialization 
+     * @param writerFactory factory for underlying RDF writers used to do the actual serialization
+     * @param dataContext URI of named graph where resolved quads will be placed or null for unique graph per quad
+     *        (if the serialization format supports named graphs)
+     * @param metadataContext URI of named graph where CR metadata will be placed or null for no metadata
+     *        (if the serialization format supports named graphs) 
      * @throws IOException I/O error
      */
-    public SplittingRDFWriter(EnumSerializationFormat outputFormat, URI metadataContext, File outputFile,
-            long splitByBytes, CloseableRDFWriterFactory writerFactory) throws IOException {
+    public SplittingRDFWriter(EnumSerializationFormat outputFormat, File outputFile, long splitByBytes,
+            CloseableRDFWriterFactory writerFactory, URI dataContext, URI metadataContext) throws IOException {
         this.writerFactory = writerFactory;
         this.outputFormat = outputFormat;
         this.metadataContext = metadataContext;
+        this.dataContext = dataContext;
         this.fileNameGenrator = new SplitFileNameGenerator(outputFile);
         this.splitByBytes = splitByBytes;
     }
@@ -73,7 +77,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
             
             ODCSFusionToolUtils.ensureParentsExists(file);
             currentOutputStream = new CountingOutputStream(new FileOutputStream(file));
-            currentRDFWriter = writerFactory.createRDFWriter(outputFormat, metadataContext, currentOutputStream);
+            currentRDFWriter = writerFactory.createFileRDFWriter(outputFormat, currentOutputStream, dataContext, metadataContext);
 
             // Do not forget namespace declarations whose definitions were in the previous files
             for (NamespaceDeclaration ns : namespaceDeclarations) {

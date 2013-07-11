@@ -18,6 +18,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
@@ -171,9 +172,11 @@ public final class ODCSFusionToolApplication {
         
         // Check output settings
         for (Output output : config.getOutputs()) {
-            if (output.getFileLocation().exists() && !output.getFileLocation().canWrite()) {
-                System.out.println(output.getFileLocation().getAbsolutePath());
-                throw new InvalidInputException("Cannot write to output file " + output.getFileLocation().getPath());
+            if (output.getType() == EnumOutputType.FILE && output.getParams().get(Output.PATH_PARAM) != null) {
+                File fileLocation = new File(output.getParams().get(Output.PATH_PARAM));
+                if (fileLocation.exists() && !fileLocation.canWrite()) {
+                    throw new InvalidInputException("Cannot write to output file " + fileLocation.getPath());
+                }
             }
         }
 

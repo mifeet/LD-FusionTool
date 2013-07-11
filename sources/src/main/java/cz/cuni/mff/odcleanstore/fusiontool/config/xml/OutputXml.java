@@ -18,12 +18,19 @@ import org.simpleframework.xml.Root;
 public class OutputXml {
     @Attribute
     private String type;
+    
+    @Attribute(required = false)
+    private String name;
 
     @ElementList(empty = false, inline = true, required = false)
     private List<ParamXml> params;
 
     public String getType() {
         return type;
+    }
+    
+    public String getName() {
+        return name;
     }
 
     public List<ParamXml> getParams() {

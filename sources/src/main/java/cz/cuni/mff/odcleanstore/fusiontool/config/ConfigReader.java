@@ -30,7 +30,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ResolutionStrategyXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.RestrictionXml;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
 import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
@@ -137,14 +136,14 @@ public final class ConfigReader {
         return strategy;
     }
 
-    private String extractParamByName(List<ParamXml> params, String name) {
-        for (ParamXml param : params) {
-            if (name.equalsIgnoreCase(param.getName())) {
-                return param.getValue();
-            }
-        }
-        return null;
-    }
+    //    private String extractParamByName(List<ParamXml> params, String name) {
+    //        for (ParamXml param : params) {
+    //            if (name.equalsIgnoreCase(param.getName())) {
+    //                return param.getValue();
+    //            }
+    //        }
+    //        return null;
+    //    }
     
     private Map<String, String> extractAllParams(List<ParamXml> params) {
         Map<String, String> result = new HashMap<String, String>(params.size());
@@ -215,46 +214,63 @@ public final class ConfigReader {
     }
 
     private Output extractOutput(OutputXml outputXml) throws InvalidInputException {
-        String formatString = extractParamByName(outputXml.getParams(), "format");
-        EnumSerializationFormat format = EnumSerializationFormat.parseFormat(formatString);
-        if (formatString == null) {
-            throw new InvalidInputException("Output format must be specified");
-        } else if (format == null) {
-            throw new InvalidInputException("Unknown output format " + formatString);
-        }
-
-        String fileLocationString = extractParamByName(outputXml.getParams(), "file");
-        if (fileLocationString == null) {
-            throw new InvalidInputException("Name of the output file must be specified");
-        }
-        File fileLocation = new File(fileLocationString);
-        
-        // Create result object
-        OutputImpl output = new OutputImpl(format, fileLocation);
-        
-        // Add optional parameters
-        String sameAsLocationString = extractParamByName(outputXml.getParams(), "sameAsFile");
-        if (sameAsLocationString != null) {
-            output.setSameAsFileLocation(new File(sameAsLocationString));
-        }
-
-        String splitByMB = extractParamByName(outputXml.getParams(), "splitByMB");
-        if (splitByMB != null) {
-            final String errorMessage = "Value of splitByMB for output is not a valid number";
-            long value = convertToLong(splitByMB, errorMessage);
-            if (value <= 0) {
-                throw new InvalidInputException(errorMessage);
-            }
-            output.setSplitByBytes(value * ODCSFusionToolUtils.MB_BYTES);
+        EnumOutputType type;
+        try {
+            type = EnumOutputType.valueOf(outputXml.getType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidInputException("Unknown type of output: " + outputXml.getType());
         }
         
-        String metadataContext = extractParamByName(outputXml.getParams(), "metadataContext");
-        if (metadataContext != null) {
-            URI uri = convertToURI(metadataContext, "metadataContext is not a valid URI");
-            output.setMetadataContext(uri);
+        OutputImpl output = new OutputImpl(type, outputXml.getName());
+        
+        for (ParamXml param : outputXml.getParams()) {
+            String key = param.getName().toLowerCase();
+            String value = param.getValue();
+            validateOutputParam(key, value, output);
+            output.getParams().put(key, value);
+        }
+        
+        String metadataContextString = output.getParams().get(Output.METADATA_CONTEXT_PARAM);
+        if (metadataContextString != null) {
+            URI context = convertToURI(metadataContextString, "metadataContext is not a valid URI for output " + output);
+            output.setMetadataContext(context);
+        }
+        
+        String dataContextString = output.getParams().get(Output.DATA_CONTEXT_PARAM);
+        if (dataContextString != null) {
+            URI context = convertToURI(dataContextString, "dataContext is not a valid URI for output " + output);
+            output.setDataContext(context);
         }
 
         return output;
+    }
+
+    private void validateOutputParam(String key, String value, Output output) throws InvalidInputException {
+        switch (output.getType()) {
+        case FILE:
+            if (Output.FORMAT_PARAM.equals(key)) {
+                if (value == null) {
+                    throw new InvalidInputException("Output format must be specified");
+                } else if (EnumSerializationFormat.parseFormat(value) == null) {
+                    throw new InvalidInputException("Unknown output format '" + value + "' for output " + output);
+                }
+            } else if (Output.PATH_PARAM.equals(key)) {
+                if (value == null) {
+                    throw new InvalidInputException("Name of the output file must be specified");
+                }
+            } else if (Output.SPLIT_BY_MB_PARAM.equals(key)) {
+                if (value != null) {
+                    final String errorMessage = "Value of splitByMB for output " + output + " is not a positive number";
+                    long numericValue = convertToLong(value, errorMessage);
+                    if (numericValue <= 0) {
+                        throw new InvalidInputException(errorMessage);
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
     }
 
     private long convertToLong(String str, String errorMessage) throws InvalidInputException {
@@ -264,7 +280,7 @@ public final class ConfigReader {
             throw new InvalidInputException(errorMessage, e);
         }
     }
-    
+
     private URI convertToURI(String str, String errorMessage) throws InvalidInputException {
         try {
             return ValueFactoryImpl.getInstance().createURI(str);
@@ -272,7 +288,7 @@ public final class ConfigReader {
             throw new InvalidInputException(errorMessage, e);
         }
     }
-
+    
     private SparqlRestriction extractGraphRestriction(RestrictionXml restrictionXml) {
         return extractRestriction(restrictionXml, ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
     }
