@@ -3,37 +3,34 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Iterator;
 
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFWriterFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 
 
 /**
+ * Implementation of {@link CloseableRDFWriter} writing to a given Sesame {@link RDFHandler}.
  * @author Jan Michelfeit
  */
 public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter {
     private final RDFHandler rdfWriter;
-    private final Writer outputWriter;
+    private final Closeable underlyingResource;
     
     /**
      * Create a new instance.
-     * @param outputStream output stream
-     * @param writerFactory factory for RDFWriter to be used for serialization
+     * @param rdfWriter handler or written RDF data
+     * @param underlyingResource a resource to be closed as soon as writing is finished
      * @throws IOException  I/O error
      */
-    protected SesameCloseableRDFWriterBase(OutputStream outputStream, RDFWriterFactory writerFactory) throws IOException {
-        this.outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-        this.rdfWriter = writerFactory.getWriter(outputWriter);
+    protected SesameCloseableRDFWriterBase(RDFHandler rdfWriter, Closeable underlyingResource) throws IOException {
+        this.rdfWriter = rdfWriter;
+        this.underlyingResource = underlyingResource;
         try {
             this.rdfWriter.startRDF();
         } catch (RDFHandlerException e) {
@@ -53,7 +50,7 @@ public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter
     @Override
     public final void writeCRQuads(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
         while (resolvedStatements.hasNext()) {
-            write(resolvedStatements.next().getStatement());
+            write(resolvedStatements.next());
         } 
     }
     
@@ -80,6 +77,6 @@ public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter
         } catch (RDFHandlerException e) {
             throw new IOException(e);
         }
-        outputWriter.close();
+        underlyingResource.close();
     }
 }

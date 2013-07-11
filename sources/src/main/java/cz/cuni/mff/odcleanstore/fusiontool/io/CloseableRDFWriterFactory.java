@@ -3,12 +3,19 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 import org.openrdf.model.URI;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.n3.N3WriterFactory;
+import org.openrdf.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
+import org.openrdf.rio.trig.TriGWriterFactory;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
@@ -96,13 +103,18 @@ public class CloseableRDFWriterFactory {
             URI dataContext, URI metadataContext)
             throws IOException {
         
+        Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
         switch (format) {
         case RDF_XML:
-            return new RdfXmlCloseableRDFWriter(outputStream);
+            RDFHandler rdfXmlWriter = new RDFXMLPrettyWriterFactory().getWriter(outputWriter);
+            //RDFHandler rdfXmlWriter = new RDFXMLWriterFactory().getWriter(outputWriter);
+            return new SesameCloseableRDFWriterTriple(rdfXmlWriter, outputWriter);
         case N3:
-            return new N3CloseableRDFWriter(outputStream);
+            RDFHandler n3Writer = new N3WriterFactory().getWriter(outputWriter);
+            return new SesameCloseableRDFWriterTriple(n3Writer, outputWriter);
         case TRIG:
-            return new TriGCloseableRDFWriter(outputStream, dataContext, metadataContext);
+            RDFHandler trigHandler = new TriGWriterFactory().getWriter(outputWriter);
+            return new SesameCloseableRDFWriterQuad(trigHandler, outputWriter, dataContext, metadataContext);
         default:
             throw new IllegalArgumentException("Unknown output format " + format);
         }
