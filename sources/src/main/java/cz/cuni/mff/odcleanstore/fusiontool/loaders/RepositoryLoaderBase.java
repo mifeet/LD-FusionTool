@@ -5,10 +5,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import java.util.Map;
 
-import cz.cuni.mff.odcleanstore.fusiontool.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
 
 /**
  * @author Jan Michelfeit

@@ -50,8 +50,11 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
+import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferSubjectsCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedQuadLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedSeedSubjectsLoader;
@@ -350,7 +353,7 @@ public class ODCSFusionToolExecutor {
         return preferredURIs;
     }
 
-    private void addDiscoveredObjects(UriCollection queuedSubjects, Collection<ResolvedStatement
+    private static void addDiscoveredObjects(UriCollection queuedSubjects, Collection<ResolvedStatement
             > resolvedStatements,
             URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
@@ -447,7 +450,7 @@ public class ODCSFusionToolExecutor {
         }
     }
 
-    private boolean hasVirtuosoSource(List<DataSourceConfig> sources) {
+    private static boolean hasVirtuosoSource(List<DataSourceConfig> sources) {
         for (DataSourceConfig sourceConfig : sources) {
             if (sourceConfig.getType() == EnumDataSourceType.VIRTUOSO) {
                 return true;
@@ -456,7 +459,7 @@ public class ODCSFusionToolExecutor {
         return false;
     }
     
-    private void fixVirtuosoOpenedStatements(boolean hasVirtuosoSource) {
+    private static void fixVirtuosoOpenedStatements(boolean hasVirtuosoSource) {
         if (hasVirtuosoSource) {
             // Somehow helps Virtuoso release connections. Without call to Thread.sleep(),
             // application may fail with "No buffer space available (maximum connections reached?)"

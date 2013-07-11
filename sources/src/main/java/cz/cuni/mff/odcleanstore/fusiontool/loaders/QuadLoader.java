@@ -17,7 +17,7 @@ public interface QuadLoader extends Closeable<ODCSFusionToolException> {
      * @param uri searched subject URI
      * @param quadCollection collection to which the result will be added
      * @throws ODCSFusionToolException error
-     * @see cz.cuni.mff.odcleanstore.fusiontool.DataSource#getNamedGraphRestriction()
+     * @see cz.cuni.mff.odcleanstore.fusiontool.io.DataSource#getNamedGraphRestriction()
      */
     void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException;
 }

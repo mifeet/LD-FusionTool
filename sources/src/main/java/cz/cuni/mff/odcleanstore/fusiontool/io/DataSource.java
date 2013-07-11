@@ -1,7 +1,7 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool;
+package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import java.util.Map;
 
