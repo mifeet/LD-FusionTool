@@ -4,6 +4,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,10 +13,15 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 import org.openrdf.model.URI;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.n3.N3WriterFactory;
 import org.openrdf.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
 import org.openrdf.rio.trig.TriGWriterFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
@@ -27,11 +33,14 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
  * @author Jan Michelfeit
  */
 public class CloseableRDFWriterFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(CloseableRDFWriterFactory.class);
+    private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
+
     /**
      * Creates a new {@link CloseableRDFWriter} according to settings given in output configuration.
      * @param output output configuration
      * @return RDF writer
-     * @throws IOException I/O error 
+     * @throws IOException I/O error
      * @throws ODCSFusionToolException invalid output configuration
      */
     public CloseableRDFWriter createRDFWriter(Output output) throws IOException, ODCSFusionToolException {
@@ -41,26 +50,25 @@ public class CloseableRDFWriterFactory {
         if (dataContext != null) {
             metadataContext = null; // data and metadata context are exclude each other
         }
-        
+
         switch (output.getType()) {
         case VIRTUOSO:
-            return createVirtuosoOutput(
+            return createVirtuosoSparqlOutput(
                     name,
-                    output.getParams().get(Output.HOST_PARAM),
-                    output.getParams().get(Output.PORT_PARAM),
+                    output.getParams().get(Output.ENDPOINT_URL_PARAM),
                     output.getParams().get(Output.USERNAME_PARAM),
                     output.getParams().get(Output.PASSWORD_PARAM),
                     dataContext,
                     metadataContext);
-        case SPARQL: 
+        case SPARQL:
             return createSparqlOutput(
-                    name, 
+                    name,
                     output.getParams().get(Output.ENDPOINT_URL_PARAM),
                     output.getParams().get(Output.USERNAME_PARAM),
-                    output.getParams().get(Output.PASSWORD_PARAM), 
+                    output.getParams().get(Output.PASSWORD_PARAM),
                     dataContext,
                     metadataContext);
-        case FILE: 
+        case FILE:
             String pathString = output.getParams().get(Output.PATH_PARAM);
             File fileLocation = pathString != null ? new File(pathString) : null;
 
@@ -87,39 +95,7 @@ public class CloseableRDFWriterFactory {
                     + output.getType() + " is not supported");
         }
     }
-    
-    /**
-     * Creates a new {@link CloseableRDFWriter} serializing RDF to a file of the given format.
-     * @param format serialization format
-     * @param outputStream stream to write
-     * @param dataContext URI of named graph where resolved quads will be placed or null for unique graph per quad
-     *        (if the serialization format supports named graphs)
-     * @param metadataContext URI of named graph where CR metadata will be placed or null for no metadata
-     *        (if the serialization format supports named graphs)
-     * @return RDF writer
-     * @throws IOException I/O error
-     */
-    public CloseableRDFWriter createFileRDFWriter(EnumSerializationFormat format, OutputStream outputStream, 
-            URI dataContext, URI metadataContext)
-            throws IOException {
-        
-        Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
-        switch (format) {
-        case RDF_XML:
-            RDFHandler rdfXmlWriter = new RDFXMLPrettyWriterFactory().getWriter(outputWriter);
-            //RDFHandler rdfXmlWriter = new RDFXMLWriterFactory().getWriter(outputWriter);
-            return new SesameCloseableRDFWriterTriple(rdfXmlWriter, outputWriter);
-        case N3:
-            RDFHandler n3Writer = new N3WriterFactory().getWriter(outputWriter);
-            return new SesameCloseableRDFWriterTriple(n3Writer, outputWriter);
-        case TRIG:
-            RDFHandler trigHandler = new TriGWriterFactory().getWriter(outputWriter);
-            return new SesameCloseableRDFWriterQuad(trigHandler, outputWriter, dataContext, metadataContext);
-        default:
-            throw new IllegalArgumentException("Unknown output format " + format);
-        }
-    }
-    
+
     /**
      * Returns a new {@link CloseableRDFWriter} for serialization to a file.
      * @param name output name
@@ -140,18 +116,53 @@ public class CloseableRDFWriterFactory {
             throws IOException, ODCSFusionToolException {
 
         if (fileLocation == null) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.OUTPUT_PARAM, 
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.OUTPUT_PARAM,
                     "Name of output file must be specified for output " + name);
         } else if (format == null) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.OUTPUT_PARAM, 
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.OUTPUT_PARAM,
                     "Invalid output format specified for output " + name);
         }
-        
+
         ODCSFusionToolUtils.ensureParentsExists(fileLocation);
         if (splitByMB == null) {
             return createFileRDFWriter(format, new FileOutputStream(fileLocation), dataContext, metadataContext);
         } else {
             return createSplittingFileRDFWriter(format, fileLocation, splitByMB, dataContext, metadataContext);
+        }
+    }
+
+    /**
+     * Creates a new {@link CloseableRDFWriter} serializing RDF to a file of the given format.
+     * @param format serialization format
+     * @param outputStream stream to write
+     * @param dataContext URI of named graph where resolved quads will be placed or null for unique graph per quad
+     *        (if the serialization format supports named graphs)
+     * @param metadataContext URI of named graph where CR metadata will be placed or null for no metadata
+     *        (if the serialization format supports named graphs)
+     * @return RDF writer
+     * @throws IOException I/O error
+     */
+    public CloseableRDFWriter createFileRDFWriter(EnumSerializationFormat format, OutputStream outputStream,
+            URI dataContext, URI metadataContext)
+            throws IOException {
+
+        Writer outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+        switch (format) {
+        case RDF_XML:
+            RDFHandler rdfXmlWriter = new RDFXMLPrettyWriterFactory().getWriter(outputWriter);
+            LOG.debug("Created a RDF/XML file output");
+            // RDFHandler rdfXmlWriter = new RDFXMLWriterFactory().getWriter(outputWriter);
+            return new SesameCloseableRDFWriterTriple(rdfXmlWriter, outputWriter);
+        case N3:
+            RDFHandler n3Writer = new N3WriterFactory().getWriter(outputWriter);
+            LOG.debug("Created an N3 file output");
+            return new SesameCloseableRDFWriterTriple(n3Writer, outputWriter);
+        case TRIG:
+            RDFHandler trigHandler = new TriGWriterFactory().getWriter(outputWriter);
+            LOG.debug("Created a TriG file output");
+            return new SesameCloseableRDFWriterQuad(trigHandler, outputWriter, dataContext, metadataContext);
+        default:
+            throw new IllegalArgumentException("Unknown output format " + format);
         }
     }
 
@@ -177,13 +188,64 @@ public class CloseableRDFWriterFactory {
         return new SplittingRDFWriter(format, outputFile, splitByBytes, this, dataContext, metadataContext);
     }
     
-    private CloseableRDFWriter createSparqlOutput(String name, String endpointURL, String username, String password,
-            URI dataContext, URI metadataContext)  {
-        throw new UnsupportedOperationException();
+    private CloseableRDFWriter createVirtuosoSparqlOutput(String name, String endpointURL, String username, String password,
+            URI dataContext, URI metadataContext) throws IOException {
+        try {
+            Repository repository = REPOSITORY_FACTORY.createVirtuosoSparqlUpdateRepository(
+                    name, endpointURL, endpointURL, username, password);
+            return createRepositoryOutput(repository, name, dataContext, metadataContext);
+        } catch (ODCSFusionToolException e) {
+            throw new IOException(e);
+        }
     }
 
-    private CloseableRDFWriter createVirtuosoOutput(String name, String host, String port, String username, String password,
-            URI dataContext, URI metadataContext) {
-        throw new UnsupportedOperationException();
+    private CloseableRDFWriter createSparqlOutput(String name, String endpointURL, String username, String password,
+            URI dataContext, URI metadataContext) throws IOException {
+        try {
+            Repository repository = REPOSITORY_FACTORY.createSparqlRepository(
+                    name, endpointURL, endpointURL, username, password);
+            return createRepositoryOutput(repository, name, dataContext, metadataContext);
+        } catch (ODCSFusionToolException e) {
+            throw new IOException(e);
+        }
+    }
+    
+    private CloseableRDFWriter createRepositoryOutput(Repository repository, String name, URI dataContext, URI metadataContext)
+            throws IOException {
+        
+        RepositoryConnection connection;
+        try {
+            connection = repository.getConnection();
+        } catch (RepositoryException e) {
+            throw new IOException(e);
+        }
+        
+        RepositoryRDFInserter rdfWriter = new RepositoryRDFInserter(connection);
+        Closeable connectionCloser = new ConnectionCloser(connection);
+        LOG.debug("Initialized repository output {}", name);
+        return new SesameCloseableRDFWriterQuad(rdfWriter, connectionCloser, dataContext, metadataContext);
+    }
+    
+    /**
+     * Wrapper for closing a repository connection.
+     */
+    private class ConnectionCloser implements Closeable {
+        private RepositoryConnection connection;
+
+        public ConnectionCloser(RepositoryConnection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (RepositoryException e) {
+                    throw new IOException(e);
+                }
+                connection = null;
+            }
+        }
     }
 }

@@ -8,7 +8,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
  * @author Jan Michelfeit
  */
 public enum EnumOutputType {
-    /** Virtuoso JDBC connection. */
+    /** Virtuoso SPARQL Update endpoint. */
     VIRTUOSO,
     
     /** File. */

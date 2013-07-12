@@ -82,6 +82,7 @@ public class ODCSFusionToolExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolExecutor.class);
 
     private static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory();
+    private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
 
     /**
      * Performs the actual ODCS-FusionTool task according to the given configuration.
@@ -214,10 +215,9 @@ public class ODCSFusionToolExecutor {
     private Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
             throws ODCSFusionToolException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
-        RepositoryFactory repositoryFactory = new RepositoryFactory();
         for (DataSourceConfig dataSourceConfig : config) {
             try {
-                DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, repositoryFactory);
+                DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, REPOSITORY_FACTORY);
                 dataSources.add(dataSource);
             } catch (ODCSFusionToolException e) {
                 // clean up already initialized repositories

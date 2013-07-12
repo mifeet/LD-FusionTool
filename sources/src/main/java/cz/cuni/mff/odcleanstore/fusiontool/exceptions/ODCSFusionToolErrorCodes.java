@@ -29,5 +29,6 @@ public final class ODCSFusionToolErrorCodes {
     public static final int REPOSITORY_CLOSE = 23;
     public static final int OUTPUT_UNSUPPORTED = 24;
     public static final int OUTPUT_PARAM = 25;
+    public static final int REPOSITORY_INIT_VIRTUOSO_SPARQL = 26;
     // CHECKSTYLE:ON
 }
