@@ -149,16 +149,19 @@
       <!--<Param name="dataContext" value="http://opendata.cz/infrastructure/odcleanstore/result" />-->
     </Output>
     
-    <!-- Definition of output to a Virtuoso database instance using Virtuoso SPARQL endpoint
-	     Note that Virtuoso isn't compatible with the standard SPARQL endpoint -->
-    <Output type="virtuoso">
-      <!-- URL of the SPARQL endpoint; (required)) -->
-      <Param name="endpointUrl" value="http://localhost:8890/sparql-auth" />
-      
-      <!-- Connection username; the user account needs SPARQL Update permission (optional) -->
+    <!-- Definition of output to a Virtuoso database instance using JDBC;
+	     note that Virtuoso isn't compatible with the standard SPARQL endpoint -->
+    <Output type="virtuoso" name="virtuoso-output">
+      <!-- Hostname for the Virtuoso database instance; (required) -->
+      <Param name="host" value="localhost" />
+    
+      <!-- Connection port; (required) -->
+      <Param name="port" value="1111" />
+    
+      <!-- Connection username; (required) -->
       <Param name="username" value="dba" />
     
-      <!-- Connection password; (optional) -->
+      <!-- Connection password; (required) -->
       <Param name="password" value="dba" />
       
       <!-- URI of named graph where Conflict Resolution metadata will be placed in the output;
@@ -172,7 +175,7 @@
     </Output>
 
      <!-- Definition of output to a SPARQL endpoint -->    
-    <Output type="sparql">
+    <Output type="sparql" name="sparql-output">
       <!-- URL of the SPARQL endpoint; (required)) -->
       <Param name="endpointUrl" value="http://localhost:8890/sparql-auth" />
       

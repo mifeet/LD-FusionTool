@@ -53,9 +53,10 @@ public class CloseableRDFWriterFactory {
 
         switch (output.getType()) {
         case VIRTUOSO:
-            return createVirtuosoSparqlOutput(
+            return createVirtuosoOutput(
                     name,
-                    output.getParams().get(Output.ENDPOINT_URL_PARAM),
+                    output.getParams().get(Output.HOST_PARAM),
+                    output.getParams().get(Output.PORT_PARAM),
                     output.getParams().get(Output.USERNAME_PARAM),
                     output.getParams().get(Output.PASSWORD_PARAM),
                     dataContext,
@@ -188,42 +189,32 @@ public class CloseableRDFWriterFactory {
         return new SplittingRDFWriter(format, outputFile, splitByBytes, this, dataContext, metadataContext);
     }
     
-    private CloseableRDFWriter createVirtuosoSparqlOutput(String name, String endpointURL, String username, String password,
+    private CloseableRDFWriter createVirtuosoOutput(String name, String host, String port, String username, String password,
             URI dataContext, URI metadataContext) throws IOException {
         try {
-            Repository repository = REPOSITORY_FACTORY.createVirtuosoSparqlUpdateRepository(
-                    name, endpointURL, endpointURL, username, password);
-            return createRepositoryOutput(repository, name, dataContext, metadataContext);
-        } catch (ODCSFusionToolException e) {
-            throw new IOException(e);
-        }
-    }
-
-    private CloseableRDFWriter createSparqlOutput(String name, String endpointURL, String username, String password,
-            URI dataContext, URI metadataContext) throws IOException {
-        try {
-            Repository repository = REPOSITORY_FACTORY.createSparqlRepository(
-                    name, endpointURL, endpointURL, username, password);
-            return createRepositoryOutput(repository, name, dataContext, metadataContext);
+            VirtuosoRDFWriter writer = new VirtuosoRDFWriter(name, host, port, username, password);
+            LOG.debug("Initialized Virtuoso output {}", name);
+            return new SesameCloseableRDFWriterQuad(writer, writer, dataContext, metadataContext);
         } catch (ODCSFusionToolException e) {
             throw new IOException(e);
         }
     }
     
-    private CloseableRDFWriter createRepositoryOutput(Repository repository, String name, URI dataContext, URI metadataContext)
-            throws IOException {
-        
-        RepositoryConnection connection;
+    private CloseableRDFWriter createSparqlOutput(String name, String endpointURL, String username, String password,
+            URI dataContext, URI metadataContext) throws IOException {
         try {
-            connection = repository.getConnection();
+            Repository repository = REPOSITORY_FACTORY.createSparqlRepository(
+                    name, endpointURL, endpointURL, username, password);
+            RepositoryConnection connection  = repository.getConnection();
+            RepositoryRDFInserter rdfWriter = new RepositoryRDFInserter(connection);
+            Closeable connectionCloser = new ConnectionCloser(connection);
+            LOG.debug("Initialized SPARQL output {}", name);
+            return new SesameCloseableRDFWriterQuad(rdfWriter, connectionCloser, dataContext, metadataContext);
+        } catch (ODCSFusionToolException e) {
+            throw new IOException(e);
         } catch (RepositoryException e) {
             throw new IOException(e);
         }
-        
-        RepositoryRDFInserter rdfWriter = new RepositoryRDFInserter(connection);
-        Closeable connectionCloser = new ConnectionCloser(connection);
-        LOG.debug("Initialized repository output {}", name);
-        return new SesameCloseableRDFWriterQuad(rdfWriter, connectionCloser, dataContext, metadataContext);
     }
     
     /**

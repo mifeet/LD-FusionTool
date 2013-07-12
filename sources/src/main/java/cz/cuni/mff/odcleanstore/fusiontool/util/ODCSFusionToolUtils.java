@@ -96,4 +96,14 @@ public final class ODCSFusionToolUtils {
     /** Disable constructor for a utility class. */
     private ODCSFusionToolUtils() {
     }
+
+    /**
+     * Creates a connection string for connecting to Virtuoso via JDBC.
+     * @param host host for the connection
+     * @param port connection port
+     * @return JDBC connection string
+     */
+    public static String getVirtuosoConnectionString(String host, String port) {
+        return "jdbc:virtuoso://" + host + ":" + port + "/CHARSET=UTF-8";
+    }
 }

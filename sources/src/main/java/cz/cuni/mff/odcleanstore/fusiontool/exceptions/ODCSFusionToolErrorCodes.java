@@ -30,5 +30,6 @@ public final class ODCSFusionToolErrorCodes {
     public static final int OUTPUT_UNSUPPORTED = 24;
     public static final int OUTPUT_PARAM = 25;
     public static final int REPOSITORY_INIT_VIRTUOSO_SPARQL = 26;
+    public static final int REPOSITORY_INIT_VIRTUOSO_JDBC = 27;
     // CHECKSTYLE:ON
 }
