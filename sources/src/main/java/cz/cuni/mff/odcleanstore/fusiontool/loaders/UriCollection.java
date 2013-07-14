@@ -6,7 +6,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
 
 /**
- * Simple closeable collection of URIs.
+ * Simple closeable iteration over URIs.
  * @author Jan Michelfeit
  */
 public interface UriCollection extends Closeable<IOException> {

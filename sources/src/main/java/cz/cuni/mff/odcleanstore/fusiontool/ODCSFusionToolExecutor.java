@@ -55,7 +55,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferSubjectsCollection;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferedSubjectsCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedQuadLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedSeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.MetadataLoader;
@@ -111,7 +111,7 @@ public class ODCSFusionToolExecutor {
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
             final boolean isTransitive = config.getSeedResourceRestriction() != null;
             if (isTransitive) {
-                queuedSubjects = createBufferSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
+                queuedSubjects = createBufferedSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
                 seedSubjects.close();
             } else {
                 queuedSubjects = seedSubjects;
@@ -197,10 +197,10 @@ public class ODCSFusionToolExecutor {
         }
     }
 
-    private UriCollection createBufferSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
+    private UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
             LargeCollectionFactory collectionFactory) throws ODCSFusionToolException {
         Set<String> buffer = collectionFactory.<String>createSet();
-        UriCollection queuedSubjects = new BufferSubjectsCollection(buffer);
+        UriCollection queuedSubjects = new BufferedSubjectsCollection(buffer);
         while (seedSubjects.hasNext()) {
             String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());
             queuedSubjects.add(canonicalURI); // only store canonical URIs to save space
@@ -353,9 +353,10 @@ public class ODCSFusionToolExecutor {
         return preferredURIs;
     }
 
-    private static void addDiscoveredObjects(UriCollection queuedSubjects, Collection<ResolvedStatement
-            > resolvedStatements,
-            URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
+    private static void addDiscoveredObjects(UriCollection queuedSubjects,
+            Collection<ResolvedStatement> resolvedStatements, URIMappingIterable uriMapping, 
+            Set<String> resolvedCanonicalURIs) {
+        
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
             String uri = ODCSFusionToolUtils.getNodeURI(resolvedStatement.getStatement().getObject());
             if (uri == null) {
