@@ -24,7 +24,16 @@ public final class DataSourceImpl implements DataSource {
     private final String label;
     private final EnumDataSourceType type;
 
-    private DataSourceImpl(Repository repository, Map<String, String> prefixes,
+    /**
+     * Creates a new instance.
+     * @param repository repository providing access to actual data
+     * @param prefixes map of namespace prefixes
+     * @param namedGraphRestriction SPARQL restriction on named graphs from which data are loaded
+     * @param metadataGraphRestriction SPARQl restriction on named graphs from which metadata are loaded
+     * @param label name of this data source
+     * @param type type of this data source
+     */
+    public DataSourceImpl(Repository repository, Map<String, String> prefixes,
             SparqlRestriction namedGraphRestriction, SparqlRestriction metadataGraphRestriction, String label,
             EnumDataSourceType type) {
         this.repository = repository;

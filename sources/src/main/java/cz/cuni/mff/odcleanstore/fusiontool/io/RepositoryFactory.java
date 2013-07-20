@@ -50,7 +50,16 @@ public final class RepositoryFactory {
             return createVirtuosoRepository(name, host, port, username, password);
         case SPARQL:
             String endpointUrl = dataSourceConfig.getParams().get("endpointurl");
-            return createSparqlRepository(name, endpointUrl);
+            String minQueryIntervalString = dataSourceConfig.getParams().get("minqueryinterval");
+            long minQueryIntervalMs = -1;
+            if (minQueryIntervalString != null) {
+                try {
+                    minQueryIntervalMs = Long.parseLong(minQueryIntervalString);
+                } catch (NumberFormatException e) {
+                    // leave default
+                }
+            }
+            return createSparqlRepository(name, endpointUrl, minQueryIntervalMs);
         case FILE:
             String path = dataSourceConfig.getParams().get("path");
             String format = dataSourceConfig.getParams().get("format");
@@ -86,7 +95,7 @@ public final class RepositoryFactory {
             baseURI = file.toURI().toString();
         }
 
-        EnumSerializationFormat serializationFormat = EnumSerializationFormat.parseFormat(format);
+        EnumSerializationFormat serializationFormat = (format != null) ? EnumSerializationFormat.parseFormat(format) : null;
         if (format != null && serializationFormat == null) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Unknown serialization format " + format + " for data source " + dataSourceName);
@@ -156,7 +165,7 @@ public final class RepositoryFactory {
         LOG.debug("Initialized Virtuoso repository {}", dataSourceName);
         return repository;
     }
-
+    
     /**
      * Creates a repository backed by a SPARQL endpoint.
      * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
@@ -165,12 +174,28 @@ public final class RepositoryFactory {
      * @return initialized repository
      * @throws ODCSFusionToolException error creating repository
      */
-    public Repository createSparqlRepository(String dataSourceName, String endpointUrl) throws ODCSFusionToolException {
+    public Repository createSparqlRepository(String dataSourceName, String endpointUrl) 
+            throws ODCSFusionToolException {
+        return createSparqlRepository(dataSourceName, endpointUrl, -1);
+    }
+
+    /**
+     * Creates a repository backed by a SPARQL endpoint.
+     * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
+     * @param dataSourceName data source name (for logging)
+     * @param endpointUrl SPARQL endpoint URL
+     * @param minQueryIntervalMs minimum time in ms between SPARQL requests (-1 for no minimum time)
+     * @return initialized repository
+     * @throws ODCSFusionToolException error creating repository
+     */
+    public Repository createSparqlRepository(String dataSourceName, String endpointUrl, long minQueryIntervalMs) 
+            throws ODCSFusionToolException {
+        
         if (ODCSUtils.isNullOrEmpty(endpointUrl)) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Missing required parameters for data source " + dataSourceName);
         }
-        Repository repository = new SPARQLRepository(endpointUrl);
+        Repository repository = new WellBehavedSPARQLRepository(endpointUrl, minQueryIntervalMs);
         try {
             repository.initialize();
         } catch (RepositoryException e) {

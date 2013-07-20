@@ -55,7 +55,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferSubjectsCollection;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferedSubjectsCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedQuadLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedSeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.MetadataLoader;
@@ -81,8 +81,11 @@ import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 public class ODCSFusionToolExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolExecutor.class);
 
-    private static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory();
-    private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
+    /** An instance of {@link CloseableRDFWriterFactory}. */
+    protected static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory();
+    
+    /** An instance of {@link RepositoryFactory}. */
+    protected static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
 
     /**
      * Performs the actual ODCS-FusionTool task according to the given configuration.
@@ -111,7 +114,7 @@ public class ODCSFusionToolExecutor {
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
             final boolean isTransitive = config.getSeedResourceRestriction() != null;
             if (isTransitive) {
-                queuedSubjects = createBufferSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
+                queuedSubjects = createBufferedSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
                 seedSubjects.close();
             } else {
                 queuedSubjects = seedSubjects;
@@ -128,6 +131,7 @@ public class ODCSFusionToolExecutor {
             long maxOutputTriples = checkMaxOutputTriples ? config.getMaxOutputTriples() : -1;
             long outputTriples = 0;
             long inputTriples = 0;
+            
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
             quadLoader = createQuadLoader(dataSources, alternativeURINavigator);
             while (queuedSubjects.hasNext()) {
@@ -197,10 +201,18 @@ public class ODCSFusionToolExecutor {
         }
     }
 
-    private UriCollection createBufferSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
+    /** 
+     * Creates a collection to hold subject URIs queued to be processed.
+     * @param seedSubjects initial URIs to fill in the collection
+     * @param uriMapping canonical URI mapping
+     * @param collectionFactory factory method for creating the returned collection
+     * @return collection of URIs
+     * @throws ODCSFusionToolException error
+     */
+    protected UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
             LargeCollectionFactory collectionFactory) throws ODCSFusionToolException {
         Set<String> buffer = collectionFactory.<String>createSet();
-        UriCollection queuedSubjects = new BufferSubjectsCollection(buffer);
+        UriCollection queuedSubjects = new BufferedSubjectsCollection(buffer);
         while (seedSubjects.hasNext()) {
             String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());
             queuedSubjects.add(canonicalURI); // only store canonical URIs to save space
@@ -212,7 +224,14 @@ public class ODCSFusionToolExecutor {
         return queuedSubjects;
     }
 
-    private Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
+    /**
+     * Initializes data sources from configuration.
+     * @param config configuration for data sources
+     * @param prefixes namespace prefixes
+     * @return initialized data sources
+     * @throws ODCSFusionToolException I/O error
+     */
+    protected Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
             throws ODCSFusionToolException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
         for (DataSourceConfig dataSourceConfig : config) {
@@ -234,7 +253,13 @@ public class ODCSFusionToolExecutor {
         return dataSources;
     }
     
-    private Model getMetadata(Collection<DataSource> dataSources) throws ODCSFusionToolException {
+    /**
+     * Returns metadata for conflict resolution.
+     * @param dataSources initialized data sources
+     * @return metadata for conflict resolution
+     * @throws ODCSFusionToolException error
+     */
+    protected Model getMetadata(Collection<DataSource> dataSources) throws ODCSFusionToolException {
         Model metadata = new TreeModel();
         for (DataSource source : dataSources) {
             MetadataLoader loader = new MetadataLoader(source);
@@ -243,7 +268,16 @@ public class ODCSFusionToolExecutor {
         return metadata;
     }
     
-    private URIMappingIterable getURIMapping(Collection<DataSource> dataSources, Config config)
+    /**
+     * Returns mapping of URIs to their canonical URI created from owl:sameAs links loaded 
+     * from the given data sources.
+     * @param dataSources data sources
+     * @param config fusion tool configuration
+     * @return mapping of URIs to their canonical URI
+     * @throws ODCSFusionToolException error
+     * @throws IOException I/O error
+     */
+    protected URIMappingIterable getURIMapping(Collection<DataSource> dataSources, Config config)
             throws ODCSFusionToolException, IOException {
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(), 
@@ -256,20 +290,42 @@ public class ODCSFusionToolExecutor {
         return uriMapping;
     }
     
-
-    private UriCollection getSeedSubjects(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
+    /**
+     * Returns collections of seed subjects, i.e. the initial URIs for which
+     * corresponding quads are loaded and resolved.
+     * @param dataSources initialized data sources
+     * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
+     *      or null to iterate all subjects
+     * @return collection of seed subject URIs
+     * @throws ODCSFusionToolException query error
+     */
+    protected UriCollection getSeedSubjects(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
             throws ODCSFusionToolException { 
         FederatedSeedSubjectsLoader loader = new FederatedSeedSubjectsLoader(dataSources);
         return loader.getTripleSubjectsCollection(seedResourceRestriction);
     }
     
-    private Collection<Statement> getQuads(QuadLoader quadLoader, String canonicalURI) throws ODCSFusionToolException {
+    /**
+     * Loads quads having the given URI as their subject using the given quad loader.
+     * @param quadLoader quad loader
+     * @param canonicalURI canonical URI for which quads should be loaded
+     * @return collection of quads loaded by quadLoader for canonicalURI
+     * @throws ODCSFusionToolException query error
+     */
+    protected Collection<Statement> getQuads(QuadLoader quadLoader, String canonicalURI) throws ODCSFusionToolException {
         Collection<Statement> quads = new ArrayList<Statement>();
         quadLoader.loadQuadsForURI(canonicalURI, quads);
         return quads;
     }
     
-    private LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
+    /**
+     * Creates factory object for large collections depending on configuration.
+     * If cache is enabled, the collection is backed by a file, otherwise kept in memory.
+     * @param config fusion tool configuration
+     * @return factory for large collections
+     * @throws IOException I/O error
+     */
+    protected LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
         if (config.getEnableFileCache()) {
             return new MapdbCollectionFactory(ODCSFusionToolUtils.getCacheDirectory());
         } else {
@@ -287,7 +343,13 @@ public class ODCSFusionToolExecutor {
         }
     }
     
-    private QuadLoader createQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
+    /**
+     * Creates a quad loader retrieving quads from the given data sources (checking all of them). 
+     * @param dataSources initialized data sources
+     * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
+     * @return initialized quad loader
+     */
+    protected QuadLoader createQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
         if (dataSources.size() == 1) {
             return new RepositoryQuadLoader(dataSources.iterator().next(), alternativeURINavigator);
         } else {
@@ -295,7 +357,15 @@ public class ODCSFusionToolExecutor {
         }
     }
     
-    private static List<CloseableRDFWriter> createRDFWriters(List<Output> outputs, Map<String, String> nsPrefixes)
+    /**
+     * Creates and initializes output writers.
+     * @param outputs specification of data outputs
+     * @param nsPrefixes namespace prefix mappings
+     * @return output writers 
+     * @throws IOException I/O error
+     * @throws ODCSFusionToolException configuration error
+     */
+    protected List<CloseableRDFWriter> createRDFWriters(List<Output> outputs, Map<String, String> nsPrefixes)
             throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         for (Output output : outputs) {
@@ -306,7 +376,14 @@ public class ODCSFusionToolExecutor {
         return writers;
     }
 
-    private static ConflictResolver createConflictResolver(
+    /** 
+     * Creates conflict resolver initialized according to given configuration.
+     * @param config fusion tool configuration
+     * @param metadata metadata for conflict resolution
+     * @param uriMapping mapping of URIs to their canonical URI
+     * @return initialized conflict resolver
+     */
+    protected ConflictResolver createConflictResolver(
             Config config, Model metadata, URIMappingIterable uriMapping) {
 
         SourceQualityCalculator sourceConfidence = new ODCSSourceQualityCalculator(
@@ -328,7 +405,15 @@ public class ODCSFusionToolExecutor {
         return conflictResolver;
     }
 
-    private static Set<String> getPreferredURIs(Set<URI> settingsPreferredURIs, File canonicalURIsInputFile)
+    /**
+     * Returns set of URIs preferred for canonical URIs. 
+     * The URIs are loaded from canonicalURIsInputFile if given and URIs present in settingsPreferredURIs are added.
+     * @param settingsPreferredURIs URIs occurring on fusion tool configuration
+     * @param canonicalURIsInputFile file with canonical URIs to be loaded; can be null
+     * @return set of URIs preferred for canonical URIs
+     * @throws IOException error reading canonical URIs from file
+     */
+    protected Set<String> getPreferredURIs(Set<URI> settingsPreferredURIs, File canonicalURIsInputFile)
             throws IOException {
         Set<String> preferredURIs = new HashSet<String>(settingsPreferredURIs.size());
         for (URI uri : settingsPreferredURIs) {
@@ -353,9 +438,18 @@ public class ODCSFusionToolExecutor {
         return preferredURIs;
     }
 
-    private static void addDiscoveredObjects(UriCollection queuedSubjects, Collection<ResolvedStatement
-            > resolvedStatements,
-            URIMappingIterable uriMapping, Set<String> resolvedCanonicalURIs) {
+    /**
+     * Adds URIs from objects of resolved statements to the given collection of queued subjects.
+     * Only URIs that haven't been resolved already are added. 
+     * @param queuedSubjects collection where URIs are added 
+     * @param resolvedStatements resolved statements whose objects are added to queued subjects
+     * @param uriMapping mapping to canonical URIs
+     * @param resolvedCanonicalURIs set of already resolved URIs
+     */
+    protected void addDiscoveredObjects(UriCollection queuedSubjects,
+            Collection<ResolvedStatement> resolvedStatements, URIMappingIterable uriMapping, 
+            Set<String> resolvedCanonicalURIs) {
+        
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
             String uri = ODCSFusionToolUtils.getNodeURI(resolvedStatement.getStatement().getObject());
             if (uri == null) {
@@ -371,13 +465,25 @@ public class ODCSFusionToolExecutor {
         }
     }
     
-    private static void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
+    /** 
+     * Writes namespace declarations to the given output writer.
+     * @param writer output writer
+     * @param nsPrefixes map of namespace prefixes
+     * @throws IOException I/O error
+     */
+    protected void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
         for (Map.Entry<String, String> entry : nsPrefixes.entrySet()) {
             writer.addNamespace(entry.getKey(), entry.getValue());
         }
     }
 
-    private static void writeCanonicalURIs(Set<String> resolvedCanonicalURIs, File outputFile) throws IOException {
+    /**
+     * Write the given set of canonical URIs to a file, one URI per line.
+     * @param resolvedCanonicalURIs URIs to write
+     * @param outputFile file where to write
+     * @throws IOException writing error
+     */
+    protected void writeCanonicalURIs(Set<String> resolvedCanonicalURIs, File outputFile) throws IOException {
         if (outputFile == null) {
             return;
         }
@@ -401,7 +507,17 @@ public class ODCSFusionToolExecutor {
         }
     }
 
-    private static void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs,
+    /**
+     * Writes owl:sameAs links according to the given URI mapping to given outputs.
+     * owl:sameAs links between URIs and their canonical equivalent are written.
+     * @param uriMapping uri mapping defining the links to write
+     * @param outputs outputs where sameAs links are written
+     * @param nsPrefixes map of namespace prefixes
+     * @param valueFactory a value factory
+     * @throws IOException I/O error 
+     * @throws ODCSFusionToolException error when creating output
+     */
+    protected void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs,
             Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException, ODCSFusionToolException {
 
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
@@ -450,7 +566,12 @@ public class ODCSFusionToolExecutor {
         }
     }
 
-    private static boolean hasVirtuosoSource(List<DataSourceConfig> sources) {
+    /**
+     * Indicates whether a source of type {@link EnumDataSourceType#VIRTUOSO} is present in the given data sources.
+     * @param sources configuration of data sources
+     * @return true iff sources contain a Virtuoso data source
+     */
+    protected boolean hasVirtuosoSource(List<DataSourceConfig> sources) {
         for (DataSourceConfig sourceConfig : sources) {
             if (sourceConfig.getType() == EnumDataSourceType.VIRTUOSO) {
                 return true;
@@ -459,7 +580,13 @@ public class ODCSFusionToolExecutor {
         return false;
     }
     
-    private static void fixVirtuosoOpenedStatements(boolean hasVirtuosoSource) {
+    /**
+     * Fixes bug in Virtuoso which doesn't release connections even when they are released explicitly.
+     * This method puts the current thread to sleep so that the thread releasing connections has chance to be 
+     * planned for execution. If hasVirtuosoSource is false, does nothing.
+     * @param hasVirtuosoSource indicates whether a data source of type VIRTUOSO is used
+     */
+    protected void fixVirtuosoOpenedStatements(boolean hasVirtuosoSource) {
         if (hasVirtuosoSource) {
             // Somehow helps Virtuoso release connections. Without call to Thread.sleep(),
             // application may fail with "No buffer space available (maximum connections reached?)"

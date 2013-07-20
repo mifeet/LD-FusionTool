@@ -56,9 +56,10 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
     /**
      * Loads owl:sameAs links from relevant named graphs and adds them to the given canonical URI mapping.
      * @param uriMapping URI mapping where loaded links will be added
+     * @return number of loaded owl:sameAs links
      * @throws ODCSFusionToolException repository error
      */
-    public void loadSameAsMappings(URIMappingImpl uriMapping) throws ODCSFusionToolException {
+    public long loadSameAsMappings(URIMappingImpl uriMapping) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
         long linkCount = 0;
         
@@ -96,6 +97,7 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
 
         LOG.debug(String.format("ODCS-FusionTool: loaded & resolved %,d owl:sameAs links from source %s in %d ms",
                     linkCount, dataSource.getName(), System.currentTimeMillis() - startTime));
+        return linkCount;
     }
 
     private long loadSameAsLinks(URIMappingImpl uriMapping, String query) throws OpenRDFException {

@@ -11,13 +11,13 @@ import java.util.Set;
  * Nodes other than resource URIs or blank nodes are discarded.
  * @author Jan Michelfeit
  */
-public class BufferSubjectsCollection implements UriCollection {
+public class BufferedSubjectsCollection implements UriCollection {
     private final Set<String> uriQueue;
 
     /**
      * Creates a new instance.
      */
-    public BufferSubjectsCollection() {
+    public BufferedSubjectsCollection() {
         uriQueue = new HashSet<String>();
     }
     
@@ -25,7 +25,7 @@ public class BufferSubjectsCollection implements UriCollection {
      * Creates a new instance using the given set as buffer for subjects to be processed.
      * @param buffer buffer for subjects to be processed
      */
-    public BufferSubjectsCollection(Set<String> buffer) {
+    public BufferedSubjectsCollection(Set<String> buffer) {
         this.uriQueue = buffer;
     }
 
