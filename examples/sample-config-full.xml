@@ -45,7 +45,7 @@
       </MetadataGraphRestriction>
     </DataSource>
 
-     <!-- Data source representing a SPARQL endpoint -->    
+    <!-- Data source representing a SPARQL endpoint -->    
     <DataSource type="sparql">
       <!-- URL of the SPARQL endpoint; (required)) -->
       <Param name="endpointUrl" value="http://localhost:8890/sparql" />
