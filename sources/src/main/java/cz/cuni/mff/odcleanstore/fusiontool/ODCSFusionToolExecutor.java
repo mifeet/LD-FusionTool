@@ -281,7 +281,8 @@ public class ODCSFusionToolExecutor {
             throws ODCSFusionToolException, IOException {
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(), 
-                config.getCanonicalURIsInputFile());
+                config.getCanonicalURIsInputFile(),
+                config.getPreferredCanonicalURIs());
         URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
         for (DataSource source : dataSources) {
             SameAsLinkLoader loader = new SameAsLinkLoader(source);
@@ -410,11 +411,13 @@ public class ODCSFusionToolExecutor {
      * The URIs are loaded from canonicalURIsInputFile if given and URIs present in settingsPreferredURIs are added.
      * @param settingsPreferredURIs URIs occurring on fusion tool configuration
      * @param canonicalURIsInputFile file with canonical URIs to be loaded; can be null
+     * @param preferredCanonicalURIs default set of preferred canonical URIs
      * @return set of URIs preferred for canonical URIs
      * @throws IOException error reading canonical URIs from file
      */
-    protected Set<String> getPreferredURIs(Set<URI> settingsPreferredURIs, File canonicalURIsInputFile)
-            throws IOException {
+    protected Set<String> getPreferredURIs(Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
+            Collection<String> preferredCanonicalURIs) throws IOException {
+        
         Set<String> preferredURIs = new HashSet<String>(settingsPreferredURIs.size());
         for (URI uri : settingsPreferredURIs) {
             preferredURIs.add(uri.stringValue());
@@ -434,6 +437,7 @@ public class ODCSFusionToolExecutor {
                 // Intentionally do not throw an exception
             }
         }
+        preferredURIs.addAll(preferredCanonicalURIs);
 
         return preferredURIs;
     }

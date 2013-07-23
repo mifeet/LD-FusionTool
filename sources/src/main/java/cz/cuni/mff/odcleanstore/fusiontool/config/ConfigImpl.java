@@ -3,6 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -204,5 +205,10 @@ public class ConfigImpl implements Config {
     @Override
     public Long getMaxDateDifference() {
         return ConfigConstants.MAX_DATE_DIFFERENCE;
+    }
+    
+    @Override
+    public Collection<String> getPreferredCanonicalURIs() {
+        return ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS;
     }
 }
