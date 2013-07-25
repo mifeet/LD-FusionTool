@@ -3,6 +3,15 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.openrdf.model.vocabulary.DC;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.RDF;
+import org.openrdf.model.vocabulary.RDFS;
+
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
@@ -53,7 +62,7 @@ public final class ConfigConstants {
     /**
      * Graph score used if none is given in the input.
      */
-    public static final double SCORE_IF_UNKNOWN = 1;
+    public static final double SCORE_IF_UNKNOWN = 0.5;
     
     /**
      * Weight of the publisher score.
@@ -65,4 +74,22 @@ public final class ConfigConstants {
      * 31622400 s ~ 366 days
      */
     public static final long MAX_DATE_DIFFERENCE = 31622400;
+    
+    /**
+     * Set of default preferred canonical URIs. 
+     */
+    public static final Collection<String> DEFAULT_PREFERRED_CANONICAL_URIS = Arrays.asList(
+            RDFS.LABEL.stringValue(),
+            RDF.TYPE.stringValue(),
+            OWL.SAMEAS.stringValue(),
+            OWL.NOTHING.stringValue(),
+            OWL.THING.stringValue(),
+            OWL.CLASS.stringValue(),
+            DCTERMS.TITLE.stringValue(),
+            DCTERMS.DATE.stringValue(),
+            DCTERMS.SOURCE.stringValue(),
+            DC.CREATOR.stringValue(),
+            DC.SOURCE.stringValue(),
+            DC.SUBJECT.stringValue());
+            
 }

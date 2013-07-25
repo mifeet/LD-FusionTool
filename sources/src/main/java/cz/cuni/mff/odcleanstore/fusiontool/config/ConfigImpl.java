@@ -3,6 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ public class ConfigImpl implements Config {
     private File canonicalURIsInputFile;
     private boolean enableFileCache = false;
     private Long maxOutputTriples = null;
+    private boolean isProfilingOn = false;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -182,6 +184,19 @@ public class ConfigImpl implements Config {
     }
     
     @Override
+    public boolean isProfilingOn() {
+        return isProfilingOn; 
+    }
+    
+    /**
+     * Sets value for {@link #isProfilingOn()}.
+     * @param isProfilingOn see {@link #isProfilingOn()}
+     */
+    public void setProfilingOn(boolean isProfilingOn) {
+        this.isProfilingOn = isProfilingOn;
+    }
+    
+    @Override
     public Integer getQueryTimeout() {
         return ConfigConstants.DEFAULT_QUERY_TIMEOUT;
     }
@@ -204,5 +219,10 @@ public class ConfigImpl implements Config {
     @Override
     public Long getMaxDateDifference() {
         return ConfigConstants.MAX_DATE_DIFFERENCE;
+    }
+    
+    @Override
+    public Collection<String> getPreferredCanonicalURIs() {
+        return ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS;
     }
 }

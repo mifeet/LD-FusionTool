@@ -1,6 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -119,4 +120,17 @@ public interface Config {
      * @return SPARQL restriction (group graph pattern) or null  
      */
     SparqlRestriction getSeedResourceRestriction();
+    
+    /**
+     * Returns a default set of preferred URIs. 
+     * These are added to preferred URIs obtained from configuration and canonical URI file.
+     * @return set of preferred canonical URIs
+     */
+    Collection<String> getPreferredCanonicalURIs();
+    
+    /**
+     * Returns true of profiling logs should be printed.
+     * @return true iff profiling logs should be printed
+     */
+    boolean isProfilingOn();
 }
