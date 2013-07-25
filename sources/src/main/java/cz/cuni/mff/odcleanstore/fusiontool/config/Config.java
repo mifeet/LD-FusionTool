@@ -127,4 +127,10 @@ public interface Config {
      * @return set of preferred canonical URIs
      */
     Collection<String> getPreferredCanonicalURIs();
+    
+    /**
+     * Returns true of profiling logs should be printed.
+     * @return true iff profiling logs should be printed
+     */
+    boolean isProfilingOn();
 }

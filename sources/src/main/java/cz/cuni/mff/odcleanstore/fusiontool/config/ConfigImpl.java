@@ -36,6 +36,7 @@ public class ConfigImpl implements Config {
     private File canonicalURIsInputFile;
     private boolean enableFileCache = false;
     private Long maxOutputTriples = null;
+    private boolean isProfilingOn = false;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -180,6 +181,19 @@ public class ConfigImpl implements Config {
      */
     public void setMaxOutputTriples(Long maxOutputTriples) {
         this.maxOutputTriples = maxOutputTriples;
+    }
+    
+    @Override
+    public boolean isProfilingOn() {
+        return isProfilingOn; 
+    }
+    
+    /**
+     * Sets value for {@link #isProfilingOn()}.
+     * @param isProfilingOn see {@link #isProfilingOn()}
+     */
+    public void setProfilingOn(boolean isProfilingOn) {
+        this.isProfilingOn = isProfilingOn;
     }
     
     @Override

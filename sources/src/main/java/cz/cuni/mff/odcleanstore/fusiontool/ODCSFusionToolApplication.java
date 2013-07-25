@@ -15,6 +15,7 @@ import org.simpleframework.xml.core.PersistenceException;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
@@ -35,15 +36,21 @@ public final class ODCSFusionToolApplication {
     /** Parsed command line arguments representation. */
     private static class ApplicationArgs {
         private final boolean isVerbose;
+        private final boolean isProfilingOn;
         private final String configFilePath;
         
-        public ApplicationArgs(boolean isVerbose, String configFilePath) {
+        public ApplicationArgs(boolean isVerbose, boolean isProfilingOn, String configFilePath) {
             this.isVerbose = isVerbose;
+            this.isProfilingOn = isProfilingOn;
             this.configFilePath = configFilePath;
         }
         
         public boolean isVerbose() {
             return isVerbose;
+        }
+        
+        public boolean isProfilingOn() {
+            return isProfilingOn;
         }
         
         public String getConfigFilePath() {
@@ -82,6 +89,7 @@ public final class ODCSFusionToolApplication {
         Config config = null;
         try {
             config = ConfigReader.parseConfigXml(configFile);
+            ((ConfigImpl) config).setProfilingOn(parsedArgs.isProfilingOn());
             checkValidInput(config);
             setupDefaultRestrictions(config);
         } catch (InvalidInputException e) {
@@ -134,15 +142,21 @@ public final class ODCSFusionToolApplication {
         }
         
         boolean verbose = false;
-        int configFilePathPosition = 0;
-        if (configFilePathPosition < args.length && "--verbose".equals(args[configFilePathPosition])) {
-            verbose = true;
-            configFilePathPosition++;
+        boolean profile = false;
+        String configFilePath = null;
+        for (String arg : args) {
+            if ("--verbose".equals(arg)) {
+                verbose = true;
+            } else if ("--profile".equals(arg)) {
+                profile = true;
+            } else {
+                configFilePath = arg;
+            }
         }
-        if (configFilePathPosition >= args.length) {
+        if (configFilePath == null) {
             throw new InvalidInputException("Missing config file argument");
         }
-        return new ApplicationArgs(verbose, args[configFilePathPosition]);
+        return new ApplicationArgs(verbose, profile, configFilePath);
     }
 
     private static void checkValidInput(Config config) throws InvalidInputException {

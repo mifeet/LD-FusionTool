@@ -69,6 +69,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.util.GenericConverter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingCounters;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
@@ -101,6 +103,9 @@ public class ODCSFusionToolExecutor {
         List<CloseableRDFWriter> rdfWriters = null;
         Collection<DataSource> dataSources = getDataSources(config.getDataSources(), config.getPrefixes());
         boolean hasVirtuosoSource = hasVirtuosoSource(config.getDataSources());
+        ProfilingTimeCounter<ProfilingCounters> profiler = ProfilingTimeCounter.createInstance(
+                ProfilingCounters.class, config.isProfilingOn());
+        profiler.startCounter(ProfilingCounters.INITIALIZATION);
         try {
             // Load source named graphs metadata
             Model metadata = getMetadata(dataSources);
@@ -134,7 +139,9 @@ public class ODCSFusionToolExecutor {
             
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
             quadLoader = createQuadLoader(dataSources, alternativeURINavigator);
+            profiler.stopAddCounter(ProfilingCounters.INITIALIZATION);
             while (queuedSubjects.hasNext()) {
+                profiler.startCounter(ProfilingCounters.BUFFERING);
                 String uri = queuedSubjects.next();
                 String canonicalURI = uriMapping.getCanonicalURI(uri);
 
@@ -143,15 +150,20 @@ public class ODCSFusionToolExecutor {
                     continue;
                 }
                 resolvedCanonicalURIs.add(canonicalURI);
+                profiler.stopAddCounter(ProfilingCounters.BUFFERING);
 
                 // Load quads for the given subject
+                profiler.startCounter(ProfilingCounters.QUAD_LOADING);
                 Collection<Statement> quads = getQuads(quadLoader, canonicalURI);
                 inputTriples += quads.size();
+                profiler.stopAddCounter(ProfilingCounters.QUAD_LOADING);
 
                 // Resolve conflicts
+                profiler.startCounter(ProfilingCounters.CONFLICT_RESOLUTION);
                 Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(quads);
-                LOG.info("Resolved {} quads for URI <{}> resulting in {} quads",
-                        new Object[] { quads.size(), canonicalURI, resolvedQuads.size() });
+                profiler.stopAddCounter(ProfilingCounters.CONFLICT_RESOLUTION);
+                LOG.info("Resolved {} quads for URI <{}> resulting in {} quads (processed totally {} quads)",
+                        new Object[] { quads.size(), canonicalURI, resolvedQuads.size(), inputTriples});
 
                 // Check if we have reached the limit on output triples
                 if (checkMaxOutputTriples && outputTriples + resolvedQuads.size() > maxOutputTriples) {
@@ -160,21 +172,30 @@ public class ODCSFusionToolExecutor {
                 outputTriples += resolvedQuads.size();
 
                 // Add objects filtered by CR for traversal
+                
                 if (isTransitive) {
+                    profiler.startCounter(ProfilingCounters.BUFFERING);
                     addDiscoveredObjects(queuedSubjects, resolvedQuads, uriMapping, resolvedCanonicalURIs);
+                    profiler.stopAddCounter(ProfilingCounters.BUFFERING);
                 }
 
                 // Write result to output
+                profiler.startCounter(ProfilingCounters.OUTPUT_WRITING);
                 for (CloseableRDFWriter writer : rdfWriters) {
                     writer.writeCRQuads(resolvedQuads.iterator());
                 }
-                
+                profiler.stopAddCounter(ProfilingCounters.OUTPUT_WRITING);
+
                 fixVirtuosoOpenedStatements(hasVirtuosoSource);
             }
             LOG.info(String.format("Processed %,d quads which were resolved to %,d output quads.", inputTriples, outputTriples));
 
             writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
             writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes(), ValueFactoryImpl.getInstance());
+            
+            if (config.isProfilingOn()) {
+                printProfilingInformation(profiler);
+            }
 
         } finally {
             if (quadLoader != null) {
@@ -601,5 +622,13 @@ public class ODCSFusionToolExecutor {
                 // ignore
             }
         }
+    }
+    
+    protected void printProfilingInformation(ProfilingTimeCounter<ProfilingCounters> profiler) {
+        System.out.println("Initialization time:      " + profiler.formatCounter(ProfilingCounters.INITIALIZATION));
+        System.out.println("Quad loading time:        " + profiler.formatCounter(ProfilingCounters.QUAD_LOADING));
+        System.out.println("Conflict resolution time: " + profiler.formatCounter(ProfilingCounters.CONFLICT_RESOLUTION));
+        System.out.println("Buffering time:           " + profiler.formatCounter(ProfilingCounters.BUFFERING));
+        System.out.println("Output writing time:      " + profiler.formatCounter(ProfilingCounters.OUTPUT_WRITING));
     }
 }
