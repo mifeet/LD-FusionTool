@@ -62,7 +62,7 @@ public final class ConfigConstants {
     /**
      * Graph score used if none is given in the input.
      */
-    public static final double SCORE_IF_UNKNOWN = 1;
+    public static final double SCORE_IF_UNKNOWN = 0.5;
     
     /**
      * Weight of the publisher score.
