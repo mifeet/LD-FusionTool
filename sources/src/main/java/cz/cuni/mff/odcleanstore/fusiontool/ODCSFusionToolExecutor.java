@@ -624,6 +624,10 @@ public class ODCSFusionToolExecutor {
         }
     }
     
+    /**
+     * Prints profiling information from the given profiling time counter.
+     * @param profiler profiling time counter
+     */
     protected void printProfilingInformation(ProfilingTimeCounter<ProfilingCounters> profiler) {
         System.out.println("Initialization time:      " + profiler.formatCounter(ProfilingCounters.INITIALIZATION));
         System.out.println("Quad loading time:        " + profiler.formatCounter(ProfilingCounters.QUAD_LOADING));
