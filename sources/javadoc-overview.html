@@ -1,0 +1,35 @@
+<html>
+<head>
+	<title>ODCS-FusionTool - API overview</title>
+</head>
+<body>
+	<style>
+		#codebase-structure dt { font-weight: bold; }
+		#codebase-structure dd { margin-top: 5px; margin-bottom: 10px; }
+	</style>
+	
+	<p>ODCS-FusionTool is a standalone tool for execution of data fusion and conflict resolution on RDF data from single or multiple sources. ODCS-FusionTool is based on the Cnflict Resolution component implemented in <a href="https://github.com/ODCleanStore/ODCleanStore">ODCleanStore</a>, a Linked Data management tool.</p>
+	
+	<p>The main application entry point are classes <code>ODCSFusionToolApplication</code> and <code>ODCSFusionToolExecutor</code>. Other classes are structured into subpackages as follows</p>
+	
+	<dl id="codebase-structure">
+		<dt>config</td>
+		<dd>Classes holding configuration of ODCS-FusionTool and parsing of XML configuration file.</dd>
+		
+		<dt>io</dt>
+		<dd>Classes providing access to RDF inputs and outputs (files, SPARQL endpoints etc.).</dd>
+		
+		<dt>loaders</dt>
+		<dd>Classes executing loading of data from input data sources.</dd>
+		
+		<dt>urimapping</dt>
+		<dd>Classes implementing construction of canonical URI mapping.</dd>
+		
+		<dt>util and exceptions</dt>
+		<dd>Utilities and exceptions.</dd>
+	</dl>
+
+	<p>For an in-depth description of individual classes and their interfaces, refer to this javadoc documentation. The configuration file accepted by ODCS-FusionTool is documented in form of comments inside the example configuration files distributed with ODCS-FusionTool.</p>
+	
+</body>
+</html>

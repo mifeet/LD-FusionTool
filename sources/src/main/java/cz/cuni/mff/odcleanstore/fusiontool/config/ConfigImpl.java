@@ -57,7 +57,7 @@ public class ConfigImpl implements Config {
     }
     
     /**
-     * Sets value for {@link #getSeedResourceRestrictionPattern()}.
+     * Sets value for {@link #getSeedResourceRestriction()}.
      * @param restriction SPARQL group graph pattern
      */
     public void setSeedResourceRestriction(SparqlRestriction restriction) {

@@ -48,7 +48,7 @@ public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter
     }
     
     @Override
-    public final void writeCRQuads(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
+    public final void writeResolvedStatements(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
         while (resolvedStatements.hasNext()) {
             write(resolvedStatements.next());
         } 

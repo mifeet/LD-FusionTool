@@ -33,14 +33,14 @@ public interface CloseableRDFWriter extends Closeable<IOException> {
     
     /**
      * Write quads resolved by Conflict Resolution.
-     * @param resolvedStatements {@link CRQuad CRQUads} to write
+     * @param resolvedStatements {@link ResolvedStatement resolved statements} to write
      * @throws IOException I/O error
      */
-    void writeCRQuads(Iterator<ResolvedStatement> resolvedStatements) throws IOException;
+    void writeResolvedStatements(Iterator<ResolvedStatement> resolvedStatements) throws IOException;
     
     /**
-     * Write a single CRQuad.
-     * @param resolvedStatement CRQuad to write
+     * Write a single resolved statement.
+     * @param resolvedStatement {@link ResolvedStatement resolved statement} to write
      * @throws IOException I/O error
      */
     void write(ResolvedStatement resolvedStatement) throws IOException;

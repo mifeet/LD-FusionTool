@@ -182,7 +182,7 @@ public class ODCSFusionToolExecutor {
                 // Write result to output
                 profiler.startCounter(ProfilingCounters.OUTPUT_WRITING);
                 for (CloseableRDFWriter writer : rdfWriters) {
-                    writer.writeCRQuads(resolvedQuads.iterator());
+                    writer.writeResolvedStatements(resolvedQuads.iterator());
                 }
                 profiler.stopAddCounter(ProfilingCounters.OUTPUT_WRITING);
 
