@@ -69,7 +69,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.util.GenericConverter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingCounters;
+import cz.cuni.mff.odcleanstore.fusiontool.util.EnumProfilingCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import cz.cuni.mff.odcleanstore.vocabulary.OWL;
@@ -103,9 +103,9 @@ public class ODCSFusionToolExecutor {
         List<CloseableRDFWriter> rdfWriters = null;
         Collection<DataSource> dataSources = getDataSources(config.getDataSources(), config.getPrefixes());
         boolean hasVirtuosoSource = hasVirtuosoSource(config.getDataSources());
-        ProfilingTimeCounter<ProfilingCounters> profiler = ProfilingTimeCounter.createInstance(
-                ProfilingCounters.class, config.isProfilingOn());
-        profiler.startCounter(ProfilingCounters.INITIALIZATION);
+        ProfilingTimeCounter<EnumProfilingCounters> profiler = ProfilingTimeCounter.createInstance(
+                EnumProfilingCounters.class, config.isProfilingOn());
+        profiler.startCounter(EnumProfilingCounters.INITIALIZATION);
         try {
             // Load source named graphs metadata
             Model metadata = getMetadata(dataSources);
@@ -139,9 +139,9 @@ public class ODCSFusionToolExecutor {
             
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
             quadLoader = createQuadLoader(dataSources, alternativeURINavigator);
-            profiler.stopAddCounter(ProfilingCounters.INITIALIZATION);
+            profiler.stopAddCounter(EnumProfilingCounters.INITIALIZATION);
             while (queuedSubjects.hasNext()) {
-                profiler.startCounter(ProfilingCounters.BUFFERING);
+                profiler.startCounter(EnumProfilingCounters.BUFFERING);
                 String uri = queuedSubjects.next();
                 String canonicalURI = uriMapping.getCanonicalURI(uri);
 
@@ -150,18 +150,18 @@ public class ODCSFusionToolExecutor {
                     continue;
                 }
                 resolvedCanonicalURIs.add(canonicalURI);
-                profiler.stopAddCounter(ProfilingCounters.BUFFERING);
+                profiler.stopAddCounter(EnumProfilingCounters.BUFFERING);
 
                 // Load quads for the given subject
-                profiler.startCounter(ProfilingCounters.QUAD_LOADING);
+                profiler.startCounter(EnumProfilingCounters.QUAD_LOADING);
                 Collection<Statement> quads = getQuads(quadLoader, canonicalURI);
                 inputTriples += quads.size();
-                profiler.stopAddCounter(ProfilingCounters.QUAD_LOADING);
+                profiler.stopAddCounter(EnumProfilingCounters.QUAD_LOADING);
 
                 // Resolve conflicts
-                profiler.startCounter(ProfilingCounters.CONFLICT_RESOLUTION);
+                profiler.startCounter(EnumProfilingCounters.CONFLICT_RESOLUTION);
                 Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(quads);
-                profiler.stopAddCounter(ProfilingCounters.CONFLICT_RESOLUTION);
+                profiler.stopAddCounter(EnumProfilingCounters.CONFLICT_RESOLUTION);
                 LOG.info("Resolved {} quads for URI <{}> resulting in {} quads (processed totally {} quads)",
                         new Object[] { quads.size(), canonicalURI, resolvedQuads.size(), inputTriples});
 
@@ -174,17 +174,17 @@ public class ODCSFusionToolExecutor {
                 // Add objects filtered by CR for traversal
                 
                 if (isTransitive) {
-                    profiler.startCounter(ProfilingCounters.BUFFERING);
+                    profiler.startCounter(EnumProfilingCounters.BUFFERING);
                     addDiscoveredObjects(queuedSubjects, resolvedQuads, uriMapping, resolvedCanonicalURIs);
-                    profiler.stopAddCounter(ProfilingCounters.BUFFERING);
+                    profiler.stopAddCounter(EnumProfilingCounters.BUFFERING);
                 }
 
                 // Write result to output
-                profiler.startCounter(ProfilingCounters.OUTPUT_WRITING);
+                profiler.startCounter(EnumProfilingCounters.OUTPUT_WRITING);
                 for (CloseableRDFWriter writer : rdfWriters) {
                     writer.writeResolvedStatements(resolvedQuads.iterator());
                 }
-                profiler.stopAddCounter(ProfilingCounters.OUTPUT_WRITING);
+                profiler.stopAddCounter(EnumProfilingCounters.OUTPUT_WRITING);
 
                 fixVirtuosoOpenedStatements(hasVirtuosoSource);
             }
@@ -628,11 +628,11 @@ public class ODCSFusionToolExecutor {
      * Prints profiling information from the given profiling time counter.
      * @param profiler profiling time counter
      */
-    protected void printProfilingInformation(ProfilingTimeCounter<ProfilingCounters> profiler) {
-        System.out.println("Initialization time:      " + profiler.formatCounter(ProfilingCounters.INITIALIZATION));
-        System.out.println("Quad loading time:        " + profiler.formatCounter(ProfilingCounters.QUAD_LOADING));
-        System.out.println("Conflict resolution time: " + profiler.formatCounter(ProfilingCounters.CONFLICT_RESOLUTION));
-        System.out.println("Buffering time:           " + profiler.formatCounter(ProfilingCounters.BUFFERING));
-        System.out.println("Output writing time:      " + profiler.formatCounter(ProfilingCounters.OUTPUT_WRITING));
+    protected void printProfilingInformation(ProfilingTimeCounter<EnumProfilingCounters> profiler) {
+        System.out.println("Initialization time:      " + profiler.formatCounter(EnumProfilingCounters.INITIALIZATION));
+        System.out.println("Quad loading time:        " + profiler.formatCounter(EnumProfilingCounters.QUAD_LOADING));
+        System.out.println("Conflict resolution time: " + profiler.formatCounter(EnumProfilingCounters.CONFLICT_RESOLUTION));
+        System.out.println("Buffering time:           " + profiler.formatCounter(EnumProfilingCounters.BUFFERING));
+        System.out.println("Output writing time:      " + profiler.formatCounter(EnumProfilingCounters.OUTPUT_WRITING));
     }
 }

@@ -7,7 +7,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.util;
  * Types of time counters available in profiling mode. 
  * @author Jan Michelfeit
  */
-public enum ProfilingCounters {
+public enum EnumProfilingCounters {
     /** Length of initialization (loading and resolution of sameAs links, metadata etc.). */
     INITIALIZATION,
     
