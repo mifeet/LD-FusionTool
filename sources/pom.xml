@@ -8,7 +8,7 @@
 	<groupId>cz.cuni.mff.odcleanstore.cr</groupId>
 	<artifactId>odcs-fusion-tool</artifactId>
 	<name>ODCS-FusionTool</name>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 
 	<description>Standalone RDF fusion tool based on the ODCleanStore Conflict Resolution component.</description>
 	<url>https://github.com/mifeet/cr-batch</url>
