@@ -50,6 +50,9 @@
       <!-- URL of the SPARQL endpoint; (required)) -->
       <Param name="endpointUrl" value="http://localhost:8890/sparql" />
       
+      <!-- Specifies a minimum interval between SPARQL queries in milliseconds -->
+      <Param name="minQueryInterval" value="1000" />
+      
       <!-- <GraphRestriction /> and <MetadataGraphRestriction /> can optionally be used here as well -->
     </DataSource>
     
