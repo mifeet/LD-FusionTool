@@ -1,11 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,8 +18,6 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
  * @author Jan Michelfeit
  */
 public class ConfigImpl implements Config {
-    private static final DateFormat CANONICAL_FILE_SUFFIS_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss");
-    
     private List<DataSourceConfig> dataSources = Collections.emptyList();
     private SparqlRestriction seedResourceRestriction;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
@@ -31,8 +26,7 @@ public class ConfigImpl implements Config {
     private ResolutionStrategy defaultResolutionStrategy = new ResolutionStrategyImpl();
     private Map<URI, ResolutionStrategy> propertyResolutionStrategies = new HashMap<URI, ResolutionStrategy>();
     
-    private File canonicalURIsOutputFile = 
-            new File("canonicalUris-" + CANONICAL_FILE_SUFFIS_FORMAT.format(new Date()) + ".txt");
+    private File canonicalURIsOutputFile = null; 
     private File canonicalURIsInputFile;
     private boolean enableFileCache = false;
     private Long maxOutputTriples = null;
