@@ -14,7 +14,7 @@
   <!-- Definition of where the output shall be written (required) -->
   <Outputs>
     <Output type="file">
-      <Param name="file" value="out.n3"/>
+      <Param name="path" value="out.n3"/>
       <Param name="format" value="ntriples"/>
     </Output>
   </Outputs>
