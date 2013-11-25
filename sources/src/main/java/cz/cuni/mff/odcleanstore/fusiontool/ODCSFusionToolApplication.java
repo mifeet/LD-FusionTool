@@ -271,10 +271,10 @@ public final class ODCSFusionToolApplication {
                     //   UNION { GRAPH ?m {?x odcs:publisherScore ?y} }
                     //   UNION { ?m odcs:generatedGraph 1 }
                     String graphPattern = "{ GRAPH ?" + varPrefix + "m {?" + varPrefix + "x <%s> ?" + varPrefix + "y} }";
-                    String pattern = String.format(Locale.ROOT, graphPattern, ODCS.source)
-                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.score)
-                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.publisherScore)
-                            + "\n  UNION { ?" + varPrefix + "m <" + ODCS.generatedGraph + "> 1}";
+                    String pattern = String.format(Locale.ROOT, graphPattern, ODCS.SOURCE)
+                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.SCORE)
+                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.PUBLISHER_SCORE)
+                            + "\n  UNION { ?" + varPrefix + "m <" + ODCS.GENERATED_GRAPH + "> 1}";
                     dsConfig.setMetadataGraphRestriction(new SparqlRestrictionImpl(pattern, varPrefix + "m"));
                 }
                 break;

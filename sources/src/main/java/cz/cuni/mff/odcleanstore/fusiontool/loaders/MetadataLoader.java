@@ -5,6 +5,7 @@ import java.util.Locale;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
+import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.repository.RepositoryConnection;
@@ -19,7 +20,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryExcepti
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
  * Loads URIs and metadata of named graphs to be processed.
@@ -55,11 +55,11 @@ public class MetadataLoader extends RepositoryLoaderBase {
             + "\n   UNION" // TODO
             + "\n   {"
             + "\n     SELECT DISTINCT ?" + VAR_PREFIX + "gs"
-            +           " (<" + ODCS.publisherScore + "> AS ?" + VAR_PREFIX + "gp) ?" + VAR_PREFIX + "go"
+            +           " (<" + ODCS.PUBLISHER_SCORE + "> AS ?" + VAR_PREFIX + "gp) ?" + VAR_PREFIX + "go"
             + "\n     WHERE {"
             + "\n       %2$s"
-            + "\n       ?%3$s <" + ODCS.publishedBy + "> ?" + VAR_PREFIX + "gs."
-            + "\n       ?" + VAR_PREFIX + "gs <" + ODCS.publisherScore + "> ?" + VAR_PREFIX + "go."
+            + "\n       ?%3$s <" + ODCS.PUBLISHED_BY + "> ?" + VAR_PREFIX + "gs."
+            + "\n       ?" + VAR_PREFIX + "gs <" + ODCS.PUBLISHER_SCORE + "> ?" + VAR_PREFIX + "go."
             + "\n     }"
             + "\n   }"
             + "\n }";
@@ -83,7 +83,7 @@ public class MetadataLoader extends RepositoryLoaderBase {
             + "\n   %2$s" 
             + "\n   GRAPH ?%3$s {" 
             + "\n     ?" + VAR_PREFIX + "gs ?" + VAR_PREFIX + "gp ?" + VAR_PREFIX + "go"
-            + "\n     FILTER (?" + VAR_PREFIX + "gp != <" + OWL.sameAs + ">)"
+            + "\n     FILTER (?" + VAR_PREFIX + "gp != <" + OWL.SAMEAS + ">)"
             + "\n   }"
             + "\n }";
 
