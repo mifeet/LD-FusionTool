@@ -3,6 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import java.util.Locale;
 
 import org.openrdf.OpenRDFException;
+import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQueryResult;
@@ -17,7 +18,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
  * Loads owl:sameAs links from named graphs to be processed.
@@ -41,7 +41,7 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
             + "\n WHERE {"
             + "\n   %2$s"
             + "\n   GRAPH ?%3$s {"
-            + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.sameAs + "> ?" + VAR_PREFIX + "r2"
+            + "\n     ?" + VAR_PREFIX + "r1 <" + OWL.SAMEAS + "> ?" + VAR_PREFIX + "r2"
             + "\n   }"
             + "\n }";
 

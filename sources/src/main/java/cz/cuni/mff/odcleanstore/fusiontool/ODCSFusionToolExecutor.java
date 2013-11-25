@@ -26,6 +26,7 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.TreeModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
-import cz.cuni.mff.odcleanstore.vocabulary.OWL;
 
 /**
  * Fuses RDF data loaded from RDF sources using ODCS Conflict Resolution and writes the output to RDF outputs.
@@ -421,7 +421,7 @@ public class ODCSFusionToolExecutor {
 
         ConflictResolver conflictResolver = ConflictResolverFactory.configureResolver()
                 .setResolutionFunctionRegistry(registry)
-                .setResolvedGraphsURIPrefix(config.getResultDataURIPrefix() + ODCSInternal.queryResultGraphUriInfix)
+                .setResolvedGraphsURIPrefix(config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX)
                 .setMetadata(metadata)
                 .setURIMapping(uriMapping)
                 .setDefaultResolutionStrategy(config.getDefaultResolutionStrategy())
@@ -562,7 +562,7 @@ public class ODCSFusionToolExecutor {
                 sameAsOutput.getParams().put(Output.SPLIT_BY_MB_PARAM, output.getParams().get(Output.SPLIT_BY_MB_PARAM));
                 CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(sameAsOutput);
                 writers.add(writer);
-                writer.addNamespace("owl", OWL.getURI());
+                writer.addNamespace("owl", OWL.NAMESPACE);
                 writeNamespaceDeclarations(writer, nsPrefixes);
             }
             if (writers.isEmpty()) {
