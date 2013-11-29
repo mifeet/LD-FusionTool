@@ -23,7 +23,7 @@ public class ODCSFusionToolQueryException extends ODCSFusionToolException {
 
     /**
      * Return the error code of the error.
-     * @see cz.cuni.mff.odcleanstore.shared.ODCSErrorCodes
+     * @see cz.cuni.mff.odcleanstore.shared.util.ODCSErrorCodes
      * @return error code or null
      */
     public String getQuery() {
