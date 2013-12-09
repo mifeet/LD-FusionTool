@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
-import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
  * Utility class for expansion of namespace prefixes.

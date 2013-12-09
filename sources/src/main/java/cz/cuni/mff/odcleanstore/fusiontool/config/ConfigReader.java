@@ -18,6 +18,7 @@ import org.simpleframework.xml.core.Persister;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConfigXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConflictResolutionXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.DataSourceXml;
@@ -31,7 +32,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.xml.RestrictionXml;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
-import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
  * Reads the XML configuration file and produces instances of configuration in a {@link Config} instance.

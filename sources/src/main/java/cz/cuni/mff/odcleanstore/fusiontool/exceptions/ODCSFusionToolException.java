@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
 
-import cz.cuni.mff.odcleanstore.shared.ODCleanStoreException;
+import cz.cuni.mff.odcleanstore.core.ODCleanStoreException;
 
 /**
  * A general ODCS-FusionTool exception.

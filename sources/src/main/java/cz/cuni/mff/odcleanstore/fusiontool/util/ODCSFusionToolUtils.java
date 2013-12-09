@@ -6,8 +6,8 @@ import org.openrdf.model.BNode;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
  * Various utility methods.
