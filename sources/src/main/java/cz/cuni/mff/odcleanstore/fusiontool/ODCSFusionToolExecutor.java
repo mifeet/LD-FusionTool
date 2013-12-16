@@ -55,6 +55,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferedSubjectsCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedQuadLoader;
@@ -354,17 +355,7 @@ public class ODCSFusionToolExecutor {
         if (config.getEnableFileCache()) {
             return new MapdbCollectionFactory(ODCSFusionToolUtils.getCacheDirectory());
         } else {
-            return new LargeCollectionFactory() {
-                @Override
-                public <T> Set<T> createSet() {
-                    return new HashSet<T>();
-                }
-
-                @Override
-                public void close() throws IOException {
-                    // do nothing
-                }
-            };
+            return new MemoryCollectionFactory();
         }
     }
     

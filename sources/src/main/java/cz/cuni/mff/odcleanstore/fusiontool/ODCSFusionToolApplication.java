@@ -126,14 +126,7 @@ public final class ODCSFusionToolApplication {
         }
 
         System.out.println("----------------------------");
-        
-        long runTime = System.currentTimeMillis() - startTime;
-        final long hourMs = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
-        DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
-        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        System.out.printf("ODCS-FusionTool executed in %d:%s \n",
-                runTime / hourMs,
-                timeFormat.format(new Date(runTime)));
+        System.out.printf("ODCS-FusionTool executed in %s\n", formatRunTime(System.currentTimeMillis() - startTime));
     }
     
     private static ApplicationArgs parseArgs(String[] args) throws InvalidInputException {
@@ -283,6 +276,15 @@ public final class ODCSFusionToolApplication {
                 break;
             }
         }
+    }
+    
+    private static String formatRunTime(long runTime) {
+        final long hourMs = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
+        DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
+        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return String.format("%d:%s",
+                runTime / hourMs,
+                timeFormat.format(new Date(runTime)));
     }
 
     /** Disable constructor. */
