@@ -14,13 +14,13 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 
 /**
  * Loads subjects of triples to be processed.
@@ -146,7 +146,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                     BindingSet bindings = subjectsResultSet.next();
                     
                     Value subject = bindings.getValue(subjectVar);
-                    String uri = ODCSFusionToolUtils.getNodeURI(subject);
+                    String uri = ODCSUtils.getVirtuosoNodeURI(subject);
                     if (uri != null) {
                         return uri;
                     }

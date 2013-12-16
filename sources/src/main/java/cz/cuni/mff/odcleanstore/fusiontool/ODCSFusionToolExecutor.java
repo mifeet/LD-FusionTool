@@ -40,6 +40,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
@@ -470,7 +471,7 @@ public class ODCSFusionToolExecutor {
             Set<String> resolvedCanonicalURIs) {
         
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
-            String uri = ODCSFusionToolUtils.getNodeURI(resolvedStatement.getStatement().getObject());
+            String uri = ODCSUtils.getVirtuosoNodeURI(resolvedStatement.getStatement().getObject());
             if (uri == null) {
                 // a literal or something, skip it
                 continue;

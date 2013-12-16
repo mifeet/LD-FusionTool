@@ -2,10 +2,6 @@ package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import java.io.File;
 
-import org.openrdf.model.BNode;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 
@@ -29,22 +25,6 @@ public final class ODCSFusionToolUtils {
     
     /** Default cache directory. */
     public static final File CACHE_DIRECTORY = new File(".");
-
-    /**
-     * Returns an URI representing the given node or null if it is not a resource.
-     * For blank nodes returns the Virtuoso blank node identifier.
-     * @param value RDF node
-     * @return URI representing
-     */
-    public static String getNodeURI(Value value) {
-        if (value instanceof URI) {
-            return value.stringValue();
-        } else if (value instanceof BNode) {
-            return ODCSUtils.getVirtuosoURIForBlankNode((BNode) value);
-        } else {
-            return null;
-        }
-    }
 
     /**
      * Returns a human-readable (memory, file, ...) size.
