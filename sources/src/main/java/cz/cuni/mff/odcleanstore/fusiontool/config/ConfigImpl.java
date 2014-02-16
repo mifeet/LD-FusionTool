@@ -31,6 +31,8 @@ public class ConfigImpl implements Config {
     private boolean enableFileCache = false;
     private Long maxOutputTriples = null;
     private boolean isProfilingOn = false;
+    private boolean outputConflictsOnly = false;
+    private boolean outputMappedSubjectsOnly = false;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -188,6 +190,32 @@ public class ConfigImpl implements Config {
      */
     public void setProfilingOn(boolean isProfilingOn) {
         this.isProfilingOn = isProfilingOn;
+    }
+    
+    @Override
+    public boolean getOutputConflictsOnly() {
+        return outputConflictsOnly;
+    }
+    
+    /**
+     * Sets value for {@link #getOutputConflictsOnly()}.
+     * @param outputConflictsOnly see {@link #getOutputConflictsOnly()}
+     */
+    public void setOutputConflictsOnly(boolean outputConflictsOnly) {
+        this.outputConflictsOnly = outputConflictsOnly;
+    }
+    
+    @Override
+    public boolean getOutputMappedSubjectsOnly() {
+        return outputMappedSubjectsOnly;
+    }
+    
+    /**
+     * Sets value for {@link #getOutputMappedSubjectsOnly()}.
+     * @param outputMappedSubjectsOnly see {@link #getOutputMappedSubjectsOnly()}
+     */
+    public void setOutputMappedSubjectsOnly(boolean outputMappedSubjectsOnly) {
+        this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
     }
     
     @Override

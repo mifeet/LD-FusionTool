@@ -36,13 +36,17 @@ public final class ODCSFusionToolApplication {
     /** Parsed command line arguments representation. */
     private static class ApplicationArgs {
         private final boolean isVerbose;
+        private final boolean outputConflictsOnly;
+        private final boolean outputMappedSubjectsOnly;
         private final boolean isProfilingOn;
         private final String configFilePath;
         
-        public ApplicationArgs(boolean isVerbose, boolean isProfilingOn, String configFilePath) {
+        public ApplicationArgs(boolean isVerbose, boolean isProfilingOn, String configFilePath, boolean outputConflictsOnly, boolean outputMappedSubjectsOnly) {
             this.isVerbose = isVerbose;
             this.isProfilingOn = isProfilingOn;
             this.configFilePath = configFilePath;
+            this.outputConflictsOnly = outputConflictsOnly;
+            this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         }
         
         public boolean isVerbose() {
@@ -56,10 +60,18 @@ public final class ODCSFusionToolApplication {
         public String getConfigFilePath() {
             return configFilePath;
         }
+        
+        public boolean getOutputConflictsOnly() {
+            return outputConflictsOnly;
+        }
+        
+        public boolean getOutputMappedSubjectsOnly() {
+            return outputMappedSubjectsOnly;
+        }
     }
     
     private static String getUsage() {
-        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] <config file>.xml";
+        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--only-conflicts] [--only-mapped] <config file>.xml";
     }
 
     /**
@@ -90,6 +102,8 @@ public final class ODCSFusionToolApplication {
         try {
             config = ConfigReader.parseConfigXml(configFile);
             ((ConfigImpl) config).setProfilingOn(parsedArgs.isProfilingOn());
+            ((ConfigImpl) config).setOutputConflictsOnly(parsedArgs.getOutputConflictsOnly());
+            ((ConfigImpl) config).setOutputMappedSubjectsOnly(parsedArgs.getOutputMappedSubjectsOnly());
             checkValidInput(config);
             setupDefaultRestrictions(config);
         } catch (InvalidInputException e) {
@@ -135,6 +149,8 @@ public final class ODCSFusionToolApplication {
         }
         
         boolean verbose = false;
+        boolean outputConflictsOnly = false;
+        boolean outputMappedSubjectsOnly = false;
         boolean profile = false;
         String configFilePath = null;
         for (String arg : args) {
@@ -142,6 +158,10 @@ public final class ODCSFusionToolApplication {
                 verbose = true;
             } else if ("--profile".equals(arg)) {
                 profile = true;
+            } else if ("--only-conflicts".equals(arg)) {
+                outputConflictsOnly = true;
+            } else if ("--only-mapped".equals(arg)) {
+                outputMappedSubjectsOnly = true;
             } else {
                 configFilePath = arg;
             }
@@ -149,7 +169,7 @@ public final class ODCSFusionToolApplication {
         if (configFilePath == null) {
             throw new InvalidInputException("Missing config file argument");
         }
-        return new ApplicationArgs(verbose, profile, configFilePath);
+        return new ApplicationArgs(verbose, profile, configFilePath, outputConflictsOnly, outputMappedSubjectsOnly);
     }
 
     private static void checkValidInput(Config config) throws InvalidInputException {

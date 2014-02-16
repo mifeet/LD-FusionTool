@@ -36,6 +36,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
+import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory.ConflictResolverBuilder;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
@@ -69,6 +70,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ConflictingClusterConflictClusterFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumProfilingCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.GenericConverter;
@@ -149,6 +151,11 @@ public class ODCSFusionToolExecutor {
                 String uri = queuedSubjects.next();
                 String canonicalURI = uriMapping.getCanonicalURI(uri);
 
+                if (config.getOutputMappedSubjectsOnly() && uri.equals(canonicalURI)) {
+                    // Skip subjects with no mapping
+                    LOG.debug("Skipping not mapped subject <{}>", uri);
+                    continue;
+                }
                 if (resolvedCanonicalURIs.contains(canonicalURI)) {
                     // avoid processing a URI multiple times
                     continue;
@@ -411,15 +418,18 @@ public class ODCSFusionToolExecutor {
                 config.getAgreeCoeficient(),
                 new DistanceMeasureImpl());
 
-        ConflictResolver conflictResolver = ConflictResolverFactory.configureResolver()
+        ConflictResolverBuilder builder = ConflictResolverFactory.configureResolver()
                 .setResolutionFunctionRegistry(registry)
                 .setResolvedGraphsURIPrefix(config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX)
                 .setMetadata(metadata)
                 .setURIMapping(uriMapping)
                 .setDefaultResolutionStrategy(config.getDefaultResolutionStrategy())
-                .setPropertyResolutionStrategies(config.getPropertyResolutionStrategies())
-                .create();
-        return conflictResolver;
+                .setPropertyResolutionStrategies(config.getPropertyResolutionStrategies());
+        if (config.getOutputConflictsOnly()) {
+            builder.setConflictClusterFilter(new ConflictingClusterConflictClusterFilter());
+        }
+        
+        return builder.create();
     }
 
     /**
@@ -449,8 +459,8 @@ public class ODCSFusionToolExecutor {
                 }
                 reader.close();
             } else {
-                LOG.error("Cannot read canonical URIs from '{}'", canonicalURIsInputFile.getPath());
-                // Intentionally do not throw an exception
+                LOG.warn("Cannot read canonical URIs from '{}'. The file may have not been created yet.",
+                        canonicalURIsInputFile.getPath());
             }
         }
         preferredURIs.addAll(preferredCanonicalURIs);

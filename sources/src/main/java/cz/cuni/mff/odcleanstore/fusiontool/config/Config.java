@@ -133,4 +133,17 @@ public interface Config {
      * @return true iff profiling logs should be printed
      */
     boolean isProfilingOn();
+
+    /**
+     * Indicates whether only conflict clusters with an actual conflict should be included in the output.
+     * @return true iff only conflict clusters with an actual conflict should be included in the output
+     * @return
+     */
+    boolean getOutputConflictsOnly();
+
+    /**
+     * Indicates whether only subjects for which an URI mapping exists should be included in the output.
+     * @return true iff only subjects for which an URI mapping exists should be included in the output
+     */
+    boolean getOutputMappedSubjectsOnly();
 }
