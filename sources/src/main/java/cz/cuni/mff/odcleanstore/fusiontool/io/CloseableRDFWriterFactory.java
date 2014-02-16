@@ -162,6 +162,9 @@ public class CloseableRDFWriterFactory {
             RDFHandler trigHandler = new TriGWriterFactory().getWriter(outputWriter);
             LOG.debug("Created a TriG file output");
             return new SesameCloseableRDFWriterQuad(trigHandler, outputWriter, dataContext, metadataContext);
+        case HTML:
+            LOG.debug("Created a HTML file output");
+            return new CloseableHtmlWriter(outputWriter);
         default:
             throw new IllegalArgumentException("Unknown output format " + format);
         }
