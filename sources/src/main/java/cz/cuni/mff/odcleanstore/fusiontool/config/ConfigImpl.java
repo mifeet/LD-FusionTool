@@ -19,6 +19,8 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
  */
 public class ConfigImpl implements Config {
     private List<DataSourceConfig> dataSources = Collections.emptyList();
+    private List<ConstructSourceConfig> sameAsSources = Collections.emptyList();
+    private List<ConstructSourceConfig> metadataSources = Collections.emptyList();
     private SparqlRestriction seedResourceRestriction;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
@@ -45,6 +47,32 @@ public class ConfigImpl implements Config {
      */
     public void setDataSources(List<DataSourceConfig> dataSources) {
         this.dataSources = dataSources;
+    }
+    
+    @Override
+    public List<ConstructSourceConfig> getSameAsSources() {
+        return sameAsSources;
+    }
+    
+    /**
+     * Sets value for {@link #getSameAsSources()}.
+     * @param sameAsSources settings for owl:sameAs sources
+     */
+    public void setSameAsSources(List<ConstructSourceConfig> sameAsSources) {
+        this.sameAsSources = sameAsSources;
+    }
+    
+    @Override
+    public List<ConstructSourceConfig> getMetadataSources() {
+        return metadataSources;
+    }
+    
+    /**
+     * Sets value for {@link #getMetadataSources()}.
+     * @param metadataSources settings metadata sources
+     */
+    public void setMetadataSources(List<ConstructSourceConfig> metadataSources) {
+        this.metadataSources = metadataSources;
     }
     
     @Override

@@ -33,16 +33,17 @@ import org.slf4j.LoggerFactory;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
+import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory.ConflictResolverBuilder;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory.ConflictResolverBuilder;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
@@ -52,6 +53,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CloseableRDFWriterFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSource;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
@@ -114,10 +117,11 @@ public class ODCSFusionToolExecutor {
         timeProfiler.startCounter(EnumProfilingCounters.INITIALIZATION);
         try {
             // Load source named graphs metadata
-            Model metadata = getMetadata(dataSources);
+            Model metadata = getMetadata(getConstructSources(config.getMetadataSources(), config.getPrefixes()));
 
             // Load & resolve owl:sameAs links
-            URIMappingIterable uriMapping = getURIMapping(dataSources, config);
+            Collection<ConstructSource> sameAsSources = getConstructSources(config.getSameAsSources(), config.getPrefixes());
+            URIMappingIterable uriMapping = getURIMapping(sameAsSources, config);
             AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
             Set<String> resolvedCanonicalURIs = collectionFactory.createSet();
 
@@ -287,14 +291,44 @@ public class ODCSFusionToolExecutor {
     }
     
     /**
+     * Initializes construct sources from configuration.
+     * @param config configuration for data sources
+     * @param prefixes namespace prefixes
+     * @return initialized construct sources
+     * @throws ODCSFusionToolException I/O error
+     */
+    protected Collection<ConstructSource> getConstructSources(List<ConstructSourceConfig> config, Map<String, String> prefixes)
+            throws ODCSFusionToolException {
+        List<ConstructSource> constructSources = new ArrayList<ConstructSource>();
+        for (ConstructSourceConfig constructSourceConfig : config) {
+            try {
+                ConstructSource constructSource = 
+                        ConstructSourceImpl.fromConfig(constructSourceConfig, prefixes, REPOSITORY_FACTORY);
+                constructSources.add(constructSource);
+            } catch (ODCSFusionToolException e) {
+                // clean up already initialized repositories
+                for (ConstructSource initializedDataSource : constructSources) {
+                    try {
+                        initializedDataSource.getRepository().shutDown();
+                    } catch (RepositoryException e2) {
+                        // ignore
+                    }
+                }
+                throw e;
+            }
+        }
+        return constructSources;
+    }
+    
+    /**
      * Returns metadata for conflict resolution.
-     * @param dataSources initialized data sources
+     * @param metadataSources initialized metadata sources
      * @return metadata for conflict resolution
      * @throws ODCSFusionToolException error
      */
-    protected Model getMetadata(Collection<DataSource> dataSources) throws ODCSFusionToolException {
+    protected Model getMetadata(Collection<ConstructSource> metadataSources) throws ODCSFusionToolException {
         Model metadata = new TreeModel();
-        for (DataSource source : dataSources) {
+        for (ConstructSource source : metadataSources) {
             MetadataLoader loader = new MetadataLoader(source);
             loader.loadNamedGraphsMetadata(metadata);
         }
@@ -304,20 +338,20 @@ public class ODCSFusionToolExecutor {
     /**
      * Returns mapping of URIs to their canonical URI created from owl:sameAs links loaded 
      * from the given data sources.
-     * @param dataSources data sources
+     * @param sameAsSources URI mapping sources
      * @param config fusion tool configuration
      * @return mapping of URIs to their canonical URI
      * @throws ODCSFusionToolException error
      * @throws IOException I/O error
      */
-    protected URIMappingIterable getURIMapping(Collection<DataSource> dataSources, Config config)
+    protected URIMappingIterable getURIMapping(Collection<ConstructSource> sameAsSources, Config config)
             throws ODCSFusionToolException, IOException {
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(), 
                 config.getCanonicalURIsInputFile(),
                 config.getPreferredCanonicalURIs());
         URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
-        for (DataSource source : dataSources) {
+        for (ConstructSource source : sameAsSources) {
             SameAsLinkLoader loader = new SameAsLinkLoader(source);
             loader.loadSameAsMappings(uriMapping);
         }

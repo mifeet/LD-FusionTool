@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import virtuoso.sesame2.driver.VirtuosoRepository;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
@@ -39,7 +39,7 @@ public final class RepositoryFactory {
      * @return initialized repository
      * @throws ODCSFusionToolException error creating repository
      */
-    public Repository createRepository(DataSourceConfig dataSourceConfig) throws ODCSFusionToolException {
+    public Repository createRepository(SourceConfig dataSourceConfig) throws ODCSFusionToolException {
         String name = dataSourceConfig.toString();
         switch (dataSourceConfig.getType()) {
         case VIRTUOSO:

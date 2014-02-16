@@ -20,8 +20,8 @@ public class ConfigXml {
     @ElementList(name = "Prefixes", required = false)
     private List<PrefixXml> prefixes;
 
-    @ElementList(name = "DataSources", empty = true, required = true)
-    private List<DataSourceXml> dataSources;
+    @Element(name = "Sources", required = true)
+    private SourcesXml sources;
     
     @Element(name="DataProcessing", required = false)
     private DataProcessingXml dataProcessing;
@@ -36,8 +36,8 @@ public class ConfigXml {
         return prefixes;
     }
 
-    public List<DataSourceXml> getDataSources() {
-        return dataSources;
+    public SourcesXml getSources() {
+        return sources;
     }
     
     public DataProcessingXml getDataProcessing() {

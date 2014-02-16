@@ -11,7 +11,7 @@
   </Prefixes>
   
   <!-- Definitions of data sources; multiple <DataSource> children can be given; (required) -->
-  <DataSources>
+  <Sources>
     <!-- Data source of type "virtuoso"; connects to an Openlink Virtuoso database instance using JDBC -->
     <DataSource type="virtuoso" name="virtuoso_local">
       <!-- Hostname for the Virtuoso database instance; (required) -->
@@ -68,7 +68,9 @@
           (optional, format is recognized from file extension if not given) -->
       <Param name="format" value="ntriples"/>
     </DataSource>
-  </DataSources>
+    
+    <!-- TODO -->
+  </Sources>
   
   <!-- Definition of data processing settings; (optional) -->
   <DataProcessing>

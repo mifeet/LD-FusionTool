@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -18,15 +17,13 @@ import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 
 /**
  * The main entry point of the application.
@@ -41,7 +38,9 @@ public final class ODCSFusionToolApplication {
         private final boolean isProfilingOn;
         private final String configFilePath;
         
-        public ApplicationArgs(boolean isVerbose, boolean isProfilingOn, String configFilePath, boolean outputConflictsOnly, boolean outputMappedSubjectsOnly) {
+        public ApplicationArgs(boolean isVerbose, boolean isProfilingOn, String configFilePath,
+                boolean outputConflictsOnly, boolean outputMappedSubjectsOnly) {
+            
             this.isVerbose = isVerbose;
             this.isProfilingOn = isProfilingOn;
             this.configFilePath = configFilePath;
@@ -105,7 +104,6 @@ public final class ODCSFusionToolApplication {
             ((ConfigImpl) config).setOutputConflictsOnly(parsedArgs.getOutputConflictsOnly());
             ((ConfigImpl) config).setOutputMappedSubjectsOnly(parsedArgs.getOutputMappedSubjectsOnly());
             checkValidInput(config);
-            setupDefaultRestrictions(config);
         } catch (InvalidInputException e) {
             System.err.println("Error in config file:");
             System.err.println("  " + e.getMessage());
@@ -193,8 +191,18 @@ public final class ODCSFusionToolApplication {
         }   
        
         // Check data Source settings
+        if (config.getDataSources() == null || config.getDataSources().isEmpty()) {
+            throw new InvalidInputException("There must be at least one DataSource specified");
+        }
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             checkDataSourceValidInput(dataSourceConfig, config);
+        }
+        
+        for (ConstructSourceConfig sourceConfig : config.getSameAsSources()) {
+            checkConstructSourceValiedInput(sourceConfig, config);
+        }
+        for (ConstructSourceConfig sourceConfig : config.getMetadataSources()) {
+            checkConstructSourceValiedInput(sourceConfig, config);
         }
         
         // Check output settings
@@ -209,21 +217,22 @@ public final class ODCSFusionToolApplication {
 
         // intentionally do not check canonical URI files
     }
-
+    
+    private static void checkConstructSourceValiedInput(ConstructSourceConfig sourceConfig, Config config)
+            throws InvalidInputException {
+        checkSourceValidInput(sourceConfig, config);
+    }
+    
     private static void checkDataSourceValidInput(DataSourceConfig dataSourceConfig, Config config) throws InvalidInputException {
+        checkSourceValidInput(dataSourceConfig, config);
+        
         if (!ODCSUtils.isValidSparqlVar(dataSourceConfig.getNamedGraphRestriction().getVar())) {
             throw new InvalidInputException(
                     "Variable name specified in source graphs restriction must be a valid SPARQL identifier, '"
                             + dataSourceConfig.getNamedGraphRestriction().getVar() 
                             + "' given for data source " + dataSourceConfig);
         }
-        if (dataSourceConfig.getMetadataGraphRestriction() != null
-                && !ODCSUtils.isValidSparqlVar(dataSourceConfig.getMetadataGraphRestriction().getVar())) {
-            throw new InvalidInputException(
-                    "Variable name specified in ontology graphs restriction must be a valid SPARQL identifier, '"
-                            + dataSourceConfig.getMetadataGraphRestriction().getVar() 
-                            + "' given for data source " + dataSourceConfig);
-        }
+        
         if (config.getSeedResourceRestriction() != null
                 && dataSourceConfig.getNamedGraphRestriction().getVar().equals(
                         config.getSeedResourceRestriction().getVar())) {
@@ -233,67 +242,35 @@ public final class ODCSFusionToolApplication {
                     + "\nNote that any other variables used in the two restriction patterns should be also different.";
             throw new InvalidInputException(message);
         }
-        
-        switch (dataSourceConfig.getType()) {
+    }
+
+    private static void checkSourceValidInput(SourceConfig sourceConfig, Config config) throws InvalidInputException {
+        switch (sourceConfig.getType()) {
         case VIRTUOSO:
-            checkRequiredDataSourceParam(dataSourceConfig, "host", "port", "username", "password");
+            checkRequiredDataSourceParam(sourceConfig, "host", "port", "username", "password");
             break;
         case SPARQL:
-            checkRequiredDataSourceParam(dataSourceConfig, "endpointurl");
+            checkRequiredDataSourceParam(sourceConfig, "endpointurl");
             break;
         case FILE:
-            checkRequiredDataSourceParam(dataSourceConfig, "path");
-            File file = new File(dataSourceConfig.getParams().get("path"));
+            checkRequiredDataSourceParam(sourceConfig, "path");
+            File file = new File(sourceConfig.getParams().get("path"));
             if (!file.isFile() || !file.canRead()) {
-                throw new InvalidInputException("Cannot read input file " + dataSourceConfig.getParams().get("path"));
+                throw new InvalidInputException("Cannot read input file " + sourceConfig.getParams().get("path"));
             }
             break;
         default:
-            throw new InvalidInputException("Unsupported type of data source: " + dataSourceConfig.getType());
+            throw new InvalidInputException("Unsupported type of data source: " + sourceConfig.getType());
         }
     }
-
-    private static void checkRequiredDataSourceParam(DataSourceConfig dataSourceConfig, String... requiredParams)
+    
+    private static void checkRequiredDataSourceParam(SourceConfig dataSourceConfig, String... requiredParams)
             throws InvalidInputException {
         
         for (String requiredParam : requiredParams) {
             if (dataSourceConfig.getParams().get(requiredParam) == null) {
                 throw new InvalidInputException("Missing required parameter '" + requiredParam
                         + "' for data source " + dataSourceConfig);
-            }
-        }
-    }
-    
-    /**
-     * Sets up SPARQL restrictions in config if none are given.
-     * This step is mostly for performance reasons, e.g. loading metadata from a large
-     * RDF data source without a restriction on metadata graphs is to demanding.
-     * @param config
-     */
-    private static void setupDefaultRestrictions(Config config) {
-        final String varPrefix = "c6fa378ae1_"; // some random string to avoid collisions
-        for (DataSourceConfig dsConfigImmutable : config.getDataSources()) {
-            DataSourceConfigImpl dsConfig = (DataSourceConfigImpl) dsConfigImmutable;
-            switch (dsConfig.getType()) {
-            case SPARQL:
-            case VIRTUOSO:
-                // Use ODCS default if appropriate
-                if (ODCSFusionToolUtils.isRestrictionEmpty(dsConfig.getMetadataGraphRestriction())) {
-                    // { GRAPH ?m {?x odcs:source ?y} }
-                    //   UNION { GRAPH ?m {?x odcs:score ?y} }
-                    //   UNION { GRAPH ?m {?x odcs:publisherScore ?y} }
-                    //   UNION { ?m odcs:generatedGraph 1 }
-                    String graphPattern = "{ GRAPH ?" + varPrefix + "m {?" + varPrefix + "x <%s> ?" + varPrefix + "y} }";
-                    String pattern = String.format(Locale.ROOT, graphPattern, ODCS.SOURCE)
-                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.SCORE)
-                            + "\n  UNION " + String.format(Locale.ROOT, graphPattern, ODCS.PUBLISHER_SCORE)
-                            + "\n  UNION { ?" + varPrefix + "m <" + ODCS.GENERATED_GRAPH + "> 1}";
-                    dsConfig.setMetadataGraphRestriction(new SparqlRestrictionImpl(pattern, varPrefix + "m"));
-                }
-                break;
-            default:
-                // do nothing
-                break;
             }
         }
     }

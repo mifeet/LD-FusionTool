@@ -28,6 +28,18 @@ public interface Config {
     List<DataSourceConfig> getDataSources();
     
     /**
+     * List of owl:sameAs links sources.
+     * @return list of data sources.
+     */ 
+    List<ConstructSourceConfig> getSameAsSources();
+    
+    /**
+     * List of metadata sources.
+     * @return list of data sources.
+     */ 
+    List<ConstructSourceConfig> getMetadataSources();
+    
+    /**
      * Prefix of named graphs and URIs where query results and metadata in the output are placed.
      * @return graph name prefix
      */

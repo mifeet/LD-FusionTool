@@ -21,6 +21,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConfigXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConflictResolutionXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConstructSourceXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.DataSourceXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.OutputXml;
 import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ParamXml;
@@ -73,10 +74,24 @@ public final class ConfigReader {
 
         // Data sources
         List<DataSourceConfig> dataSources = new LinkedList<DataSourceConfig>();
-        for (DataSourceXml dsXml : configXml.getDataSources()) {
+        for (DataSourceXml dsXml : configXml.getSources().getDataSources()) {
             dataSources.add(extractDataSource(dsXml));
         }
         config.setDataSources(Collections.unmodifiableList(dataSources));
+        
+        // SameAs sources
+        List<ConstructSourceConfig> sameAsSources = new LinkedList<ConstructSourceConfig>();
+        for (ConstructSourceXml csXml : configXml.getSources().getSameAsSources()) {
+            sameAsSources.add(extractConstructSource(csXml));
+        }
+        config.setSameAsSources(Collections.unmodifiableList(sameAsSources));
+        
+        // Metadata sources
+        List<ConstructSourceConfig> metadataSources = new LinkedList<ConstructSourceConfig>();
+        for (ConstructSourceXml csXml : configXml.getSources().getMetadataSources()) {
+            metadataSources.add(extractConstructSource(csXml));
+        }
+        config.setMetadataSources(Collections.unmodifiableList(metadataSources));
         
         // Data processing settings
         if (configXml.getDataProcessing() != null) {
@@ -189,7 +204,7 @@ public final class ConfigReader {
             }
         }
     }
-
+    
     private DataSourceConfig extractDataSource(DataSourceXml dataSourceXml) throws InvalidInputException {
         EnumDataSourceType type;
         try {
@@ -208,9 +223,31 @@ public final class ConfigReader {
         if (namedGraphResriction != null) {
             dataSourceConfig.setNamedGraphRestriction(namedGraphResriction);
         }
-        dataSourceConfig.setMetadataGraphRestriction(extractGraphRestriction(dataSourceXml.getMetadataGraphRestriction()));
 
         return dataSourceConfig;
+    }
+    
+    private ConstructSourceConfig extractConstructSource(ConstructSourceXml constructSourceXml) throws InvalidInputException {
+        EnumDataSourceType type;
+        try {
+            type = EnumDataSourceType.valueOf(constructSourceXml.getType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidInputException("Unknown type of data source: " + constructSourceXml.getType());
+        }
+        
+        String constructQuery = constructSourceXml.getConstructQuery();
+        if (constructQuery == null) {
+            throw new InvalidInputException("Empty CONSTRUCT query");
+        }
+        
+        ConstructSourceConfigImpl constructSourceConfig = 
+                new ConstructSourceConfigImpl(type, constructSourceXml.getName(), constructQuery);
+        
+        for (ParamXml param : constructSourceXml.getParams()) {
+            constructSourceConfig.getParams().put(param.getName().toLowerCase(), param.getValue());
+        }
+        
+        return constructSourceConfig;
     }
 
     private Output extractOutput(OutputXml outputXml) throws InvalidInputException {
