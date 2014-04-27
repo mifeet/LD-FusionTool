@@ -156,7 +156,7 @@
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
         <module name="LineLength">
             <property name="ignorePattern" value="^ */\*\*.*\*/ *$"/>
-            <property name="max" value="130"/>
+            <property name="max" value="140"/>
         </module>
         <module name="MethodLength"/>
         <module name="ParameterNumber"/>
