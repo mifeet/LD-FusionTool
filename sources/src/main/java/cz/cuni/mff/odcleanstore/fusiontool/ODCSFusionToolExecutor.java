@@ -250,14 +250,13 @@ public class ODCSFusionToolExecutor {
             LargeCollectionFactory collectionFactory) throws ODCSFusionToolException {
         Set<String> buffer = collectionFactory.<String>createSet();
         UriCollection queuedSubjects = new BufferedSubjectsCollection(buffer);
+        long count = 0;
         while (seedSubjects.hasNext()) {
             String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());
             queuedSubjects.add(canonicalURI); // only store canonical URIs to save space
+            count++;
         }
-        if (LOG.isDebugEnabled()) {
-            // only when debug is enabled, this may be expensive when using file cache
-            LOG.debug(String.format("ODCS-FusionTool: loaded %,d seed resources", buffer.size()));
-        } 
+        LOG.info(String.format("ODCS-FusionTool: buffered approx. %,d seed resources", count));
         return queuedSubjects;
     }
 
