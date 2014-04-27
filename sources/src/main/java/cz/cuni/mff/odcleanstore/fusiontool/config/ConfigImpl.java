@@ -35,7 +35,8 @@ public class ConfigImpl implements Config {
     private boolean isProfilingOn = false;
     private boolean outputConflictsOnly = false;
     private boolean outputMappedSubjectsOnly = false;
-
+    private boolean isProcessingTransitive = true;
+    
     @Override
     public List<DataSourceConfig> getDataSources() {
         return dataSources;
@@ -244,6 +245,19 @@ public class ConfigImpl implements Config {
      */
     public void setOutputMappedSubjectsOnly(boolean outputMappedSubjectsOnly) {
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
+    }
+    
+    @Override
+    public boolean isProcessingTransitive() {
+        return isProcessingTransitive;
+    };
+    
+    /**
+     * Sets value for {@link #isProcessingTransitive()}.
+     * @param isProcessingTransitive see {@link #isProcessingTransitive()}
+     */
+    public void setIsProcessingTransitive(boolean isProcessingTransitive) {
+        this.isProcessingTransitive = isProcessingTransitive;
     }
     
     @Override

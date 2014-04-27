@@ -127,7 +127,7 @@ public class ODCSFusionToolExecutor {
 
             // Get iterator over subjects of relevant triples
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
-            final boolean isTransitive = config.getSeedResourceRestriction() != null;
+            final boolean isTransitive = config.isProcessingTransitive() && config.getSeedResourceRestriction() != null;
             if (isTransitive) {
                 queuedSubjects = createBufferedSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
                 seedSubjects.close();

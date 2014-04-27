@@ -198,6 +198,8 @@ public final class ConfigReader {
             } else if ("maxOutputTriples".equalsIgnoreCase(param.getName())) {
                 long value = convertToLong(param.getValue(), "Value of maxOutputTriples is not a valid number");
                 config.setMaxOutputTriples(value);
+            } else if ("transitive".equalsIgnoreCase(param.getName())) {
+                config.setIsProcessingTransitive(Boolean.parseBoolean(param.getValue()));
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");

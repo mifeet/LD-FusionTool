@@ -158,4 +158,10 @@ public interface Config {
      * @return true iff only subjects for which an URI mapping exists should be included in the output
      */
     boolean getOutputMappedSubjectsOnly();
+    
+    /**
+     * Indicates whether to resolve resources transitively starting from seed resources of a data source.
+     * @return true if resources should be processed transitively
+     */
+    boolean isProcessingTransitive();
 }

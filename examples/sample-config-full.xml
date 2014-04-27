@@ -99,13 +99,18 @@
     <!--<Param name="maxOutputTriples" value="1000" />-->
       
     <!-- If set to true, enables file cache for objects needed by the algorithm that may not fit in the memory;
-           disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
+         disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
     <Param name="enableFileCache" value="false" />
+
+	<!-- If set to true and <SeedResourceRestriction> is given, triples to be resolved are traversed transitively;
+	     in other words all resources that can be transitively reached from seed resources of a data source are processed;
+	     (optional, default to true) -->
+	<Param name="transitive" value="true" />
     
-    <!-- SPARQL group graph pattern giving seed resources for transitive traversal of triples;
-         the output will include triples having matching resources as their subjects and
-         triples transitively reachable from there;
-         attribute var specifies which variable in the pattern represents the seed resource;
+    <!-- SPARQL group graph pattern giving seed resources for data fusion;
+         if given, subjects matching the SPARQL variable given in attribute 'var' will be loaded as seed resources
+         and only triples having these seed resources as subject will be processed;
+         if parameter 'transitive' is set to true, also resources transitively reachable from seed resources will be processed
          optional (if not given, all triples from source graphs are processed) -->
     <SeedResourceRestriction var="s">
       ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
