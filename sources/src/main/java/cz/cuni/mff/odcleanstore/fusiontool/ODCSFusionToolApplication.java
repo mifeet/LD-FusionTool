@@ -199,10 +199,10 @@ public final class ODCSFusionToolApplication {
         }
         
         for (ConstructSourceConfig sourceConfig : config.getSameAsSources()) {
-            checkConstructSourceValiedInput(sourceConfig, config);
+            checkConstructSourceValidInput(sourceConfig, config);
         }
         for (ConstructSourceConfig sourceConfig : config.getMetadataSources()) {
-            checkConstructSourceValiedInput(sourceConfig, config);
+            checkConstructSourceValidInput(sourceConfig, config);
         }
         
         // Check output settings
@@ -218,7 +218,7 @@ public final class ODCSFusionToolApplication {
         // intentionally do not check canonical URI files
     }
     
-    private static void checkConstructSourceValiedInput(ConstructSourceConfig sourceConfig, Config config)
+    private static void checkConstructSourceValidInput (ConstructSourceConfig sourceConfig, Config config)
             throws InvalidInputException {
         checkSourceValidInput(sourceConfig, config);
     }

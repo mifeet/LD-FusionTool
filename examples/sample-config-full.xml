@@ -10,7 +10,11 @@
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
   </Prefixes>
   
-  <!-- Definitions of data sources; multiple <DataSource> children can be given; (required) -->
+  <!-- Definitions of inputs; the <Source/> tag can contain three types of sources:
+       <DataSource> representing data to be fused,
+	   <MetadataSource> representing metadata for data fusion,
+	   <SameAsSource> representing owl:sameAs links to be used;
+	   there can be multiple children of each kind given; at least one <DataSource> child is required -->
   <Sources>
     <!-- Data source of type "virtuoso"; connects to an Openlink Virtuoso database instance using JDBC -->
     <DataSource type="virtuoso" name="virtuoso_local">
@@ -33,16 +37,6 @@
         { SELECT ?g WHERE {?g odcs:metadataGraph ?m} }
         UNION { SELECT ?g WHERE {?a odcs:attachedGraph ?g} }
       </GraphRestriction>
-    
-      <!-- SPARQL group graph pattern which specifies named graphs from which metadata and 
-           owl:sameAs links are loaded; contents of these graphs are considered in conflict resolution
-           (e.g. owl:sameAs links for identity resolution) but contents are not included in the output;
-           attribute var specifies which variable represents the named graph in the pattern;
-          optional (if not given, statements about named graphs containing data to process are loaded) -->
-      <MetadataGraphRestriction var="m">
-        { GRAPH ?m {?x ?p ?y FILTER (?p IN (odcs:score, odcs:publisherScore, odcs:source))} }
-        UNION { ?m odcs:generatedGraph 1 }
-      </MetadataGraphRestriction>
     </DataSource>
 
     <!-- Data source representing a SPARQL endpoint -->    
@@ -53,7 +47,7 @@
       <!-- Specifies a minimum interval between SPARQL queries in milliseconds -->
       <Param name="minQueryInterval" value="1000" />
       
-      <!-- <GraphRestriction /> and <MetadataGraphRestriction /> can optionally be used here as well -->
+      <!-- <GraphRestriction /> can optionally be used here as well -->
     </DataSource>
     
     <!-- Data source loading RDF data from a file -->
@@ -69,7 +63,27 @@
       <Param name="format" value="ntriples"/>
     </DataSource>
     
-    <!-- TODO -->
+    <!-- Source containing metadata for data fusion 
+	     'type' attribute can have the same values as <DataSource> -->
+	<MetadataSource type="sparql" name="metadata-local">
+      <!-- SPARQL Construct query selecting the owl:sameAs links -->
+      <ConstructQuery>
+      	CONSTRUCT {?g odcs:score ?s } WHERE { ?g odcs:score ?s } 
+	  </ConstructQuery>
+	  
+      <Param name="endpointUrl" value="http://localhost:8890/sparql" />
+    </MetadataSource>
+	
+	<!-- Source containing owl:sameAs links for data fusion; 
+	     'type' attribute can have the same values as <DataSource> -->
+	<SameAsSource type="sparql" name="sameAs-local">
+      <!-- SPARQL Construct query selecting the owl:sameAs links -->
+      <ConstructQuery>
+      	CONSTRUCT {?s owl:sameAs ?o} WHERE { ?s owl:sameAs ?o } 
+	  </ConstructQuery>
+	  
+      <Param name="endpointUrl" value="http://localhost:8890/sparql" />
+    </SameAsSource>
   </Sources>
   
   <!-- Definition of data processing settings; (optional) -->

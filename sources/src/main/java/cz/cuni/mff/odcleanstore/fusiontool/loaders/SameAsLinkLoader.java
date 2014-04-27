@@ -5,8 +5,6 @@ import org.openrdf.model.Statement;
 import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.rio.ParserConfig;
-import org.openrdf.rio.RDFParserRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,18 +18,19 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSource;
  * Loads owl:sameAs links from named graphs to be processed.
  * @author Jan Michelfeit
  */
-public class SameAsLinkLoader {
+public class SameAsLinkLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkLoader.class);
     
     /** RDF data source. */
-    protected final ConstructSource source;
+    protected final ConstructSource constructSource;
     
     /**
      * Creates a new instance.
-     * @param source an initialized construct source
+     * @param constructSource an initialized construct source
      */
-    public SameAsLinkLoader(ConstructSource source) {
-        this.source = source;
+    public SameAsLinkLoader(ConstructSource constructSource) {
+        super(constructSource);
+        this.constructSource = constructSource;
     }
 
     /**
@@ -45,23 +44,22 @@ public class SameAsLinkLoader {
         long linkCount = 0;
         
         // Load links from processed data
-        // TODO: getPrefixDecl
-        String constructQuery = this.source.getConstructQuery();
+        String constructQuery = addPrefixDecl(this.constructSource.getConstructQuery());
         try {
             linkCount += loadSameAsLinks(uriMapping, constructQuery.trim());
         } catch (OpenRDFException e) {
-            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_SAMEAS, constructQuery, source.getName(), e);
+            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_SAMEAS, constructQuery, constructSource.getName(), e);
         }
 
         LOG.debug(String.format("ODCS-FusionTool: loaded & resolved %,d owl:sameAs links from source %s in %d ms",
-                    linkCount, source.getName(), System.currentTimeMillis() - startTime));
+                    linkCount, constructSource.getName(), System.currentTimeMillis() - startTime));
         return linkCount;
     }
 
     private long loadSameAsLinks(URIMappingImpl uriMapping, String query) throws OpenRDFException {
         long linkCount = 0;
         long startTime = System.currentTimeMillis();
-        RepositoryConnection connection = source.getRepository().getConnection();
+        RepositoryConnection connection = constructSource.getRepository().getConnection();
         GraphQueryResult resultSet = null;
         try {
             resultSet = connection.prepareGraphQuery(QueryLanguage.SPARQL, query).evaluate();

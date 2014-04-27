@@ -63,6 +63,8 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
             + "\n     %4$s"
             + "\n   }"
             + "\n }";
+
+    private final DataSource dataSource;
     
     /**
      * Creates a new instance.
@@ -70,6 +72,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      */
     public SeedSubjectsLoader(DataSource dataSource) {
         super(dataSource);
+        this.dataSource = dataSource;
     }
 
     /**
@@ -85,7 +88,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
     public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
 
-        SparqlRestriction graphRestriction = dataSource.getNamedGraphRestriction() != null 
+        SparqlRestriction graphRestriction = dataSource.getNamedGraphRestriction() != null
                 ? dataSource.getNamedGraphRestriction()
                 : EMPTY_GRAPH_RESTRICTION;
         SparqlRestriction seedRestriction = seedResourceRestriction != null
@@ -123,7 +126,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
          * Creates a new instance.
          * @param query query that retrieves subjects from the database; the query must return
          *        the subjects as the first variable in the results
-         * @param repository an initialized RDF repository
+         * @param dataSource RDF data source
          * @throws ODCSFusionToolException error
          */
         protected UriCollectionImpl(String query, DataSource dataSource) throws ODCSFusionToolException {

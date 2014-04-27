@@ -16,46 +16,48 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSource;
 
 /**
  * Loads URIs and metadata of named graphs to be processed.
+ *
  * @author Jan Michelfeit
  */
-public class MetadataLoader {
+public class MetadataLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(MetadataLoader.class);
-    
-    private ConstructSource source;
+
+    private ConstructSource constructSource;
 
     /**
      * Creates a new instance.
-     * @param source an initialized construct source
+     *
+     * @param constructSource an initialized construct source
      */
-    public MetadataLoader(ConstructSource source) {
-        this.source = source;
+    public MetadataLoader(ConstructSource constructSource) {
+        super(constructSource);
+        this.constructSource = constructSource;
     }
 
     /**
      * Loads relevant metadata and adds them to the given metadata collection.
-     * Metadata are loaded for named graphs containing triples to be processed and metadata graphs.
+     *
      * @param metadata named graph metadata where loaded metadata are added
      * @throws ODCSFusionToolException repository error
-     * @see DataSource#getMetadataGraphRestriction()
      */
     public void loadNamedGraphsMetadata(Model metadata) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
         String query = "";
         try {
-            // TODO: getPrefixDecl
-            query = source.getConstructQuery();
+            query = addPrefixDecl(constructSource.getConstructQuery());
             loadMetadataInternal(metadata, query);
         } catch (OpenRDFException e) {
-            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_NG_METADATA, query, source.getName(), e);
+            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_NG_METADATA, query, constructSource.getName(), e);
         }
-        
-        LOG.debug("ODCS-FusionTool: Metadata loaded from source {} in {} ms", 
-                source.getName(), System.currentTimeMillis() - startTime);
+
+        LOG.debug("ODCS-FusionTool: Metadata loaded from source {} in {} ms",
+                constructSource.getName(),
+                System.currentTimeMillis() - startTime);
     }
-    
+
     private void loadMetadataInternal(Model metadata, String query) throws OpenRDFException {
         long startTime = System.currentTimeMillis();
-        RepositoryConnection connection = source.getRepository().getConnection();
+        RepositoryConnection connection = constructSource.getRepository().getConnection();
         GraphQueryResult resultSet = null;
         try {
             resultSet = connection.prepareGraphQuery(QueryLanguage.SPARQL, query).evaluate();
