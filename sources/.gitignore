@@ -5,3 +5,4 @@ target/
 /.checkstyle
 /canonicalUris.txt
 /*.n3
+/output
