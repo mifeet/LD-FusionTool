@@ -164,4 +164,9 @@ public interface Config {
      * @return true if resources should be processed transitively
      */
     boolean isProcessingTransitive();
+
+    /**
+     * Directory for temporary files
+     */
+    File getTempDirectory();
 }

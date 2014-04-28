@@ -248,7 +248,7 @@ public class ODCSFusionToolExecutor {
      */
     protected UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
             LargeCollectionFactory collectionFactory) throws ODCSFusionToolException {
-        Set<String> buffer = collectionFactory.<String>createSet();
+        Set<String> buffer = collectionFactory.createSet();
         UriCollection queuedSubjects = new BufferedSubjectsCollection(buffer);
         long count = 0;
         while (seedSubjects.hasNext()) {
@@ -394,7 +394,7 @@ public class ODCSFusionToolExecutor {
      */
     protected LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
         if (config.getEnableFileCache()) {
-            return new MapdbCollectionFactory(ODCSFusionToolUtils.getCacheDirectory());
+            return new MapdbCollectionFactory(ODCSFusionToolUtils.getCacheDirectory(config.getTempDirectory()));
         } else {
             return new MemoryCollectionFactory();
         }

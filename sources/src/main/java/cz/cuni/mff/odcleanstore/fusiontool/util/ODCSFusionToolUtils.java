@@ -23,9 +23,6 @@ public final class ODCSFusionToolUtils {
     /** Number of bytes in a gigabyte. */
     public static final long GB_BYTES = 1024 * 1024 * 1024;
     
-    /** Default cache directory. */
-    public static final File CACHE_DIRECTORY = new File(".");
-
     /**
      * Returns a human-readable (memory, file, ...) size.
      * @param byteCount the number of bytes
@@ -48,20 +45,19 @@ public final class ODCSFusionToolUtils {
     /**
      * Creates parent directories for the given file if they don't exist already.
      * @param file file whose parent directories will be created
+     * @return the given file
      */
-    public static void ensureParentsExists(File file) {
+    public static File ensureParentsExists(File file) {
         file.getAbsoluteFile().getParentFile().mkdirs();
+        return file;
     }
         
     /**
      * Returns directory for cache files. Creates one if it doesn't exist yet.
-     * @see #CACHE_DIRECTORY
      * @return directory
      */
-    public static File getCacheDirectory() {
-        File dir = CACHE_DIRECTORY;
-        ensureParentsExists(dir);
-        return dir;
+    public static File getCacheDirectory(File tempDirectory) {
+        return ensureParentsExists(tempDirectory);
     }
     
     /**
