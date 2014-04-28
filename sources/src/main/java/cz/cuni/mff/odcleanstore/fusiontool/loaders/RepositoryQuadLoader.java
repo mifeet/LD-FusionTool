@@ -1,10 +1,13 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-
-import cz.cuni.mff.odcleanstore.fusiontool.io.Source;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
+import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
@@ -18,14 +21,9 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
-import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject)

@@ -86,6 +86,8 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
  * Fuses RDF data loaded from RDF sources using ODCS Conflict Resolution and writes the output to RDF outputs.
  * Conflict resolution includes resolution of owl:sameAs link, resolution of instance-level conflicts.
  * See sample configuration files (sample-config-full.xml) for overview of all processing options.
+ *
+ * This class is not thread-safe.
  * @author Jan Michelfeit
  */
 public class ODCSFusionToolExecutor {
@@ -96,38 +98,57 @@ public class ODCSFusionToolExecutor {
     
     /** An instance of {@link RepositoryFactory}. */
     protected static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
-    
+
+    /** Global configuration. */
+    protected final Config config;
+
+    /** Indicates if resources to process should be discovered transitively. */
+    protected final boolean isTransitive;
+
+    /** Performance profiler counter. */
+    protected ProfilingTimeCounter<EnumProfilingCounters> timeProfiler;
+
+    /** Memory profiler. */
+    protected MemoryProfiler memoryProfiler;
+
+    private final boolean hasVirtuosoSource;
+
+    /**
+     * Creates new instance.
+     * @param config global configuration
+     */
+    public ODCSFusionToolExecutor(Config config) {
+        this.config = config;
+        hasVirtuosoSource = hasVirtuosoSource(config.getDataSources());
+        isTransitive = config.isProcessingTransitive() && config.getSeedResourceRestriction() != null;
+    }
+
     /**
      * Performs the actual ODCS-FusionTool task according to the given configuration.
-     * @param config global configuration
      * @throws ODCSFusionToolException general fusion error
      * @throws IOException I/O error when writing results
      * @throws ConflictResolutionException conflict resolution error
      */
-    public void runFusionTool(Config config) throws ODCSFusionToolException, IOException, ConflictResolutionException {
-        LargeCollectionFactory collectionFactory = createLargeCollectionFactory(config);
+    public void runFusionTool() throws ODCSFusionToolException, IOException, ConflictResolutionException {
+        LargeCollectionFactory collectionFactory = createLargeCollectionFactory();
         QuadLoader quadLoader = null;
         UriCollection queuedSubjects = null;
         List<CloseableRDFWriter> rdfWriters = null;
-        Collection<DataSource> dataSources = getDataSources(config.getDataSources(), config.getPrefixes());
-        boolean hasVirtuosoSource = hasVirtuosoSource(config.getDataSources());
-        ProfilingTimeCounter<EnumProfilingCounters> timeProfiler = ProfilingTimeCounter.createInstance(
-                EnumProfilingCounters.class, config.isProfilingOn());
-        MemoryProfiler memoryProfiler = MemoryProfiler.createInstance(config.isProfilingOn());
+        Collection<DataSource> dataSources = getDataSources();
+        resetProfilers();
         timeProfiler.startCounter(EnumProfilingCounters.INITIALIZATION);
         try {
             // Load source named graphs metadata
-            Model metadata = getMetadata(getConstructSources(config.getMetadataSources(), config.getPrefixes()));
+            Model metadata = getMetadata(getConstructSources(config.getMetadataSources()));
 
             // Load & resolve owl:sameAs links
-            Collection<ConstructSource> sameAsSources = getConstructSources(config.getSameAsSources(), config.getPrefixes());
-            URIMappingIterable uriMapping = getURIMapping(sameAsSources, config);
+            Collection<ConstructSource> sameAsSources = getConstructSources(config.getSameAsSources());
+            URIMappingIterable uriMapping = getURIMapping(sameAsSources);
             AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
             Set<String> resolvedCanonicalURIs = collectionFactory.createSet();
 
             // Get iterator over subjects of relevant triples
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
-            final boolean isTransitive = config.isProcessingTransitive() && config.getSeedResourceRestriction() != null;
             if (isTransitive) {
                 queuedSubjects = createBufferedSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
                 seedSubjects.close();
@@ -136,10 +157,10 @@ public class ODCSFusionToolExecutor {
             }
 
             // Initialize CR
-            ConflictResolver conflictResolver = createConflictResolver(config, metadata, uriMapping);
+            ConflictResolver conflictResolver = createConflictResolver(metadata, uriMapping);
 
             // Initialize output writer
-            rdfWriters = createRDFWriters(config.getOutputs(), config.getPrefixes());
+            rdfWriters = createRDFWriters();
 
             // Initialize triple counter
             boolean checkMaxOutputTriples = config.getMaxOutputTriples() != null && config.getMaxOutputTriples() >= 0;
@@ -168,17 +189,11 @@ public class ODCSFusionToolExecutor {
                 timeProfiler.stopAddCounter(EnumProfilingCounters.BUFFERING);
 
                 // Load quads for the given subject
-                timeProfiler.startCounter(EnumProfilingCounters.QUAD_LOADING);
                 Collection<Statement> quads = getQuads(quadLoader, canonicalURI);
                 inputTriples += quads.size();
-                timeProfiler.stopAddCounter(EnumProfilingCounters.QUAD_LOADING);
 
                 // Resolve conflicts
-                timeProfiler.startCounter(EnumProfilingCounters.CONFLICT_RESOLUTION);
-                Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(quads);
-                timeProfiler.stopAddCounter(EnumProfilingCounters.CONFLICT_RESOLUTION);
-                LOG.info("Resolved {} quads for URI <{}> resulting in {} quads (processed totally {} quads)",
-                        new Object[] { quads.size(), canonicalURI, resolvedQuads.size(), inputTriples});
+                Collection<ResolvedStatement> resolvedQuads = resolveConflicts(conflictResolver, quads, canonicalURI, inputTriples);
 
                 // Check if we have reached the limit on output triples
                 if (checkMaxOutputTriples && outputTriples + resolvedQuads.size() > maxOutputTriples) {
@@ -187,32 +202,21 @@ public class ODCSFusionToolExecutor {
                 outputTriples += resolvedQuads.size();
 
                 // Add objects filtered by CR for traversal
-                
                 if (isTransitive) {
-                    timeProfiler.startCounter(EnumProfilingCounters.BUFFERING);
                     addDiscoveredObjects(queuedSubjects, resolvedQuads, uriMapping, resolvedCanonicalURIs);
-                    timeProfiler.stopAddCounter(EnumProfilingCounters.BUFFERING);
                 }
 
                 // Write result to output
-                timeProfiler.startCounter(EnumProfilingCounters.OUTPUT_WRITING);
-                for (CloseableRDFWriter writer : rdfWriters) {
-                    writer.writeResolvedStatements(resolvedQuads.iterator());
-                }
-                timeProfiler.stopAddCounter(EnumProfilingCounters.OUTPUT_WRITING);
+                writeOutput(rdfWriters, resolvedQuads);
 
                 memoryProfiler.capture();
-                fixVirtuosoOpenedStatements(hasVirtuosoSource);
+                fixVirtuosoOpenedStatements();
             }
             LOG.info(String.format("Processed %,d quads which were resolved to %,d output quads.", inputTriples, outputTriples));
 
             writeCanonicalURIs(resolvedCanonicalURIs, config.getCanonicalURIsOutputFile());
             writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes(), ValueFactoryImpl.getInstance());
-            
-            if (config.isProfilingOn()) {
-                printProfilingInformation(timeProfiler, memoryProfiler);
-            }
-
+            printProfilingInformation(timeProfiler, memoryProfiler);
         } finally {
             if (quadLoader != null) {
                 quadLoader.close();
@@ -238,7 +242,30 @@ public class ODCSFusionToolExecutor {
         }
     }
 
-    /** 
+    /**
+     * Do the actual conflict resolution on given quads.
+     * @param conflictResolver conflict resolver instance to be used
+     * @param quads quads to be resolved
+     * @param canonicalURI URI currently being resolved
+     * @param totalProcessedTriples number of input triples processed so far
+     * @return resolved quads
+     * @throws ConflictResolutionException resolution error
+     */
+    protected Collection<ResolvedStatement> resolveConflicts(
+            ConflictResolver conflictResolver,
+            Collection<Statement> quads,
+            String canonicalURI,
+            long totalProcessedTriples) throws ConflictResolutionException {
+
+        timeProfiler.startCounter(EnumProfilingCounters.CONFLICT_RESOLUTION);
+        Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(quads);
+        timeProfiler.stopAddCounter(EnumProfilingCounters.CONFLICT_RESOLUTION);
+        LOG.info("Resolved {} quads for URI <{}> resulting in {} quads (processed totally {} quads)",
+                new Object[] {quads.size(), canonicalURI, resolvedQuads.size(), totalProcessedTriples});
+        return resolvedQuads;
+    }
+
+    /**
      * Creates a collection to hold subject URIs queued to be processed.
      * @param seedSubjects initial URIs to fill in the collection
      * @param uriMapping canonical URI mapping
@@ -262,17 +289,15 @@ public class ODCSFusionToolExecutor {
 
     /**
      * Initializes data sources from configuration.
-     * @param config configuration for data sources
-     * @param prefixes namespace prefixes
      * @return initialized data sources
      * @throws ODCSFusionToolException I/O error
      */
-    protected Collection<DataSource> getDataSources(List<DataSourceConfig> config, Map<String, String> prefixes)
+    protected Collection<DataSource> getDataSources()
             throws ODCSFusionToolException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
-        for (DataSourceConfig dataSourceConfig : config) {
+        for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
-                DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, REPOSITORY_FACTORY);
+                DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
                 dataSources.add(dataSource);
             } catch (ODCSFusionToolException e) {
                 // clean up already initialized repositories
@@ -288,21 +313,20 @@ public class ODCSFusionToolExecutor {
         }
         return dataSources;
     }
-    
+
     /**
      * Initializes construct sources from configuration.
-     * @param config configuration for data sources
-     * @param prefixes namespace prefixes
+     * @param constructSourceConfigs configuration for data sources
      * @return initialized construct sources
      * @throws ODCSFusionToolException I/O error
      */
-    protected Collection<ConstructSource> getConstructSources(List<ConstructSourceConfig> config, Map<String, String> prefixes)
+    protected Collection<ConstructSource> getConstructSources(List<ConstructSourceConfig> constructSourceConfigs)
             throws ODCSFusionToolException {
         List<ConstructSource> constructSources = new ArrayList<ConstructSource>();
-        for (ConstructSourceConfig constructSourceConfig : config) {
+        for (ConstructSourceConfig constructSourceConfig : constructSourceConfigs) {
             try {
-                ConstructSource constructSource = 
-                        ConstructSourceImpl.fromConfig(constructSourceConfig, prefixes, REPOSITORY_FACTORY);
+                ConstructSource constructSource =
+                        ConstructSourceImpl.fromConfig(constructSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
                 constructSources.add(constructSource);
             } catch (ODCSFusionToolException e) {
                 // clean up already initialized repositories
@@ -318,7 +342,7 @@ public class ODCSFusionToolExecutor {
         }
         return constructSources;
     }
-    
+
     /**
      * Returns metadata for conflict resolution.
      * @param metadataSources initialized metadata sources
@@ -333,20 +357,19 @@ public class ODCSFusionToolExecutor {
         }
         return metadata;
     }
-    
+
     /**
-     * Returns mapping of URIs to their canonical URI created from owl:sameAs links loaded 
+     * Returns mapping of URIs to their canonical URI created from owl:sameAs links loaded
      * from the given data sources.
      * @param sameAsSources URI mapping sources
-     * @param config fusion tool configuration
      * @return mapping of URIs to their canonical URI
      * @throws ODCSFusionToolException error
      * @throws IOException I/O error
      */
-    protected URIMappingIterable getURIMapping(Collection<ConstructSource> sameAsSources, Config config)
+    protected URIMappingIterable getURIMapping(Collection<ConstructSource> sameAsSources)
             throws ODCSFusionToolException, IOException {
         Set<String> preferredURIs = getPreferredURIs(
-                config.getPropertyResolutionStrategies().keySet(), 
+                config.getPropertyResolutionStrategies().keySet(),
                 config.getCanonicalURIsInputFile(),
                 config.getPreferredCanonicalURIs());
         URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
@@ -356,7 +379,7 @@ public class ODCSFusionToolExecutor {
         }
         return uriMapping;
     }
-    
+
     /**
      * Returns collections of seed subjects, i.e. the initial URIs for which
      * corresponding quads are loaded and resolved.
@@ -367,11 +390,11 @@ public class ODCSFusionToolExecutor {
      * @throws ODCSFusionToolException query error
      */
     protected UriCollection getSeedSubjects(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
-            throws ODCSFusionToolException { 
+            throws ODCSFusionToolException {
         FederatedSeedSubjectsLoader loader = new FederatedSeedSubjectsLoader(dataSources);
         return loader.getTripleSubjectsCollection(seedResourceRestriction);
     }
-    
+
     /**
      * Loads quads having the given URI as their subject using the given quad loader.
      * @param quadLoader quad loader
@@ -380,28 +403,29 @@ public class ODCSFusionToolExecutor {
      * @throws ODCSFusionToolException query error
      */
     protected Collection<Statement> getQuads(QuadLoader quadLoader, String canonicalURI) throws ODCSFusionToolException {
+        timeProfiler.startCounter(EnumProfilingCounters.QUAD_LOADING);
         Collection<Statement> quads = new ArrayList<Statement>();
         quadLoader.loadQuadsForURI(canonicalURI, quads);
+        timeProfiler.stopAddCounter(EnumProfilingCounters.QUAD_LOADING);
         return quads;
     }
-    
+
     /**
      * Creates factory object for large collections depending on configuration.
      * If cache is enabled, the collection is backed by a file, otherwise kept in memory.
-     * @param config fusion tool configuration
      * @return factory for large collections
      * @throws IOException I/O error
      */
-    protected LargeCollectionFactory createLargeCollectionFactory(Config config) throws IOException {
+    protected LargeCollectionFactory createLargeCollectionFactory() throws IOException {
         if (config.getEnableFileCache()) {
             return new MapdbCollectionFactory(ODCSFusionToolUtils.getCacheDirectory(config.getTempDirectory()));
         } else {
             return new MemoryCollectionFactory();
         }
     }
-    
+
     /**
-     * Creates a quad loader retrieving quads from the given data sources (checking all of them). 
+     * Creates a quad loader retrieving quads from the given data sources (checking all of them).
      * @param dataSources initialized data sources
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      * @return initialized quad loader
@@ -413,41 +437,37 @@ public class ODCSFusionToolExecutor {
             return new FederatedQuadLoader(dataSources, alternativeURINavigator);
         }
     }
-    
+
     /**
      * Creates and initializes output writers.
-     * @param outputs specification of data outputs
-     * @param nsPrefixes namespace prefix mappings
-     * @return output writers 
+     * @return output writers
      * @throws IOException I/O error
      * @throws ODCSFusionToolException configuration error
      */
-    protected List<CloseableRDFWriter> createRDFWriters(List<Output> outputs, Map<String, String> nsPrefixes)
+    protected List<CloseableRDFWriter> createRDFWriters()
             throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
-        for (Output output : outputs) {
+        for (Output output : config.getOutputs()) {
             CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(output);
             writers.add(writer);
-            writeNamespaceDeclarations(writer, nsPrefixes);
+            writeNamespaceDeclarations(writer, config.getPrefixes());
         }
         return writers;
     }
 
-    /** 
+    /**
      * Creates conflict resolver initialized according to given configuration.
-     * @param config fusion tool configuration
      * @param metadata metadata for conflict resolution
      * @param uriMapping mapping of URIs to their canonical URI
      * @return initialized conflict resolver
      */
-    protected ConflictResolver createConflictResolver(
-            Config config, Model metadata, URIMappingIterable uriMapping) {
+    protected ConflictResolver createConflictResolver(Model metadata, URIMappingIterable uriMapping) {
 
         SourceQualityCalculator sourceConfidence = new ODCSSourceQualityCalculator(
-                config.getScoreIfUnknown(), 
+                config.getScoreIfUnknown(),
                 config.getPublisherScoreWeight());
         ResolutionFunctionRegistry registry = ConflictResolverFactory.createInitializedResolutionFunctionRegistry(
-                sourceConfidence, 
+                sourceConfidence,
                 config.getAgreeCoeficient(),
                 new DistanceMeasureImpl());
 
@@ -461,12 +481,12 @@ public class ODCSFusionToolExecutor {
         if (config.getOutputConflictsOnly()) {
             builder.setConflictClusterFilter(new ConflictingClusterConflictClusterFilter());
         }
-        
+
         return builder.create();
     }
 
     /**
-     * Returns set of URIs preferred for canonical URIs. 
+     * Returns set of URIs preferred for canonical URIs.
      * The URIs are loaded from canonicalURIsInputFile if given and URIs present in settingsPreferredURIs are added.
      * @param settingsPreferredURIs URIs occurring on fusion tool configuration
      * @param canonicalURIsInputFile file with canonical URIs to be loaded; can be null
@@ -476,7 +496,7 @@ public class ODCSFusionToolExecutor {
      */
     protected Set<String> getPreferredURIs(Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
             Collection<String> preferredCanonicalURIs) throws IOException {
-        
+
         Set<String> preferredURIs = new HashSet<String>(settingsPreferredURIs.size());
         for (URI uri : settingsPreferredURIs) {
             preferredURIs.add(uri.stringValue());
@@ -503,16 +523,17 @@ public class ODCSFusionToolExecutor {
 
     /**
      * Adds URIs from objects of resolved statements to the given collection of queued subjects.
-     * Only URIs that haven't been resolved already are added. 
-     * @param queuedSubjects collection where URIs are added 
+     * Only URIs that haven't been resolved already are added.
+     * @param queuedSubjects collection where URIs are added
      * @param resolvedStatements resolved statements whose objects are added to queued subjects
      * @param uriMapping mapping to canonical URIs
      * @param resolvedCanonicalURIs set of already resolved URIs
      */
     protected void addDiscoveredObjects(UriCollection queuedSubjects,
-            Collection<ResolvedStatement> resolvedStatements, URIMappingIterable uriMapping, 
+            Collection<ResolvedStatement> resolvedStatements, URIMappingIterable uriMapping,
             Set<String> resolvedCanonicalURIs) {
-        
+
+        timeProfiler.startCounter(EnumProfilingCounters.BUFFERING);
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
             String uri = ODCSUtils.getVirtuosoNodeURI(resolvedStatement.getStatement().getObject());
             if (uri == null) {
@@ -526,9 +547,24 @@ public class ODCSFusionToolExecutor {
                 queuedSubjects.add(canonicalURI);
             }
         }
+        timeProfiler.stopAddCounter(EnumProfilingCounters.BUFFERING);
     }
-    
-    /** 
+
+    /**
+     * Write resolved quads to output.
+     * @param rdfWriters list of data output writers
+     * @param resolvedQuads quads to be written
+     * @throws IOException I/O error
+     */
+    protected void writeOutput(List<CloseableRDFWriter> rdfWriters, Collection<ResolvedStatement> resolvedQuads) throws IOException {
+        timeProfiler.startCounter(EnumProfilingCounters.OUTPUT_WRITING);
+        for (CloseableRDFWriter writer : rdfWriters) {
+            writer.writeResolvedStatements(resolvedQuads.iterator());
+        }
+        timeProfiler.stopAddCounter(EnumProfilingCounters.OUTPUT_WRITING);
+    }
+
+    /**
      * Writes namespace declarations to the given output writer.
      * @param writer output writer
      * @param nsPrefixes map of namespace prefixes
@@ -577,7 +613,7 @@ public class ODCSFusionToolExecutor {
      * @param outputs outputs where sameAs links are written
      * @param nsPrefixes map of namespace prefixes
      * @param valueFactory a value factory
-     * @throws IOException I/O error 
+     * @throws IOException I/O error
      * @throws ODCSFusionToolException error when creating output
      */
     protected void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs,
@@ -590,7 +626,7 @@ public class ODCSFusionToolExecutor {
                 if (output.getType() != EnumOutputType.FILE || output.getParams().get(Output.SAME_AS_FILE_PARAM) == null) {
                     continue;
                 }
-                
+
                 OutputImpl sameAsOutput = new OutputImpl(EnumOutputType.FILE, output.toString() + "-sameAs");
                 sameAsOutput.getParams().put(Output.PATH_PARAM, output.getParams().get(Output.SAME_AS_FILE_PARAM));
                 sameAsOutput.getParams().put(Output.FORMAT_PARAM, output.getParams().get(Output.FORMAT_PARAM));
@@ -642,14 +678,13 @@ public class ODCSFusionToolExecutor {
         }
         return false;
     }
-    
+
     /**
      * Fixes bug in Virtuoso which doesn't release connections even when they are released explicitly.
-     * This method puts the current thread to sleep so that the thread releasing connections has chance to be 
+     * This method puts the current thread to sleep so that the thread releasing connections has chance to be
      * planned for execution. If hasVirtuosoSource is false, does nothing.
-     * @param hasVirtuosoSource indicates whether a data source of type VIRTUOSO is used
      */
-    protected void fixVirtuosoOpenedStatements(boolean hasVirtuosoSource) {
+    protected void fixVirtuosoOpenedStatements() {
         if (hasVirtuosoSource) {
             // Somehow helps Virtuoso release connections. Without call to Thread.sleep(),
             // application may fail with "No buffer space available (maximum connections reached?)"
@@ -661,7 +696,15 @@ public class ODCSFusionToolExecutor {
             }
         }
     }
-    
+
+    /**
+     * Initializes profiler objects {@link #timeProfiler} and {@link #memoryProfiler}.
+     */
+    protected void resetProfilers() {
+        timeProfiler = ProfilingTimeCounter.createInstance(EnumProfilingCounters.class, config.isProfilingOn());
+        memoryProfiler = MemoryProfiler.createInstance(config.isProfilingOn());
+    }
+
     /**
      * Prints profiling information from the given profiling time counter.
      * @param timeProfiler profiling time counter
@@ -669,12 +712,14 @@ public class ODCSFusionToolExecutor {
      */
     protected void printProfilingInformation(
             ProfilingTimeCounter<EnumProfilingCounters> timeProfiler, MemoryProfiler memoryProfiler) {
-        
-        System.out.println("Initialization time:      " + timeProfiler.formatCounter(EnumProfilingCounters.INITIALIZATION));
-        System.out.println("Quad loading time:        " + timeProfiler.formatCounter(EnumProfilingCounters.QUAD_LOADING));
-        System.out.println("Conflict resolution time: " + timeProfiler.formatCounter(EnumProfilingCounters.CONFLICT_RESOLUTION));
-        System.out.println("Buffering time:           " + timeProfiler.formatCounter(EnumProfilingCounters.BUFFERING));
-        System.out.println("Output writing time:      " + timeProfiler.formatCounter(EnumProfilingCounters.OUTPUT_WRITING));
-        System.out.println("Maximum total memory:     " + memoryProfiler.formatMaxTotalMemory());
+
+        if (config.isProfilingOn()) {
+            System.out.println("Initialization time:      " + timeProfiler.formatCounter(EnumProfilingCounters.INITIALIZATION));
+            System.out.println("Quad loading time:        " + timeProfiler.formatCounter(EnumProfilingCounters.QUAD_LOADING));
+            System.out.println("Conflict resolution time: " + timeProfiler.formatCounter(EnumProfilingCounters.CONFLICT_RESOLUTION));
+            System.out.println("Buffering time:           " + timeProfiler.formatCounter(EnumProfilingCounters.BUFFERING));
+            System.out.println("Output writing time:      " + timeProfiler.formatCounter(EnumProfilingCounters.OUTPUT_WRITING));
+            System.out.println("Maximum total memory:     " + memoryProfiler.formatMaxTotalMemory());
+        }
     }
 }
