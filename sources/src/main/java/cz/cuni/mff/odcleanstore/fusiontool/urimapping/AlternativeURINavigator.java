@@ -17,6 +17,7 @@ import java.util.Map;
  * @author Jan Michelfeit
  */
 public class AlternativeURINavigator {
+    private static final int EXPECTED_ALTERNATIVES = 3;
     
     private final URIMappingIterable uriMapping;
     private Map<String, List<String>> alternativeURIMap;
@@ -58,7 +59,7 @@ public class AlternativeURINavigator {
             String canonicalURI = uriMapping.getCanonicalURI(mappedURI);
             List<String> alternativeURIs = alternativeURIMap.get(canonicalURI);
             if (alternativeURIs == null) {
-                alternativeURIs = new ArrayList<String>();
+                alternativeURIs = new ArrayList<String>(EXPECTED_ALTERNATIVES);
                 alternativeURIs.add(canonicalURI); // don't forget canonical URI, it won't show up in the iteration
                 alternativeURIMap.put(canonicalURI, alternativeURIs);
             }

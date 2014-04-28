@@ -13,21 +13,21 @@ import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
  * Loads triples containing statements about a given URI resource (having the URI as their subject)
  * from multiple data sources.
  * @author Jan Michelfeit
- * @see RepositoryQuadLoader
+ * @see RepositoryResourceQuadLoader
  */
-public class FederatedQuadLoader implements QuadLoader {
-    private final Collection<QuadLoader> quadLoaders;
+public class FederatedResourceQuadLoader implements ResourceQuadLoader {
+    private final Collection<ResourceQuadLoader> resourceQuadLoaders;
 
     /**
      * Creates a new instance.
      * @param dataSources initialized data sources
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      */
-    public FederatedQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
-        quadLoaders = new ArrayList<QuadLoader>();
+    public FederatedResourceQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
+        resourceQuadLoaders = new ArrayList<ResourceQuadLoader>();
         for (DataSource source : dataSources) {
-            QuadLoader loader = new RepositoryQuadLoader(source, alternativeURINavigator);
-            quadLoaders.add(loader);
+            ResourceQuadLoader loader = new RepositoryResourceQuadLoader(source, alternativeURINavigator);
+            resourceQuadLoaders.add(loader);
         }
     }
 
@@ -47,7 +47,7 @@ public class FederatedQuadLoader implements QuadLoader {
 
     @Override
     public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException {
-        for (QuadLoader loader : quadLoaders) {
+        for (ResourceQuadLoader loader : resourceQuadLoaders) {
             loader.loadQuadsForURI(uri, quadCollection);
         }
     }
@@ -55,14 +55,14 @@ public class FederatedQuadLoader implements QuadLoader {
     @Override
     public void close() throws ODCSFusionToolException {
         ODCSFusionToolException exception = null;
-        for (QuadLoader loader : quadLoaders) {
+        for (ResourceQuadLoader loader : resourceQuadLoaders) {
             try {
                 loader.close();
             } catch (ODCSFusionToolException e) {
                 exception = e;
             }
         }
-        quadLoaders.clear();
+        resourceQuadLoaders.clear();
         if (exception != null) {
             throw exception;
         }

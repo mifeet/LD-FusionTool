@@ -31,8 +31,8 @@ import java.util.Locale;
  * given owl:sameAs alternatives.
  * @author Jan Michelfeit
  */
-public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLoader {
-    private static final Logger LOG = LoggerFactory.getLogger(RepositoryQuadLoader.class);
+public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implements ResourceQuadLoader {
+    private static final Logger LOG = LoggerFactory.getLogger(RepositoryResourceQuadLoader.class);
 
     /**
      * SPARQL query that gets all quads having the given uri as their subject.
@@ -90,7 +90,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
      * @param dataSource an initialized data source
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      */
-    public RepositoryQuadLoader(DataSource dataSource, AlternativeURINavigator alternativeURINavigator) {
+    public RepositoryResourceQuadLoader(DataSource dataSource, AlternativeURINavigator alternativeURINavigator) {
         super(dataSource);
         this.dataSource = dataSource;
         this.alternativeURINavigator = alternativeURINavigator;

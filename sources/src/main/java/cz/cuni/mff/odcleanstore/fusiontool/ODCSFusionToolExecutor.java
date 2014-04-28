@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedResourceQuadLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.ResourceQuadLoader;
 import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -63,11 +65,9 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferedSubjectsCollection;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedQuadLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedSeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.MetadataLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.QuadLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryQuadLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryResourceQuadLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.SameAsLinkLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
@@ -131,7 +131,7 @@ public class ODCSFusionToolExecutor {
      */
     public void runFusionTool() throws ODCSFusionToolException, IOException, ConflictResolutionException {
         LargeCollectionFactory collectionFactory = createLargeCollectionFactory();
-        QuadLoader quadLoader = null;
+        ResourceQuadLoader resourceQuadLoader = null;
         UriCollection queuedSubjects = null;
         List<CloseableRDFWriter> rdfWriters = null;
         Collection<DataSource> dataSources = getDataSources();
@@ -144,7 +144,6 @@ public class ODCSFusionToolExecutor {
             // Load & resolve owl:sameAs links
             Collection<ConstructSource> sameAsSources = getConstructSources(config.getSameAsSources());
             URIMappingIterable uriMapping = getURIMapping(sameAsSources);
-            AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
             Set<String> resolvedCanonicalURIs = collectionFactory.createSet();
 
             // Get iterator over subjects of relevant triples
@@ -167,9 +166,10 @@ public class ODCSFusionToolExecutor {
             long maxOutputTriples = checkMaxOutputTriples ? config.getMaxOutputTriples() : -1;
             long outputTriples = 0;
             long inputTriples = 0;
-            
+
             // Load & process relevant triples (quads) subject by subject so that we can apply CR to them
-            quadLoader = createQuadLoader(dataSources, alternativeURINavigator);
+            AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
+            resourceQuadLoader = createResourceQuadLoader(dataSources, alternativeURINavigator);
             timeProfiler.stopAddCounter(EnumProfilingCounters.INITIALIZATION);
             while (queuedSubjects.hasNext()) {
                 timeProfiler.startCounter(EnumProfilingCounters.BUFFERING);
@@ -189,7 +189,7 @@ public class ODCSFusionToolExecutor {
                 timeProfiler.stopAddCounter(EnumProfilingCounters.BUFFERING);
 
                 // Load quads for the given subject
-                Collection<Statement> quads = getQuads(quadLoader, canonicalURI);
+                Collection<Statement> quads = getQuads(resourceQuadLoader, canonicalURI);
                 inputTriples += quads.size();
 
                 // Resolve conflicts
@@ -218,8 +218,8 @@ public class ODCSFusionToolExecutor {
             writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes(), ValueFactoryImpl.getInstance());
             printProfilingInformation(timeProfiler, memoryProfiler);
         } finally {
-            if (quadLoader != null) {
-                quadLoader.close();
+            if (resourceQuadLoader != null) {
+                resourceQuadLoader.close();
             }
             if (queuedSubjects != null) {
                 queuedSubjects.close();
@@ -397,15 +397,15 @@ public class ODCSFusionToolExecutor {
 
     /**
      * Loads quads having the given URI as their subject using the given quad loader.
-     * @param quadLoader quad loader
+     * @param resourceQuadLoader quad loader
      * @param canonicalURI canonical URI for which quads should be loaded
-     * @return collection of quads loaded by quadLoader for canonicalURI
+     * @return collection of quads loaded by resourceQuadLoader for canonicalURI
      * @throws ODCSFusionToolException query error
      */
-    protected Collection<Statement> getQuads(QuadLoader quadLoader, String canonicalURI) throws ODCSFusionToolException {
+    protected Collection<Statement> getQuads(ResourceQuadLoader resourceQuadLoader, String canonicalURI) throws ODCSFusionToolException {
         timeProfiler.startCounter(EnumProfilingCounters.QUAD_LOADING);
         Collection<Statement> quads = new ArrayList<Statement>();
-        quadLoader.loadQuadsForURI(canonicalURI, quads);
+        resourceQuadLoader.loadQuadsForURI(canonicalURI, quads);
         timeProfiler.stopAddCounter(EnumProfilingCounters.QUAD_LOADING);
         return quads;
     }
@@ -430,11 +430,11 @@ public class ODCSFusionToolExecutor {
      * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
      * @return initialized quad loader
      */
-    protected QuadLoader createQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
+    protected ResourceQuadLoader createResourceQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
         if (dataSources.size() == 1) {
-            return new RepositoryQuadLoader(dataSources.iterator().next(), alternativeURINavigator);
+            return new RepositoryResourceQuadLoader(dataSources.iterator().next(), alternativeURINavigator);
         } else {
-            return new FederatedQuadLoader(dataSources, alternativeURINavigator);
+            return new FederatedResourceQuadLoader(dataSources, alternativeURINavigator);
         }
     }
 

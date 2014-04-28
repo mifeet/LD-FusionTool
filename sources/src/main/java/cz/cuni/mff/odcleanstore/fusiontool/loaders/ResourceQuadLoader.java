@@ -11,7 +11,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
  * Loads triples containing statements about a given URI resource (having the URI as their subject).
  * @author Jan Michelfeit
  */
-public interface QuadLoader extends Closeable<ODCSFusionToolException> {
+public interface ResourceQuadLoader extends Closeable<ODCSFusionToolException> {
     /**
      * Adds quads having the given uri or one of its owl:sameAs alternatives as their subject to quadCollestion.
      * @param uri searched subject URI
