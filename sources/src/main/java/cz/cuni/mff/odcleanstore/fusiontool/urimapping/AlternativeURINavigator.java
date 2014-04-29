@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class AlternativeURINavigator {
     private static final int EXPECTED_ALTERNATIVES = 3;
-    
+
     private final URIMappingIterable uriMapping;
     private Map<String, List<String>> alternativeURIMap;
     
