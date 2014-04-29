@@ -14,13 +14,13 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 
 /**
  * Loads subjects of triples to be processed.
@@ -63,6 +63,8 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
             + "\n     %4$s"
             + "\n   }"
             + "\n }";
+
+    private final DataSource dataSource;
     
     /**
      * Creates a new instance.
@@ -70,6 +72,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      */
     public SeedSubjectsLoader(DataSource dataSource) {
         super(dataSource);
+        this.dataSource = dataSource;
     }
 
     /**
@@ -85,7 +88,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
     public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
 
-        SparqlRestriction graphRestriction = dataSource.getNamedGraphRestriction() != null 
+        SparqlRestriction graphRestriction = dataSource.getNamedGraphRestriction() != null
                 ? dataSource.getNamedGraphRestriction()
                 : EMPTY_GRAPH_RESTRICTION;
         SparqlRestriction seedRestriction = seedResourceRestriction != null
@@ -123,7 +126,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
          * Creates a new instance.
          * @param query query that retrieves subjects from the database; the query must return
          *        the subjects as the first variable in the results
-         * @param repository an initialized RDF repository
+         * @param dataSource RDF data source
          * @throws ODCSFusionToolException error
          */
         protected UriCollectionImpl(String query, DataSource dataSource) throws ODCSFusionToolException {
@@ -146,7 +149,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                     BindingSet bindings = subjectsResultSet.next();
                     
                     Value subject = bindings.getValue(subjectVar);
-                    String uri = ODCSFusionToolUtils.getNodeURI(subject);
+                    String uri = ODCSUtils.getVirtuosoNodeURI(subject);
                     if (uri != null) {
                         return uri;
                     }

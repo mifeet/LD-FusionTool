@@ -23,7 +23,12 @@ public enum EnumSerializationFormat {
     /**
      * File in TriG.
      */
-    TRIG(RDFFormat.TRIG);
+    TRIG(RDFFormat.TRIG),
+    
+    /**
+     * File in HTML.
+     */
+    HTML(null);
     
     private RDFFormat sesameFormat;
     private EnumSerializationFormat(RDFFormat sesameFormat) {

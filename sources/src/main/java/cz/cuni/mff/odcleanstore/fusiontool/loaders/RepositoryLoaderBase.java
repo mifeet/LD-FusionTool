@@ -4,16 +4,23 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.io.Source;
 
 /**
  * @author Jan Michelfeit
  */
 public abstract class RepositoryLoaderBase {
+    /**
+     * SPARQL query BASE declaration.
+     */
+    private static final Pattern BASE_PATTERN = Pattern.compile("^\\s*BASE\\s+<[^>]+>");
+
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
      */
@@ -31,19 +38,19 @@ public abstract class RepositoryLoaderBase {
      * Variable name is a random string to avoid conflicts.
      */
     protected static final SparqlRestriction EMPTY_RESTRICTION = new SparqlRestrictionImpl("", "308ae1cdfa_x");
-    
+
     /** RDF data source. */
-    protected final DataSource dataSource;
+    protected final Source source;
     
     /** Cached value returned by {@link #getPrefixDecl()}. */
     private String cachedPrefixDecl;
-    
+
     /**
      * Creates a new instance.
-     * @param dataSource an initialized data source
+     * @param source an initialized data source
      */
-    protected RepositoryLoaderBase(DataSource dataSource) {
-        this.dataSource = dataSource;
+    protected RepositoryLoaderBase(Source source) {
+        this.source = source;
     }
     
     /**
@@ -52,9 +59,27 @@ public abstract class RepositoryLoaderBase {
      */
     protected String getPrefixDecl() {
         if (cachedPrefixDecl == null) {
-            cachedPrefixDecl = buildPrefixDecl(dataSource.getPrefixes());
+            cachedPrefixDecl = buildPrefixDecl(source.getPrefixes());
         }
         return cachedPrefixDecl;
+    }
+
+    /**
+     * Adds prefix declarations to the given SPARQL query.
+     * @param query query to add declarations to
+     * @return input query with added prefix declarations
+     */
+    protected String addPrefixDecl(String query) {
+        String prefixDecl = getPrefixDecl();
+
+        Matcher baseMatcher = BASE_PATTERN.matcher(query);
+        if (baseMatcher.find()) {
+            String base = baseMatcher.group();
+            String subQuery = query.substring(base.length());
+            return base + prefixDecl + subQuery;
+        } else {
+            return prefixDecl + query;
+        }
     }
 
     /**

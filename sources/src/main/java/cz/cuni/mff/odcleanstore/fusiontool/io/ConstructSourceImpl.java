@@ -7,17 +7,16 @@ import java.util.Map;
 
 import org.openrdf.repository.Repository;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 
 /**
  * Container for RDF {@link Repository} and related settings.
  * @author Jan Michelfeit
  */
-public final class DataSourceImpl extends SourceImpl implements DataSource {
-    private SparqlRestriction namedGraphRestriction;
+public final class ConstructSourceImpl extends SourceImpl implements ConstructSource {
+    private String constructQuery;
 
     /**
      * Creates a new instance.
@@ -25,12 +24,12 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
      * @param prefixes map of namespace prefixes
      * @param label name of this data source
      * @param type type of this data source
-     * @param namedGraphRestriction SPARQL restriction on named graphs from which data are loaded
+     * @param constructQuery SPARQL CONSTRUCT query generating input data
      */
-    public DataSourceImpl(Repository repository, Map<String, String> prefixes,
-            String label, EnumDataSourceType type, SparqlRestriction namedGraphRestriction) {
+    public ConstructSourceImpl(Repository repository, Map<String, String> prefixes,
+            String label, EnumDataSourceType type, String constructQuery) {
         super(repository, prefixes, label, type);
-        this.namedGraphRestriction = namedGraphRestriction;
+        this.constructQuery = constructQuery;
     }
     
     /**
@@ -43,21 +42,20 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
      * @return RDF data source
      * @throws ODCSFusionToolException invalid configuration
      */
-    public static DataSource fromConfig(DataSourceConfig config, Map<String, String> prefixes,
+    public static ConstructSource fromConfig(ConstructSourceConfig config, Map<String, String> prefixes,
             RepositoryFactory repositoryFactory) throws ODCSFusionToolException {
         Repository repository = repositoryFactory.createRepository(config);
         String label = config.getName() != null ? config.getName() : config.getType().toString();
-        return new DataSourceImpl(
+        return new ConstructSourceImpl(
                 repository,
                 prefixes,
                 label,
                 config.getType(),
-                config.getNamedGraphRestriction());
+                config.getConstructQuery());
     }
-    
 
     @Override
-    public SparqlRestriction getNamedGraphRestriction() {
-        return namedGraphRestriction;
+    public String getConstructQuery() {
+        return constructQuery;
     }
 }

@@ -3,6 +3,7 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -91,5 +92,9 @@ public final class ConfigConstants {
             DC.CREATOR.stringValue(),
             DC.SOURCE.stringValue(),
             DC.SUBJECT.stringValue());
-            
+
+    /**
+     * Default directory for temporary files.
+     */
+    public static final File TEMP_DIRECTORY = new File(".");
 }

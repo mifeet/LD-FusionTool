@@ -3,43 +3,21 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Container of settings for an output of result data.
  * @author Jan Michelfeit
  */
-public class DataSourceConfigImpl implements DataSourceConfig {
-    private final EnumDataSourceType type;
-    private final String name;
-    private final Map<String, String> params = new HashMap<String, String>();
+public class DataSourceConfigImpl extends SourceConfigImpl implements DataSourceConfig {
     private SparqlRestriction namedGraphRestriction = 
             new SparqlRestrictionImpl("", ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
-    private SparqlRestriction metadataGraphRestriction;
     
     /**
      * @param type data source type
      * @param name human-readable name or null
      */
     public DataSourceConfigImpl(EnumDataSourceType type, String name) {
-        this.type = type;
-        this.name = name;
-    }
-
-    @Override
-    public EnumDataSourceType getType() {
-        return type;
-    }
-    
-    @Override
-    public String getName() {
-        return name; 
-    }
-    
-    @Override
-    public Map<String, String> getParams() {
-        return params;
+        super(type, name);
     }
 
     @Override
@@ -56,23 +34,5 @@ public class DataSourceConfigImpl implements DataSourceConfig {
             throw new IllegalArgumentException();
         } 
         this.namedGraphRestriction = restriction;
-    }
-
-    @Override
-    public SparqlRestriction getMetadataGraphRestriction() {
-        return metadataGraphRestriction;
-    }
-    
-    /**
-     * Setter for {@link #getMetadataGraphRestriction()}.
-     * @param restriction SPARQL group graph pattern or null
-     */
-    public void setMetadataGraphRestriction(SparqlRestriction restriction) {
-        this.metadataGraphRestriction = restriction;
-    }
-    
-    @Override
-    public String toString() {
-        return name != null ? name : type.toString();
     }
 }

@@ -15,7 +15,7 @@ import org.openrdf.repository.sparql.SPARQLRepository;
 
 /**
  * SPARQL repository which issues at most one query per the given time interval 
- * so that the SPARQL source enpoint is not overloaded.
+ * so that the SPARQL source endpoint is not overloaded.
  * @author Jan Michelfeit
  */
 public class WellBehavedSPARQLRepository extends SPARQLRepository {

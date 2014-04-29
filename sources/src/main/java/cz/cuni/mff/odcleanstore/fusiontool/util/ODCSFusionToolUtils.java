@@ -2,12 +2,8 @@ package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import java.io.File;
 
-import org.openrdf.model.BNode;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.shared.ODCSUtils;
 
 /**
  * Various utility methods.
@@ -27,25 +23,6 @@ public final class ODCSFusionToolUtils {
     /** Number of bytes in a gigabyte. */
     public static final long GB_BYTES = 1024 * 1024 * 1024;
     
-    /** Default cache directory. */
-    public static final File CACHE_DIRECTORY = new File(".");
-
-    /**
-     * Returns an URI representing the given node or null if it is not a resource.
-     * For blank nodes returns the Virtuoso blank node identifier.
-     * @param value RDF node
-     * @return URI representing
-     */
-    public static String getNodeURI(Value value) {
-        if (value instanceof URI) {
-            return value.stringValue();
-        } else if (value instanceof BNode) {
-            return ODCSUtils.getVirtuosoURIForBlankNode((BNode) value);
-        } else {
-            return null;
-        }
-    }
-
     /**
      * Returns a human-readable (memory, file, ...) size.
      * @param byteCount the number of bytes
@@ -68,20 +45,19 @@ public final class ODCSFusionToolUtils {
     /**
      * Creates parent directories for the given file if they don't exist already.
      * @param file file whose parent directories will be created
+     * @return the given file
      */
-    public static void ensureParentsExists(File file) {
+    public static File ensureParentsExists(File file) {
         file.getAbsoluteFile().getParentFile().mkdirs();
+        return file;
     }
         
     /**
      * Returns directory for cache files. Creates one if it doesn't exist yet.
-     * @see #CACHE_DIRECTORY
      * @return directory
      */
-    public static File getCacheDirectory() {
-        File dir = CACHE_DIRECTORY;
-        ensureParentsExists(dir);
-        return dir;
+    public static File getCacheDirectory(File tempDirectory) {
+        return ensureParentsExists(tempDirectory);
     }
     
     /**

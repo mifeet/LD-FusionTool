@@ -1,9 +1,13 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
+import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
@@ -17,14 +21,9 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
-import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject)
@@ -34,7 +33,7 @@ import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
  */
 public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLoader {
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryQuadLoader.class);
-    
+
     /**
      * SPARQL query that gets all quads having the given uri as their subject.
      * Quads are loaded from named graphs optionally limited by named graph restriction pattern.
@@ -84,6 +83,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
     
     private final AlternativeURINavigator alternativeURINavigator;
     private RepositoryConnection connection;
+    private final DataSource dataSource;
 
     /**
      * Creates a new instance.
@@ -92,6 +92,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
      */
     public RepositoryQuadLoader(DataSource dataSource, AlternativeURINavigator alternativeURINavigator) {
         super(dataSource);
+        this.dataSource = dataSource;
         this.alternativeURINavigator = alternativeURINavigator;
     }
 
@@ -122,7 +123,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
             try {
                 addQuadsFromQuery(query, quadCollection);
             } catch (OpenRDFException e) {
-                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
+                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, source.getName(), e);
             }
         } else {
             Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
@@ -131,14 +132,14 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
                 try {
                     addQuadsFromQuery(query, quadCollection);
                 } catch (OpenRDFException e) {
-                    throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, dataSource.getName(), e);
+                    throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, source.getName(), e);
                 }
             }
         }
 
         if (LOG.isTraceEnabled()) {
             LOG.trace("ODCS-FusionTool: Loaded quads for URI {} from source {} in {} ms", new Object[] {
-                    uri, dataSource, System.currentTimeMillis() - startTime });
+                    uri, source, System.currentTimeMillis() - startTime });
         }
     }
     
@@ -166,7 +167,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
         try {
             LOG.trace("ODCS-FusionTool: Quads query took {} ms", System.currentTimeMillis() - startTime);
 
-            ValueFactory valueFactory = dataSource.getRepository().getValueFactory();
+            ValueFactory valueFactory = source.getRepository().getValueFactory();
             while (resultSet.hasNext()) {
                 BindingSet bindings = resultSet.next();
                 Statement quad = valueFactory.createStatement(
@@ -178,7 +179,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
             }
         } finally {
             resultSet.close();
-            if (dataSource.getType() == EnumDataSourceType.VIRTUOSO) {
+            if (source.getType() == EnumDataSourceType.VIRTUOSO) {
                 // Issue #1 fix ("Too many open statements") - Virtuoso doesn't release resources properly
                 try {
                     closeConnection();
@@ -191,7 +192,7 @@ public class RepositoryQuadLoader extends RepositoryLoaderBase implements QuadLo
     
     private RepositoryConnection getConnection() throws RepositoryException {
         if (connection == null) {
-            connection = dataSource.getRepository().getConnection();
+            connection = source.getRepository().getConnection();
         }
         return connection;
     }

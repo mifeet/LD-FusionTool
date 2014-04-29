@@ -28,6 +28,18 @@ public interface Config {
     List<DataSourceConfig> getDataSources();
     
     /**
+     * List of owl:sameAs links sources.
+     * @return list of data sources.
+     */ 
+    List<ConstructSourceConfig> getSameAsSources();
+    
+    /**
+     * List of metadata sources.
+     * @return list of data sources.
+     */ 
+    List<ConstructSourceConfig> getMetadataSources();
+    
+    /**
      * Prefix of named graphs and URIs where query results and metadata in the output are placed.
      * @return graph name prefix
      */
@@ -133,4 +145,28 @@ public interface Config {
      * @return true iff profiling logs should be printed
      */
     boolean isProfilingOn();
+
+    /**
+     * Indicates whether only conflict clusters with an actual conflict should be included in the output.
+     * @return true iff only conflict clusters with an actual conflict should be included in the output
+     * @return
+     */
+    boolean getOutputConflictsOnly();
+
+    /**
+     * Indicates whether only subjects for which an URI mapping exists should be included in the output.
+     * @return true iff only subjects for which an URI mapping exists should be included in the output
+     */
+    boolean getOutputMappedSubjectsOnly();
+    
+    /**
+     * Indicates whether to resolve resources transitively starting from seed resources of a data source.
+     * @return true if resources should be processed transitively
+     */
+    boolean isProcessingTransitive();
+
+    /**
+     * Directory for temporary files
+     */
+    File getTempDirectory();
 }
