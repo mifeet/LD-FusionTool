@@ -97,7 +97,7 @@ public final class ODCSFusionToolApplication {
             return;
         }
 
-        Config config = null;
+        Config config;
         try {
             config = ConfigReader.parseConfigXml(configFile);
             ((ConfigImpl) config).setProfilingOn(parsedArgs.isProfilingOn());
@@ -217,12 +217,11 @@ public final class ODCSFusionToolApplication {
 
         // intentionally do not check canonical URI files
     }
-    
-    private static void checkConstructSourceValidInput (ConstructSourceConfig sourceConfig, Config config)
-            throws InvalidInputException {
+
+    private static void checkConstructSourceValidInput(ConstructSourceConfig sourceConfig, Config config) throws InvalidInputException {
         checkSourceValidInput(sourceConfig, config);
     }
-    
+
     private static void checkDataSourceValidInput(DataSourceConfig dataSourceConfig, Config config) throws InvalidInputException {
         checkSourceValidInput(dataSourceConfig, config);
         

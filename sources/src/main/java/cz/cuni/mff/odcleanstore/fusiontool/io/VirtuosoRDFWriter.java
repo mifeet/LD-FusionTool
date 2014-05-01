@@ -91,7 +91,7 @@ public class VirtuosoRDFWriter extends RDFHandlerBase implements RDFHandler, Clo
         return connection;
     }
 
-    private void executeQuery(String query) throws RDFHandlerException {
+    private void executeQuery(String query) {
         try {
             java.sql.Statement statement = connection.createStatement();
             statement.execute(query);

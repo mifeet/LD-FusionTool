@@ -45,7 +45,7 @@
 			<url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/groups/public/</url>
 		</repository>
 		<repository>
-			<id>odcleanstore-thirdpary</id>
+			<id>odcleanstore-thirdparty</id>
 			<url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/thirdparty/</url>
 		</repository>
 	
@@ -84,7 +84,7 @@
 			<artifactId>simple-xml</artifactId>
 			<version>2.7</version>
 		</dependency>
-		<!-- Dependency for in-file storage for URIs that need to be frequently used in the algoritm -->
+		<!-- Dependency for in-file storage for URIs that need to be frequently used in the algorithm -->
 		<dependency>
 			<groupId>org.mapdb</groupId>
 			<artifactId>mapdb</artifactId>

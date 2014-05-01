@@ -221,9 +221,9 @@ public final class ConfigReader {
             dataSourceConfig.getParams().put(param.getName().toLowerCase(), param.getValue());
         }
         
-        SparqlRestriction namedGraphResriction = extractGraphRestriction(dataSourceXml.getGraphRestriction());
-        if (namedGraphResriction != null) {
-            dataSourceConfig.setNamedGraphRestriction(namedGraphResriction);
+        SparqlRestriction namedGraphRestriction = extractGraphRestriction(dataSourceXml.getGraphRestriction());
+        if (namedGraphRestriction != null) {
+            dataSourceConfig.setNamedGraphRestriction(namedGraphRestriction);
         }
 
         return dataSourceConfig;
@@ -358,8 +358,7 @@ public final class ConfigReader {
      * @return group graph pattern with trimmed whitespace & enclosing braces
      */
     private String preprocessGroupGraphPattern(String groupGraphPattern) {
-        String result = groupGraphPattern.trim();
-        return result;
+        return groupGraphPattern.trim();
     }
 
     private ConfigReader() {

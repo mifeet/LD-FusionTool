@@ -19,7 +19,7 @@ import org.openrdf.repository.sparql.SPARQLRepository;
  * @author Jan Michelfeit
  */
 public class WellBehavedSPARQLRepository extends SPARQLRepository {
-    private long minQueryIntervalMs;
+    private final long minQueryIntervalMs;
     
     /**
      * @param endpointUrl URL of SPARQL endpoint to access

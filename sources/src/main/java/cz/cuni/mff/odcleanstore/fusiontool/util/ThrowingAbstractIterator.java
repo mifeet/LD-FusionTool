@@ -16,12 +16,9 @@
 
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import com.google.common.annotations.GwtCompatible;
-
-import java.util.Iterator;
 import java.util.NoSuchElementException;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * THIS FILE IS A MODIFICTATION OF AbstractIterator FROM GUAVA.
@@ -62,15 +59,18 @@ import java.util.NoSuchElementException;
  *   }}</pre>
  *
  * <p>This class supports iterators that include null elements.
- * @author Kevin Bourrillion
- * @since 2.0 (imported from Google Collections Library)
+ * @author Kevin Bourrillion (original)
+ * @param <T> type of items iterated on
+ * @param <E> type of exception thrown by the methods
  */
 public abstract class ThrowingAbstractIterator<T, E extends Exception> {
     private State state = State.NOT_READY;
 
     /** Constructor for use by subclasses. */
-    protected ThrowingAbstractIterator() {}
+    protected ThrowingAbstractIterator() {
+    }
 
+    /** Internal iterator states. */
     private enum State {
         /** We have computed the next element and haven't returned it yet. */
         READY,
@@ -129,6 +129,13 @@ public abstract class ThrowingAbstractIterator<T, E extends Exception> {
         return null;
     }
 
+    /**
+     * Returns {@code true} if the iteration has more elements.
+     * (In other words, returns {@code true} if {@link #next} would
+     * return an element rather than throwing an exception.)
+     *
+     * @return {@code true} if the iteration has more elements
+     */
     public final boolean hasNext() throws E {
         checkState(state != State.FAILED);
         switch (state) {
@@ -151,6 +158,12 @@ public abstract class ThrowingAbstractIterator<T, E extends Exception> {
         return false;
     }
 
+    /**
+     * Returns the next element in the iteration.
+     *
+     * @return the next element in the iteration
+     * @throws NoSuchElementException if the iteration has no more elements
+     */
     public final T next() throws E {
         if (!hasNext()) {
             throw new NoSuchElementException();

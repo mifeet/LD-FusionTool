@@ -3,25 +3,16 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
-import org.openrdf.model.Statement;
-import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Input loader which loads quads for each subject contained in the given collection of subjects
@@ -100,21 +91,5 @@ public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
         }
         LOG.info(String.format("Buffered approx. %,d seed resources", count));
         return queuedSubjects;
-    }
-
-
-    /**
-     * Adds URIs from objects of resolved statements to the given collection of queued subjects.
-     * Only URIs that haven't been resolved already are added.
-     * @param queuedSubjects collection where URIs are added
-     * @param resolvedStatements resolved statements whose objects are added to queued subjects
-     * @param uriMapping mapping to canonical URIs
-     * @param resolvedCanonicalURIs set of already resolved URIs
-     */
-    protected void addDiscoveredObjects(UriCollection queuedSubjects,
-            Collection<ResolvedStatement> resolvedStatements, URIMappingIterable uriMapping,
-            Set<String> resolvedCanonicalURIs) {
-
-
     }
 }

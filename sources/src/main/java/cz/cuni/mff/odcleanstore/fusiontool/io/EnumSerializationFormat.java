@@ -30,7 +30,7 @@ public enum EnumSerializationFormat {
      */
     HTML(null);
     
-    private RDFFormat sesameFormat;
+    private final RDFFormat sesameFormat;
     private EnumSerializationFormat(RDFFormat sesameFormat) {
         this.sesameFormat = sesameFormat;
     }

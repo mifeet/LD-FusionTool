@@ -16,7 +16,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
  * @author Jan Michelfeit
  */
 public final class ConstructSourceImpl extends SourceImpl implements ConstructSource {
-    private String constructQuery;
+    private final String constructQuery;
 
     /**
      * Creates a new instance.

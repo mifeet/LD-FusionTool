@@ -44,7 +44,7 @@ public class ODCSFusionToolException extends ODCleanStoreException {
 
     /**
      * Return the error code of the error.
-     * @see cz.cuni.mff.odcleanstore.shared.util.ODCSErrorCodes
+     * @see cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes
      * @return error code or null
      */
     public Integer getErrorCode() {

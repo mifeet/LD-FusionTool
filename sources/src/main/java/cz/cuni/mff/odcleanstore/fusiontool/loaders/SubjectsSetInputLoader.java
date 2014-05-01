@@ -131,21 +131,29 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     /**
-     * Returns effective canonical URI mapping
+     * Returns effective canonical URI mapping.
      * @return URI mapping
      */
     protected URIMappingIterable getUriMapping() {
         return uriMapping;
     }
 
+    /**
+     * Create a queue of subjects to be processed.
+     * @param initialSubjects initial subjects to be processed
+     * @return return queue of subjects to be processed
+     * @throws ODCSFusionToolException error
+     */
     protected UriCollection createSubjectsQueue(UriCollection initialSubjects) throws ODCSFusionToolException {
         return initialSubjects;
     }
 
+    /** Indicates whether the given canonical URI has already been resolved. */
     protected boolean isResolvedCanonicalUri(String uri) {
         return resolvedCanonicalURIs.contains(uri);
     }
 
+    /** Adds the given canonical URI to the queue of subjects to be resolved. */
     protected void addResolvedCanonicalUri(String uri) {
         resolvedCanonicalURIs.add(uri);
     }

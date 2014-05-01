@@ -22,7 +22,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSource;
 public class MetadataLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(MetadataLoader.class);
 
-    private ConstructSource constructSource;
+    private final ConstructSource constructSource;
 
     /**
      * Creates a new instance.

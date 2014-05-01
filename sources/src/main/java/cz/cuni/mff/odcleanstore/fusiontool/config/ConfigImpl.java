@@ -267,8 +267,6 @@ public class ConfigImpl implements Config {
         return isProcessingTransitive;
     }
 
-    ;
-
     /**
      * Sets value for {@link #isProcessingTransitive()}.
      *
@@ -284,7 +282,7 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public Double getAgreeCoeficient() {
+    public Double getAgreeCoefficient() {
         return ConfigConstants.AGREE_COEFFICIENT;
     }
 

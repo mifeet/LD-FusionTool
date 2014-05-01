@@ -76,7 +76,7 @@ public interface Config {
      * quality to 1.
      * @return agree coefficient
      */
-    Double getAgreeCoeficient();
+    Double getAgreeCoefficient();
 
     /**
      * Graph score used if none is given in the input.
@@ -149,7 +149,6 @@ public interface Config {
     /**
      * Indicates whether only conflict clusters with an actual conflict should be included in the output.
      * @return true iff only conflict clusters with an actual conflict should be included in the output
-     * @return
      */
     boolean getOutputConflictsOnly();
 
@@ -166,7 +165,8 @@ public interface Config {
     boolean isProcessingTransitive();
 
     /**
-     * Directory for temporary files
+     * Directory for temporary files.
+     * @return directory for temporary files.
      */
     File getTempDirectory();
 }

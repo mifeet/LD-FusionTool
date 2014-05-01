@@ -1,7 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.core.ODCleanStoreException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
@@ -22,6 +21,7 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
     /**
      * Perform any initialization. More demanding initialization should be done here instead of in the constructor.
      * @param uriMapping canonical URI mapping
+     * @throws ODCSFusionToolException error
      */
     void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException;
 
@@ -31,14 +31,16 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
      * The result MUST guarantee that all quads sharing the same subject are returned in one batch and
      * no other batches will contain quads that share the subject.
      * Returning an empty collection is a valid output, it doesn't indicate end of data as long as
-     * {@link #hasNext()} returns true, thugh.
+     * {@link #hasNext()} returns true, though.
      * @return next batch of quads
+     * @throws ODCSFusionToolException error
      */
     Collection<Statement> nextQuads() throws ODCSFusionToolException;
 
     /**
      * Indicates if there are more quads available.
      * @return true if there are more quads available
+     * @throws ODCSFusionToolException error
      */
     boolean hasNext() throws ODCSFusionToolException;
 

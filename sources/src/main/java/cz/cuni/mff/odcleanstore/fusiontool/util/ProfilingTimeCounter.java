@@ -21,8 +21,8 @@ import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 public class ProfilingTimeCounter<E extends Enum<E>> {
 // CHECKSTYLE:ON
     private static final long HOUR_MS = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
-    private long[] lengths;
-    private long[] starts;
+    private final long[] lengths;
+    private final long[] starts;
 
     /** 
      * Returns a new instance with counters enabled or disabled according to profilingOn parameter.

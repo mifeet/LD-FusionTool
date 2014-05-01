@@ -15,13 +15,13 @@ import org.openrdf.rio.helpers.RDFHandlerBase;
  * @author Jan Michelfeit
  */
 public class RepositoryRDFInserter extends RDFHandlerBase {
-    private RepositoryConnection connection;
+    private final RepositoryConnection connection;
 
     /**
      * Map that stores namespaces that are reported during the evaluation of the
      * query. Key is the namespace prefix, value is the namespace name.
      */
-    private final Map<String, String> namespaceMap = new HashMap<String, String>();;
+    private final Map<String, String> namespaceMap = new HashMap<String, String>();
 
     /**
      * Creates a new instance.

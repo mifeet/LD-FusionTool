@@ -40,7 +40,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     private final EnumSerializationFormat outputFormat;
     private final URI metadataContext;
     private final URI dataContext;
-    private final SplitFileNameGenerator fileNameGenrator;
+    private final SplitFileNameGenerator fileNameGenerator;
     private final long splitByBytes;
     private final ArrayList<NamespaceDeclaration> namespaceDeclarations = new ArrayList<NamespaceDeclaration>();
     private CloseableRDFWriter currentRDFWriter;
@@ -61,18 +61,18 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
      * @throws IOException I/O error
      */
     public SplittingRDFWriter(EnumSerializationFormat outputFormat, File outputFile, long splitByBytes,
-            CloseableRDFWriterFactory writerFactory, URI dataContext, URI metadataContext) throws IOException {
+            CloseableRDFWriterFactory writerFactory, URI dataContext, URI metadataContext) {
         this.writerFactory = writerFactory;
         this.outputFormat = outputFormat;
         this.metadataContext = metadataContext;
         this.dataContext = dataContext;
-        this.fileNameGenrator = new SplitFileNameGenerator(outputFile);
+        this.fileNameGenerator = new SplitFileNameGenerator(outputFile);
         this.splitByBytes = splitByBytes;
     }
 
     private CloseableRDFWriter getRDFWriter() throws IOException {
         if (currentRDFWriter == null) {
-            File file = fileNameGenrator.nextFile();
+            File file = fileNameGenerator.nextFile();
             LOG.info("Creating a new output file: {}", file.getName());
             
             ODCSFusionToolUtils.ensureParentsExists(file);

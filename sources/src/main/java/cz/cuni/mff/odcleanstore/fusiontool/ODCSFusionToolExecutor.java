@@ -8,12 +8,10 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory.ConflictResolverBuilder;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
-import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
@@ -34,7 +32,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.BufferedSubjectsCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedSeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.MetadataLoader;
@@ -229,8 +226,7 @@ public class ODCSFusionToolExecutor {
      * @return initialized data sources
      * @throws ODCSFusionToolException I/O error
      */
-    protected Collection<DataSource> getDataSources()
-            throws ODCSFusionToolException {
+    protected Collection<DataSource> getDataSources() throws ODCSFusionToolException {
         List<DataSource> dataSources = new ArrayList<DataSource>();
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
@@ -303,8 +299,7 @@ public class ODCSFusionToolExecutor {
      * @throws ODCSFusionToolException error
      * @throws IOException I/O error
      */
-    protected URIMappingIterable getURIMapping(Collection<ConstructSource> sameAsSources)
-            throws ODCSFusionToolException, IOException {
+    protected URIMappingIterable getURIMapping(Collection<ConstructSource> sameAsSources) throws ODCSFusionToolException, IOException {
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(),
                 config.getCanonicalURIsInputFile(),
@@ -352,8 +347,7 @@ public class ODCSFusionToolExecutor {
      * @throws IOException I/O error
      * @throws ODCSFusionToolException configuration error
      */
-    protected List<CloseableRDFWriter> createRDFWriters()
-            throws IOException, ODCSFusionToolException {
+    protected List<CloseableRDFWriter> createRDFWriters() throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
         for (Output output : config.getOutputs()) {
             CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(output);
@@ -370,13 +364,12 @@ public class ODCSFusionToolExecutor {
      * @return initialized conflict resolver
      */
     protected ConflictResolver createConflictResolver(Model metadata, URIMappingIterable uriMapping) {
-
         SourceQualityCalculator sourceConfidence = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(),
                 config.getPublisherScoreWeight());
         ResolutionFunctionRegistry registry = ConflictResolverFactory.createInitializedResolutionFunctionRegistry(
                 sourceConfidence,
-                config.getAgreeCoeficient(),
+                config.getAgreeCoefficient(),
                 new DistanceMeasureImpl());
 
         ConflictResolverBuilder builder = ConflictResolverFactory.configureResolver()

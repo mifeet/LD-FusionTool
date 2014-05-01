@@ -110,9 +110,8 @@ public final class RepositoryFactory {
         URI context = ValueFactoryImpl.getInstance().createURI(baseURI);
         Repository repository = new SailRepository(createSail());
         try {
-            RepositoryConnection connection = null;
             repository.initialize();
-            connection = repository.getConnection();
+            RepositoryConnection connection = repository.getConnection();
             try {
                 connection.add(file, baseURI, sesameFormat, context);
             } finally {
@@ -132,8 +131,7 @@ public final class RepositoryFactory {
     }
 
     private Sail createSail() {
-        MemoryStore store = new MemoryStore(); // TODO file-backed store if file caching is enabled?
-        return store;
+        return new MemoryStore(); // TODO file-backed store if file caching is enabled?
     }
 
     /**

@@ -30,7 +30,7 @@ public class CloseableHtmlWriter implements CloseableRDFWriter {
     /** Namespace prefix mappings. */
     private final Map<String, String> namespaceMapping = new HashMap<String, String>();
     
-    private Writer writer;
+    private final Writer writer;
     private int statementCounter = 0;
     
     /**
@@ -109,8 +109,6 @@ public class CloseableHtmlWriter implements CloseableRDFWriter {
     /**
      * Write start of the HTML document.
      * @param writer output writer
-     * @param queryResult query result
-     * @param executionTime execution time of the query
      * @throws IOException if an I/O error occurs
      */
     private void writeHeader(Writer writer) throws IOException {
