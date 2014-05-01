@@ -40,7 +40,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
  */
 public final class ConfigReader {
     private static final ValueFactory VALUE_FACTORY = ValueFactoryImpl.getInstance();
-    
+
     /**
      * Parses the given configuration file and produces returns the contained configuration as an {@link Config} instance.
      * @param configFile configuration XMl file
@@ -181,24 +181,24 @@ public final class ConfigReader {
             if (param.getValue() == null) {
                 continue;
             }
-            if ("canonicalUriOutputFile".equalsIgnoreCase(param.getName())) {
+            if (ConfigParameters.PROCESSING_CANONICAL_URI_OUTPUT_FILE.equalsIgnoreCase(param.getName())) {
                 if (!ODCSUtils.isNullOrEmpty(param.getValue())) {
                     config.setCanonicalURIsOutputFile(new File(param.getValue()));
                 } else {
                     config.setCanonicalURIsOutputFile(null);
                 }
-            } else if ("canonicalUriInputFile".equalsIgnoreCase(param.getName())) {
+            } else if (ConfigParameters.PROCESSING_CANONICAL_URI_INPUT_FILE.equalsIgnoreCase(param.getName())) {
                 if (!ODCSUtils.isNullOrEmpty(param.getValue())) {
                     config.setCanonicalURIsInputFile(new File(param.getValue()));
                 } else {
                     config.setCanonicalURIsInputFile(null);
                 }
-            } else if ("enableFileCache".equalsIgnoreCase(param.getName())) {
+            } else if (ConfigParameters.PROCESSING_ENABLE_FILE_CACHE.equalsIgnoreCase(param.getName())) {
                 config.setEnableFileCache(Boolean.parseBoolean(param.getValue()));                
-            } else if ("maxOutputTriples".equalsIgnoreCase(param.getName())) {
+            } else if (ConfigParameters.PROCESSING_MAX_OUTPUT_TRIPLES.equalsIgnoreCase(param.getName())) {
                 long value = convertToLong(param.getValue(), "Value of maxOutputTriples is not a valid number");
                 config.setMaxOutputTriples(value);
-            } else if ("transitive".equalsIgnoreCase(param.getName())) {
+            } else if (ConfigParameters.PROCESSING_TRANSITIVE.equalsIgnoreCase(param.getName())) {
                 config.setIsProcessingTransitive(Boolean.parseBoolean(param.getValue()));
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()

@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.TimeZone;
 
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.simpleframework.xml.core.PersistenceException;
@@ -246,16 +247,20 @@ public final class ODCSFusionToolApplication {
     private static void checkSourceValidInput(SourceConfig sourceConfig, Config config) throws InvalidInputException {
         switch (sourceConfig.getType()) {
         case VIRTUOSO:
-            checkRequiredDataSourceParam(sourceConfig, "host", "port", "username", "password");
+            checkRequiredDataSourceParam(sourceConfig,
+                    ConfigParameters.DATA_SOURCE_VIRTUOSO_HOST,
+                    ConfigParameters.DATA_SOURCE_VIRTUOSO_PORT,
+                    ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME,
+                    ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
             break;
         case SPARQL:
-            checkRequiredDataSourceParam(sourceConfig, "endpointurl");
+            checkRequiredDataSourceParam(sourceConfig, ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
             break;
         case FILE:
-            checkRequiredDataSourceParam(sourceConfig, "path");
-            File file = new File(sourceConfig.getParams().get("path"));
+            checkRequiredDataSourceParam(sourceConfig, ConfigParameters.DATA_SOURCE_FILE_PATH);
+            File file = new File(sourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH));
             if (!file.isFile() || !file.canRead()) {
-                throw new InvalidInputException("Cannot read input file " + sourceConfig.getParams().get("path"));
+                throw new InvalidInputException("Cannot read input file " + sourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH));
             }
             break;
         default:

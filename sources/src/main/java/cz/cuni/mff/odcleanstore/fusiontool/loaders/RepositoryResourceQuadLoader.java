@@ -97,7 +97,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
     }
 
     /**
-     * Adds quads having the given uri or one of its owl:sameAs alternatives as their subject to quadCollestion.
+     * Adds quads having the given uri or one of its owl:sameAs alternatives as their subject to quadCollection.
      * Only quads from graph matching the data source's {@link DataSource#getNamedGraphRestriction() named graph restriction} will
      * be loaded.
      * @param uri searched subject URI

@@ -5,6 +5,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import java.io.File;
 
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.Repository;
@@ -43,14 +44,14 @@ public final class RepositoryFactory {
         String name = dataSourceConfig.toString();
         switch (dataSourceConfig.getType()) {
         case VIRTUOSO:
-            String host = dataSourceConfig.getParams().get("host");
-            String port = dataSourceConfig.getParams().get("port");
-            String username = dataSourceConfig.getParams().get("username");
-            String password = dataSourceConfig.getParams().get("password");
+            String host = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_HOST);
+            String port = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_PORT);
+            String username = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME);
+            String password = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
             return createVirtuosoRepository(name, host, port, username, password);
         case SPARQL:
-            String endpointUrl = dataSourceConfig.getParams().get("endpointurl");
-            String minQueryIntervalString = dataSourceConfig.getParams().get("minqueryinterval");
+            String endpointUrl = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
+            String minQueryIntervalString = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_MIN_QUERY_INTERVAL);
             long minQueryIntervalMs = -1;
             if (minQueryIntervalString != null) {
                 try {
@@ -61,9 +62,9 @@ public final class RepositoryFactory {
             }
             return createSparqlRepository(name, endpointUrl, minQueryIntervalMs);
         case FILE:
-            String path = dataSourceConfig.getParams().get("path");
-            String format = dataSourceConfig.getParams().get("format");
-            String baseURI = dataSourceConfig.getParams().get("baseuri");
+            String path = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
+            String format = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
+            String baseURI = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
             return createFileRepository(name, path, format, baseURI);
         default:
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
@@ -95,16 +96,10 @@ public final class RepositoryFactory {
             baseURI = file.toURI().toString();
         }
 
-        EnumSerializationFormat serializationFormat = (format != null) ? EnumSerializationFormat.parseFormat(format) : null;
-        if (format != null && serializationFormat == null) {
+        RDFFormat sesameFormat = ODCSFusionToolUtils.getSesameSerializationFormat(format, file.getName());
+        if (sesameFormat == null) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Unknown serialization format " + format + " for data source " + dataSourceName);
-        }
-        RDFFormat sesameFormat;
-        if (serializationFormat == null) {
-            sesameFormat = RDFFormat.forFileName(file.getName(), EnumSerializationFormat.RDF_XML.toSesameFormat());
-        } else {
-            sesameFormat = serializationFormat.toSesameFormat();
         }
 
         URI context = ValueFactoryImpl.getInstance().createURI(baseURI);

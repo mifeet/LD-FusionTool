@@ -27,7 +27,7 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
      * @param type type of this data source
      * @param namedGraphRestriction SPARQL restriction on named graphs from which data are loaded
      */
-    protected DataSourceImpl(Repository repository, Map<String, String> prefixes,
+    private DataSourceImpl(Repository repository, Map<String, String> prefixes,
             String label, EnumDataSourceType type, SparqlRestriction namedGraphRestriction) {
         super(repository, prefixes, label, type);
         this.namedGraphRestriction = namedGraphRestriction;

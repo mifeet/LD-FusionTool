@@ -4,6 +4,8 @@ import java.io.File;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
+import org.openrdf.rio.RDFFormat;
 
 /**
  * Various utility methods.
@@ -82,5 +84,20 @@ public final class ODCSFusionToolUtils {
      */
     public static String getVirtuosoConnectionString(String host, String port) {
         return "jdbc:virtuoso://" + host + ":" + port + "/CHARSET=UTF-8";
+    }
+
+    /**
+     * Returns serialization format for the Sesame library.
+     * @param serializationFormat user-supplied serialization format string; can be null
+     * @param fileName file name used for automatic recognition of format when {@code serializationFormat} is null
+     * @return Sesame serialization format
+     */
+    public static RDFFormat getSesameSerializationFormat(String serializationFormat, String fileName) {
+        if (serializationFormat == null) {
+            return RDFFormat.forFileName(fileName, EnumSerializationFormat.RDF_XML.toSesameFormat());
+        } else {
+            EnumSerializationFormat format = EnumSerializationFormat.parseFormat(serializationFormat);
+            return format == null ? null : format.toSesameFormat();
+        }
     }
 }
