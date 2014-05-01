@@ -149,7 +149,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                     BindingSet bindings = subjectsResultSet.next();
                     
                     Value subject = bindings.getValue(subjectVar);
-                    String uri = ODCSUtils.getVirtuosoNodeURI(subject);
+                    String uri = ODCSUtils.getVirtuosoNodeURI(subject); // TODO
                     if (uri != null) {
                         return uri;
                     }

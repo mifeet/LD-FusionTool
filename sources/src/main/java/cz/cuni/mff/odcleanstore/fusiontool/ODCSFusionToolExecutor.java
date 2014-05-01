@@ -40,6 +40,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.MetadataLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.SameAsLinkLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.SubjectsSetInputLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.TransitiveSubjectsSetInputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
@@ -143,12 +144,6 @@ public class ODCSFusionToolExecutor {
             inputLoader = getInputLoader();
             inputLoader.initialize(uriMapping);
 
-            // TODO
-            //if (isTransitive) {
-            //    queuedSubjects = createBufferedSubjectsCollection(seedSubjects, uriMapping, collectionFactory);
-            //    seedSubjects.close();
-            //} else {
-
             // Initialize CR
             ConflictResolver conflictResolver = createConflictResolver(metadata, uriMapping);
 
@@ -190,10 +185,6 @@ public class ODCSFusionToolExecutor {
                 timeProfiler.startCounter(EnumProfilingCounters.BUFFERING);
                 inputLoader.updateWithResolvedStatements(resolvedQuads);
                 timeProfiler.stopAddCounter(EnumProfilingCounters.BUFFERING);
-                // TODO
-                //if (isTransitive) {
-                //    addDiscoveredObjects(queuedSubjects, resolvedQuads, uriMapping, resolvedCanonicalURIs);
-                //}
 
                 // Write result to output
                 timeProfiler.startCounter(EnumProfilingCounters.OUTPUT_WRITING);
@@ -226,30 +217,11 @@ public class ODCSFusionToolExecutor {
         Collection<DataSource> dataSources = getDataSources();
         UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
         LargeCollectionFactory largeCollectionFactory = createLargeCollectionFactory();
-        return new SubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
-    }
-
-    /**
-     * Creates a collection to hold subject URIs queued to be processed.
-     * @param seedSubjects initial URIs to fill in the collection
-     * @param uriMapping canonical URI mapping
-     * @param collectionFactory factory method for creating the returned collection
-     * @return collection of URIs
-     * @throws ODCSFusionToolException error
-     */
-    // TODO
-    protected UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects, URIMapping uriMapping,
-            LargeCollectionFactory collectionFactory) throws ODCSFusionToolException {
-        Set<String> buffer = collectionFactory.createSet();
-        UriCollection queuedSubjects = new BufferedSubjectsCollection(buffer);
-        long count = 0;
-        while (seedSubjects.hasNext()) {
-            String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());
-            queuedSubjects.add(canonicalURI); // only store canonical URIs to save space
-            count++;
+        if (isTransitive) {
+            return new TransitiveSubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
+        } else {
+            return new SubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
         }
-        LOG.info(String.format("ODCS-FusionTool: buffered approx. %,d seed resources", count));
-        return queuedSubjects;
     }
 
     /**
@@ -455,34 +427,6 @@ public class ODCSFusionToolExecutor {
         preferredURIs.addAll(preferredCanonicalURIs);
 
         return preferredURIs;
-    }
-
-    /**
-     * Adds URIs from objects of resolved statements to the given collection of queued subjects.
-     * Only URIs that haven't been resolved already are added.
-     * @param queuedSubjects collection where URIs are added
-     * @param resolvedStatements resolved statements whose objects are added to queued subjects
-     * @param uriMapping mapping to canonical URIs
-     * @param resolvedCanonicalURIs set of already resolved URIs
-     */
-    // TODO
-    protected void addDiscoveredObjects(UriCollection queuedSubjects,
-            Collection<ResolvedStatement> resolvedStatements, URIMappingIterable uriMapping,
-            Set<String> resolvedCanonicalURIs) {
-
-        for (ResolvedStatement resolvedStatement : resolvedStatements) {
-            String uri = ODCSUtils.getVirtuosoNodeURI(resolvedStatement.getStatement().getObject());
-            if (uri == null) {
-                // a literal or something, skip it
-                continue;
-            }
-            // only add canonical URIs to save space
-            String canonicalURI = uriMapping.getCanonicalURI(uri);
-            if (!resolvedCanonicalURIs.contains(canonicalURI)) {
-                // only add new URIs
-                queuedSubjects.add(canonicalURI);
-            }
-        }
     }
 
     /**
