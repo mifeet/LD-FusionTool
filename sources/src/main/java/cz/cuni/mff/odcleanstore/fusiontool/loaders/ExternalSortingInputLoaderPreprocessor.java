@@ -79,7 +79,7 @@ public class ExternalSortingInputLoaderPreprocessor extends RDFHandlerBase imple
         Arrays.sort(statements, 0, count, orderComparator);
 
         // Write
-        LOG.info("Writing {} statements to temporary location", buffer.size());
+        LOG.info("Writing {} quads to temporary location", buffer.size());
         for (int i = 0; i < count; i++) {
             outputWriter.handleStatement(statements[i]);
         }

@@ -38,6 +38,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
     @Ignore
     @Test
     public void performanceTest() throws Exception {
+        final long maxMemorySize = 2400 * ODCSFusionToolUtils.MB_BYTES;
         final int tripleCount = 1000000;
 
         // Arrange
@@ -77,7 +78,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
         ExternalSortingInputLoader inputLoader = null;
         try {
             executionStopwatch = Stopwatch.createStarted();
-            inputLoader = new ExternalSortingInputLoader(Collections.singleton(dataSource), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(Collections.singleton(dataSource), testDir.getRoot(), maxMemorySize, false);
             inputLoader.initialize(new URIMappingIterableImpl());
             while (inputLoader.hasNext()) {
                 actualTripleCount += inputLoader.nextQuads().size();
