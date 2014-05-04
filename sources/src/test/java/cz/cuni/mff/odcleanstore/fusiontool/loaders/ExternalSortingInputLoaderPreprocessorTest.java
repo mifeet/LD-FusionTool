@@ -5,6 +5,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.EmptyURIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
+import cz.cuni.mff.odcleanstore.fusiontool.ContextAwareStatementIsEqual;
 import cz.cuni.mff.odcleanstore.fusiontool.ODCSFTTestUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -16,6 +17,7 @@ import org.openrdf.rio.helpers.StatementCollector;
 
 import java.util.ArrayList;
 
+import static cz.cuni.mff.odcleanstore.fusiontool.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
 import static cz.cuni.mff.odcleanstore.fusiontool.ODCSFTTestUtils.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -52,9 +54,9 @@ public class ExternalSortingInputLoaderPreprocessorTest {
 
         // Assert
         assertThat(result.size(), equalTo(3));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(0), createHttpStatement("s3", "px", "o3", "g3")));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(1), createHttpStatement("sx", "px", "ox", "g1")));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(2), createHttpStatement("sx", "px", "ox", "g2")));
+        assertThat(result.get(0), contextAwareStatementIsEqual(createHttpStatement("s3", "px", "o3", "g3")));
+        assertThat(result.get(1), contextAwareStatementIsEqual(createHttpStatement("sx", "px", "ox", "g1")));
+        assertThat(result.get(2), contextAwareStatementIsEqual(createHttpStatement("sx", "px", "ox", "g2")));
     }
 
     @Test
@@ -73,10 +75,10 @@ public class ExternalSortingInputLoaderPreprocessorTest {
 
         // Assert
         assertThat(result.size(), equalTo(4));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(0), createHttpStatement("s1", "p1", "o1", "g1")));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(1), createHttpStatement("s1", "p1", "o1", "g2")));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(2), createHttpStatement("s2", "p2", "o2", "g3")));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(3), createHttpStatement("s2", "p3", "o2", "g3")));
+        assertThat(result.get(0), contextAwareStatementIsEqual(createHttpStatement("s1", "p1", "o1", "g1")));
+        assertThat(result.get(1), contextAwareStatementIsEqual(createHttpStatement("s1", "p1", "o1", "g2")));
+        assertThat(result.get(2), contextAwareStatementIsEqual(createHttpStatement("s2", "p2", "o2", "g3")));
+        assertThat(result.get(3), contextAwareStatementIsEqual(createHttpStatement("s2", "p3", "o2", "g3")));
     }
 
     @Test
@@ -126,8 +128,8 @@ public class ExternalSortingInputLoaderPreprocessorTest {
 
         // Assert
         assertThat(result.size(), equalTo(2));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(0), createHttpStatement("a", "b", "c", "g1")));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(1), createHttpStatement("x", "y", "z", "g2")));
+        assertThat(result.get(0), contextAwareStatementIsEqual(createHttpStatement("a", "b", "c", "g1")));
+        assertThat(result.get(1), contextAwareStatementIsEqual(createHttpStatement("x", "y", "z", "g2")));
     }
 
     private ArrayList<Statement> collectResultsFromPreprocessor(ArrayList<Statement> statements, URIMapping uriMapping, long memoryLimit)

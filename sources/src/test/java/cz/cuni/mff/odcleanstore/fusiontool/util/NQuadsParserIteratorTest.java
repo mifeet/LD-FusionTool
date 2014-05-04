@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 
+import static cz.cuni.mff.odcleanstore.fusiontool.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
 import static cz.cuni.mff.odcleanstore.fusiontool.ODCSFTTestUtils.createHttpStatement;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -44,7 +45,7 @@ public class NQuadsParserIteratorTest {
         // Assert
         assertThat(result.size(), equalTo(statements.size()));
         for (int i = 0; i < result.size(); i++) {
-            assertTrue(ODCSFTTestUtils.statementsEqual(result.get(i), statements.get(i)));
+            assertThat(result.get(i), contextAwareStatementIsEqual(statements.get(i)));
         }
     }
 
@@ -72,8 +73,8 @@ public class NQuadsParserIteratorTest {
 
         // Assert
         assertThat(result.size(), equalTo(2));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(0), statement1));
-        assertTrue(ODCSFTTestUtils.statementsEqual(result.get(1), statement2));
+        assertThat(result.get(0), contextAwareStatementIsEqual(statement1));
+        assertThat(result.get(1), contextAwareStatementIsEqual(statement2));
     }
 
     @Test(expected = Exception.class)
