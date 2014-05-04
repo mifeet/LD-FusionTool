@@ -336,6 +336,7 @@ public class ExternalSortingInputLoader implements InputLoader {
         try {
             close(); // clean up temporary files just in case the caller doesn't call close() on exception
         } catch (Exception e2) {
+            // ignore
         }
     }
 

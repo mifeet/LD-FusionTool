@@ -58,7 +58,6 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
      *        (if the serialization format supports named graphs)
      * @param metadataContext URI of named graph where CR metadata will be placed or null for no metadata
      *        (if the serialization format supports named graphs) 
-     * @throws IOException I/O error
      */
     public SplittingRDFWriter(EnumSerializationFormat outputFormat, File outputFile, long splitByBytes,
             CloseableRDFWriterFactory writerFactory, URI dataContext, URI metadataContext) {

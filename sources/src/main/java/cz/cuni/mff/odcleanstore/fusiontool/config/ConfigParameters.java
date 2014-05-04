@@ -3,17 +3,6 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
-import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.vocabulary.DC;
-import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-
 /**
  * Names of configuration parameters.
  */

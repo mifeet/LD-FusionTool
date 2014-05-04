@@ -11,8 +11,6 @@ import java.util.UUID;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Helper factory class for collections which may not fit into memory and need to be backed by a file.
