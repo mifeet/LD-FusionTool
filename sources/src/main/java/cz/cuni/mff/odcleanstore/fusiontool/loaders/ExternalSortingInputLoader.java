@@ -55,9 +55,9 @@ public class ExternalSortingInputLoader implements InputLoader {
     /**
      * Indicates whether to use gzip compression in temporary files.
      */
-    private static final boolean USE_GZIP = false;
+    public static final boolean USE_GZIP = false;
 
-    private static final int GZIP_BUFFER_SIZE = 1024;
+    public static final int GZIP_BUFFER_SIZE = 2048;
 
     /**
      * Max portion of free memory to use.
@@ -105,6 +105,8 @@ public class ExternalSortingInputLoader implements InputLoader {
     @Override
     public void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException {
         memoryLimit = calculateMemoryLimit();
+        LOG.info("Initializing input loader, maximum memory limit is {} MB",
+                String.format("%,.2f", memoryLimit / (double) ODCSFusionToolUtils.MB_BYTES));
         try {
             copyInputsToTempInputFile(uriMapping);
             sortTempInputFileToTempSortedFile();
@@ -133,6 +135,7 @@ public class ExternalSortingInputLoader implements InputLoader {
             while (quadIterator.hasNext() && quadIterator.peek().getSubject().equals(firstSubject)) {
                 result.add(quadIterator.next());
             }
+            LOG.debug("Loaded {} quads for resource <{}>", result.size(), first.getSubject());
             return result;
         } catch (Exception e) {
             closeOnException();
@@ -162,6 +165,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public void close() throws ODCSFusionToolException {
+        LOG.debug("Deleting input loader temporary files");
         if (quadIterator != null) {
             try {
                 quadIterator.close();
@@ -207,6 +211,9 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     private void copyDataSourceToTempInputFile(DataSourceConfig dataSourceConfig, ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor)
             throws ODCSFusionToolException {
+
+        String sourceLabel = dataSourceConfig.getName() != null ? dataSourceConfig.getName() : dataSourceConfig.getType().toString();
+        LOG.info("Parsing all quads from data source {}", sourceLabel);
         if (dataSourceConfig.getType() == EnumDataSourceType.FILE) {
             String displayPath = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
             displayPath = displayPath == null ? "" : displayPath;
@@ -217,7 +224,6 @@ public class ExternalSortingInputLoader implements InputLoader {
             } catch (RDFParseException e) {
                 throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_PARSE_FILE, "Error parsing input file " + displayPath, e);
             } catch (RDFHandlerException e) {
-                String sourceLabel = dataSourceConfig.getName() != null ? dataSourceConfig.getName() : dataSourceConfig.getType().toString();
                 throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS, "Error processing quads from input " + sourceLabel, e);
             }
         } else {
@@ -231,7 +237,8 @@ public class ExternalSortingInputLoader implements InputLoader {
     private void sortTempInputFileToTempSortedFile() throws ODCSFusionToolException {
         // External sort the temporary file
         try {
-            LOG.info("Sorting temporary file");
+            LOG.info("Sorting temporary data file (size on disk {} MB)",
+                    String.format("%,.2f", tempInputFile.length() / (double) ODCSFusionToolUtils.MB_BYTES));
             tempSortedFile = ODCSFusionToolUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
             // compare lines as string, which works fine for NQuads;
             // the only requirement is that quads with the same subject and predicate are
@@ -249,6 +256,7 @@ public class ExternalSortingInputLoader implements InputLoader {
                     true,
                     0,
                     USE_GZIP);
+            LOG.debug(" merging sorted data from {} blocks", sortFiles.size());
             ExternalSort.mergeSortedFiles(sortFiles,
                     tempSortedFile,
                     comparator,
@@ -293,7 +301,6 @@ public class ExternalSortingInputLoader implements InputLoader {
                     "Unknown serialization format " + format + " for data source " + sourceLabel);
         }
 
-        LOG.info("Parsing all quads from data source {}", sourceLabel);
         inputLoaderPreprocessor.setDefaultContext(VALUE_FACTORY.createURI(inputFile.toURI().toString()));
         RDFParser rdfParser = Rio.createParser(sesameFormat, VALUE_FACTORY);
         rdfParser.setRDFHandler(inputLoaderPreprocessor);
