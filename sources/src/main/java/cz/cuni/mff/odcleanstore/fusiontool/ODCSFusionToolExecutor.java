@@ -335,7 +335,7 @@ public class ODCSFusionToolExecutor {
      */
     protected LargeCollectionFactory createLargeCollectionFactory() throws IOException {
         if (config.getEnableFileCache()) {
-            return new MapdbCollectionFactory(ODCSFusionToolUtils.getCacheDirectory(config.getTempDirectory()));
+            return new MapdbCollectionFactory(config.getWorkingDirectory());
         } else {
             return new MemoryCollectionFactory();
         }

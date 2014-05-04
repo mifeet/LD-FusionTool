@@ -96,5 +96,5 @@ public final class ConfigConstants {
     /**
      * Default directory for temporary files.
      */
-    public static final File TEMP_DIRECTORY = new File(".");
+    public static final File WORKING_DIRECTORY = new File(".");
 }

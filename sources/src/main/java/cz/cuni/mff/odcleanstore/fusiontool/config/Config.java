@@ -168,5 +168,5 @@ public interface Config {
      * Directory for temporary files.
      * @return directory for temporary files.
      */
-    File getTempDirectory();
+    File getWorkingDirectory();
 }

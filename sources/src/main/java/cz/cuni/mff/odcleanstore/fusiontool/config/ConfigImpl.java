@@ -307,8 +307,8 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public File getTempDirectory() {
-        return ConfigConstants.TEMP_DIRECTORY;
+    public File getWorkingDirectory() {
+        return ConfigConstants.WORKING_DIRECTORY;
     }
 }
 
