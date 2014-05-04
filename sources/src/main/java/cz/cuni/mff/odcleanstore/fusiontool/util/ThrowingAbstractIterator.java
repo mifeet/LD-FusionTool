@@ -18,8 +18,6 @@ package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import java.util.NoSuchElementException;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * THIS FILE IS A MODIFICTATION OF AbstractIterator FROM GUAVA.
  * The file is distributed with the Apache License 2.0 and copyright as stated above.
@@ -137,13 +135,15 @@ public abstract class ThrowingAbstractIterator<T, E extends Exception> {
      * @return {@code true} if the iteration has more elements
      */
     public final boolean hasNext() throws E {
-        checkState(state != State.FAILED);
+        if (state == State.FAILED) {
+            throw new IllegalStateException();
+        }
         switch (state) {
-        case DONE:
-            return false;
-        case READY:
-            return true;
-        default:
+            case DONE:
+                return false;
+            case READY:
+                return true;
+            default:
         }
         return tryToComputeNext();
     }

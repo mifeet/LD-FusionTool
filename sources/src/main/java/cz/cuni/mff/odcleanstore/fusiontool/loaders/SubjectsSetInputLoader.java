@@ -18,8 +18,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Input loader which loads quads for each subject contained in the given collection of subjects.
  * Each call to {@link #nextQuads()} returns triples for one subject.
@@ -52,9 +50,6 @@ public class SubjectsSetInputLoader implements InputLoader {
             Collection<DataSource> dataSources,
             LargeCollectionFactory largeCollectionFactory,
             boolean outputMappedSubjectsOnly) {
-        checkNotNull(subjects);
-        checkNotNull(dataSources);
-        checkNotNull(largeCollectionFactory);
         this.initialSubjects = subjects;
         this.dataSources = dataSources;
         this.largeCollectionFactory = largeCollectionFactory;

@@ -26,8 +26,6 @@ import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Input loader performing an external sort on the input quads in order
  * to efficiently process large amounts of quads.
@@ -93,8 +91,6 @@ public class ExternalSortingInputLoader implements InputLoader {
             File cacheDirectory,
             long maxMemoryLimit,
             boolean outputMappedSubjectsOnly) {
-        checkNotNull(dataSources);
-        checkNotNull(cacheDirectory);
         this.dataSources = dataSources;
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         this.maxMemoryLimit = maxMemoryLimit;
