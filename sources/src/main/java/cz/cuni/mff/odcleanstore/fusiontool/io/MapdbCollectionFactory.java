@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.slf4j.Logger;
@@ -20,10 +21,9 @@ import org.slf4j.LoggerFactory;
  * @author Jan Michelfeit
  */
 public class MapdbCollectionFactory implements LargeCollectionFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(MapdbCollectionFactory.class);
-    
-    private static final String TEMP_FILE_PREFIX = "odcs-fusiontool.db.";
-    private static final String TEMP_FILE_SUFFIX = ".tmp";
+    //private static final Logger LOG = LoggerFactory.getLogger(MapdbCollectionFactory.class);
+
+    private static final String TEMP_FILE_PREFIX = "odcs-ft.db.";
 
     private final File dbFile;
     private DB db;
@@ -31,25 +31,11 @@ public class MapdbCollectionFactory implements LargeCollectionFactory {
 
     /**
      * Creates a new instance with a temporary file used to back contents of produced collections.
-     * @param tempFileDirectory directory where the temporary file backing up produced collections will be created
+     * @param workingDirectory directory where the temporary file backing up produced collections will be created
      * @throws IOException error creating temporary file
      */
-    public MapdbCollectionFactory(File tempFileDirectory) throws IOException {
-        this.dbFile = createTempFile(tempFileDirectory);
-    }
-
-    /**
-     * Creates a new instance with a unique temporary file used to back contents of produced collections.
-     * @throws IOException error creating temporary file
-     */
-    public MapdbCollectionFactory() throws IOException {
-        this(null);
-    }
-    
-    private File createTempFile(File tempFileDirectory) throws IOException {
-        File file = File.createTempFile(TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX, tempFileDirectory);
-        LOG.debug("Creating temporary cache file {}", file.getName());
-        return file;
+    public MapdbCollectionFactory(File workingDirectory) throws IOException {
+        this.dbFile = ODCSFusionToolUtils.createTempFile(workingDirectory, TEMP_FILE_PREFIX);
     }
 
     @Override

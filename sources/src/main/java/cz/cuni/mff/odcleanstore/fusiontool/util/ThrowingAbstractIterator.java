@@ -184,12 +184,11 @@ public abstract class ThrowingAbstractIterator<T, E extends Exception> {
         return next;
     }
 
-    /**
-     * Guaranteed to throw an exception and leave the underlying data unmodified.
-     *
-     * @throws UnsupportedOperationException always
-     * @deprecated Unsupported operation.
-     */
+    ///**
+    // * Guaranteed to throw an exception and leave the underlying data unmodified.
+    // *
+    // * @throws UnsupportedOperationException always
+    // */
     //public final void remove() throws E {
     //    throw new UnsupportedOperationException();
     //}

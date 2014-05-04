@@ -13,13 +13,11 @@ import java.util.Collection;
  * Implementors can themselves control how quads are retrieved, how many are returned in each batch.
  * All quads sharing the same subject, however, are guaranteed to be returned in a single batch of quads
  * returned by {@link #nextQuads()}.
- * @author Jan Michelfeit
- *
- * TODO: implementations: transitive quad loader, data source quad loader, file dump quad loader
  */
 public interface InputLoader extends Closeable<ODCSFusionToolException> {
     /**
-     * Perform any initialization. More demanding initialization should be done here instead of in the constructor.
+     * Perform any initialization. This operation can be expensive.
+     * More demanding initialization should be done here instead of in the constructor.
      * @param uriMapping canonical URI mapping
      * @throws ODCSFusionToolException error
      */

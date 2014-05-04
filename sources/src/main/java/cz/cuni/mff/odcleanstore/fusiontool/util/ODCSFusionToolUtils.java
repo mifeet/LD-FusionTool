@@ -1,11 +1,14 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
-import java.io.File;
-
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import org.openrdf.rio.RDFFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Various utility methods.
@@ -13,18 +16,21 @@ import org.openrdf.rio.RDFFormat;
  * @author Jan Michelfeit
  */
 public final class ODCSFusionToolUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolUtils.class);
+
     /** Time unit 60. */
     public static final int TIME_UNIT_60 = 60;
-    
+
     /** Number of bytes in a kilobyte. */
     public static final int KB_BYTES = 1024;
-    
+
     /** Number of bytes in a megabyte. */
     public static final long MB_BYTES = 1024 * 1024;
-    
+
     /** Number of bytes in a gigabyte. */
     public static final long GB_BYTES = 1024 * 1024 * 1024;
-    
+    private static final String TEMP_FILE_SUFFIX = ".tmp";
+
     /**
      * Returns a human-readable (memory, file, ...) size.
      * @param byteCount the number of bytes
@@ -43,7 +49,7 @@ public final class ODCSFusionToolUtils {
         }
         return result;
     }
-    
+
     /**
      * Creates parent directories for the given file if they don't exist already.
      * @param file file whose parent directories will be created
@@ -53,16 +59,7 @@ public final class ODCSFusionToolUtils {
         file.getAbsoluteFile().getParentFile().mkdirs();
         return file;
     }
-        
-    /**
-     * Returns directory for cache files. Creates one if it doesn't exist yet.
-     * @param tempDirectory temporary directory for execution
-     * @return directory
-     */
-    public static File getCacheDirectory(File tempDirectory) {
-        return ensureParentsExists(tempDirectory);
-    }
-    
+
     /**
      * Returns true if the given restriction is null or its pattern is empty.
      * @param restriction SPARQL restriction
@@ -70,10 +67,6 @@ public final class ODCSFusionToolUtils {
      */
     public static boolean isRestrictionEmpty(SparqlRestriction restriction) {
         return restriction == null || ODCSUtils.isNullOrEmpty(restriction.getPattern());
-    }
-
-    /** Disable constructor for a utility class. */
-    private ODCSFusionToolUtils() {
     }
 
     /**
@@ -99,5 +92,23 @@ public final class ODCSFusionToolUtils {
             EnumSerializationFormat format = EnumSerializationFormat.parseFormat(serializationFormat);
             return format == null ? null : format.toSesameFormat();
         }
+    }
+
+    /** Disable constructor for a utility class. */
+    private ODCSFusionToolUtils() {
+    }
+
+    /**
+     * Create a temporary file with in the given directory.
+     * @param directory parent directory for the temporary file
+     * @param filePrefix prefix for the file
+     * @return reference to a new unique temporary file
+     */
+
+    public static File createTempFile(File directory, String filePrefix) throws IOException {
+        ensureParentsExists(directory);
+        File file = File.createTempFile(filePrefix, TEMP_FILE_SUFFIX, directory);
+        LOG.debug("Creating temporary file {} in the working directory", file.getName());
+        return file;
     }
 }
