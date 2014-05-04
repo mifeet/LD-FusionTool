@@ -58,7 +58,7 @@
       <!-- Base URI for loaded data; (optional, defaults is URI representing the file) -->
       <Param name="baseuri" value="http://example.com" />
       
-      <!-- Serialization format of the file; accepted values are 'ntriples', 'trig' and 'rdf/xml';
+      <!-- Serialization format of the file; accepted values are 'ntriples', 'trig' and 'rdf/xml', 'nquads';
           (optional, format is recognized from file extension if not given) -->
       <Param name="format" value="ntriples"/>
     </DataSource>
@@ -152,7 +152,7 @@
       <!-- Path to the output file (required) -->
       <Param name="path" value="output/out.n3"/>
       
-      <!-- Format of the output file; accepted values are 'ntriples', 'trig', 'rdf/xml' and 'html'; (required) -->
+      <!-- Format of the output file; accepted values are 'ntriples', 'trig', 'rdf/xml', 'nquads' and 'html'; (required) -->
       <Param name="format" value="ntriples"/>
       
       <!-- If set, output will be split into files with the given maximum size in megabytes; n-th file will have suffix -n; (optional) -->

@@ -24,6 +24,11 @@ public enum EnumSerializationFormat {
      * File in TriG.
      */
     TRIG(RDFFormat.TRIG),
+
+    /**
+     * File in N-Quads
+     */
+    NQUADS(RDFFormat.NQUADS),
     
     /**
      * File in HTML.

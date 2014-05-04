@@ -3,30 +3,23 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-
+import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.openrdf.model.URI;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.n3.N3WriterFactory;
+import org.openrdf.rio.nquads.NQuadsWriterFactory;
 import org.openrdf.rio.rdfxml.util.RDFXMLPrettyWriterFactory;
 import org.openrdf.rio.trig.TriGWriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import java.io.*;
 
 /**
  * Factory class for {@link CloseableRDFWriter} instances.
@@ -162,6 +155,10 @@ public class CloseableRDFWriterFactory {
             RDFHandler trigHandler = new TriGWriterFactory().getWriter(outputWriter);
             LOG.debug("Created a TriG file output");
             return new SesameCloseableRDFWriterQuad(trigHandler, outputWriter, dataContext, metadataContext);
+        case NQUADS:
+            RDFHandler nquadsHandler = new NQuadsWriterFactory().getWriter(outputWriter);
+            LOG.debug("Created a N-Quads file output");
+            return new SesameCloseableRDFWriterQuad(nquadsHandler, outputWriter, dataContext, metadataContext);
         case HTML:
             LOG.debug("Created a HTML file output");
             return new CloseableHtmlWriter(outputWriter);
