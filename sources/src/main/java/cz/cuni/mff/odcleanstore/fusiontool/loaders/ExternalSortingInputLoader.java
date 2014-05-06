@@ -3,9 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import com.google.code.externalsorting.ExternalSort;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
@@ -15,7 +13,9 @@ import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.rio.*;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFWriter;
+import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -195,38 +195,34 @@ public class ExternalSortingInputLoader implements InputLoader {
 
             tempRdfWriter.startRDF();
             for (DataSourceConfig dataSource : dataSources) {
-                copyDataSourceToTempInputFile(dataSource, inputLoaderPreprocessor);
+                AllTriplesLoader triplesLoader = getAllTriplesLoader(dataSource);
+                try {
+                    inputLoaderPreprocessor.setDefaultContext(triplesLoader.getDefaultContext());
+                    triplesLoader.loadAllTriples(inputLoaderPreprocessor);
+                } finally {
+                    triplesLoader.close();
+                }
             }
             tempRdfWriter.endRDF();
             tempOutputWriter.close();
+        } catch (ODCSFusionToolException e) {
+            throw e;
         } catch (Exception e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT,
                     "Error while writing quads to temporary file in input loader", e);
         }
     }
 
-    private void copyDataSourceToTempInputFile(DataSourceConfig dataSourceConfig, ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor)
+    public AllTriplesLoader getAllTriplesLoader(DataSourceConfig dataSourceConfig)
             throws ODCSFusionToolException {
-
-        String sourceLabel = dataSourceConfig.getName() != null ? dataSourceConfig.getName() : dataSourceConfig.getType().toString();
-        LOG.info("Parsing all quads from data source {}", sourceLabel);
-        if (dataSourceConfig.getType() == EnumDataSourceType.FILE) {
-            String displayPath = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
-            displayPath = displayPath == null ? "" : displayPath;
-            try {
-                parseFileDataSource(dataSourceConfig, inputLoaderPreprocessor);
-            } catch (IOException e) {
-                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_READ_FILE, "I/O Error while reading input file " + displayPath, e);
-            } catch (RDFParseException e) {
-                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_PARSE_FILE, "Error parsing input file " + displayPath, e);
-            } catch (RDFHandlerException e) {
-                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS, "Error processing quads from input " + sourceLabel, e);
-            }
-        } else {
-            throw new RuntimeException("Data sources other than file are not supported for external sorting input loader yet");
-            //Repository repository = REPOSITORY_FACTORY.createRepository(dataSourceConfig);
-            // TODO: something along the lines of RepositoryResourceQuadLoader, use named graph restriction pattern
-            // repository.shutDown();
+        switch (dataSourceConfig.getType()) {
+            case FILE:
+                return new AllTriplesFileLoader(dataSourceConfig);
+            default:
+                throw new RuntimeException("balbla");
+                //Repository repository = REPOSITORY_FACTORY.createRepository(dataSourceConfig);
+                // TODO: something along the lines of RepositoryResourceQuadLoader, use named graph restriction pattern
+                // repository.shutDown();
         }
     }
 
@@ -273,34 +269,6 @@ public class ExternalSortingInputLoader implements InputLoader {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_PARSE_TEMP_FILE,
                     "Error while initializing temporary file reader in input loader", e);
         }
-    }
-
-    private void parseFileDataSource(DataSourceConfig dataSourceConfig, ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor)
-            throws ODCSFusionToolException, IOException, RDFParseException, RDFHandlerException {
-        String sourceLabel = dataSourceConfig.getName() != null ? dataSourceConfig.getName() : dataSourceConfig.getType().toString();
-
-        String path = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
-        if (path == null) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG, "Missing required parameter path for data source " + sourceLabel);
-        }
-        File inputFile = new File(path);
-
-        String baseURI = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
-        if (baseURI == null) {
-            baseURI = inputFile.toURI().toString();
-        }
-
-        String format = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
-        RDFFormat sesameFormat = ODCSFusionToolUtils.getSesameSerializationFormat(format, inputFile.getName());
-        if (sesameFormat == null) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
-                    "Unknown serialization format " + format + " for data source " + sourceLabel);
-        }
-
-        inputLoaderPreprocessor.setDefaultContext(VALUE_FACTORY.createURI(inputFile.toURI().toString()));
-        RDFParser rdfParser = Rio.createParser(sesameFormat, VALUE_FACTORY);
-        rdfParser.setRDFHandler(inputLoaderPreprocessor);
-        rdfParser.parse(new FileInputStream(inputFile), baseURI);
     }
 
     private static BufferedReader createTempFileReader(File file, boolean useGzip) throws IOException {
