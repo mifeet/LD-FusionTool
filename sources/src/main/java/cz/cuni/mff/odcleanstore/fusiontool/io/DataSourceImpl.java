@@ -3,14 +3,13 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import java.util.Map;
-
-import org.openrdf.repository.Repository;
-
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import org.openrdf.repository.Repository;
+
+import java.util.Map;
 
 /**
  * Container for RDF {@link Repository} and related settings.
@@ -27,7 +26,7 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
      * @param type type of this data source
      * @param namedGraphRestriction SPARQL restriction on named graphs from which data are loaded
      */
-    private DataSourceImpl(Repository repository, Map<String, String> prefixes,
+    public DataSourceImpl(Repository repository, Map<String, String> prefixes,
             String label, EnumDataSourceType type, SparqlRestriction namedGraphRestriction) {
         super(repository, prefixes, label, type);
         this.namedGraphRestriction = namedGraphRestriction;

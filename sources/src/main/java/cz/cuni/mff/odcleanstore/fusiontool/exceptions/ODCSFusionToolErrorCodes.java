@@ -9,12 +9,13 @@ package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
 public final class ODCSFusionToolErrorCodes {
 
 
+
     /** Disable constructor for a utility class. */
     private ODCSFusionToolErrorCodes() {
     }
 
-
     // CHECKSTYLE:OFF
+    public static final int ALL_TRIPLES_QUERY_QUADS = 36;
     public static final int INPUT_LOADER_HAS_NEXT = 35;
     public static final int INPUT_LOADER_LOADING = 34;
     public static final int INPUT_LOADER_PARSE_TEMP_FILE = 33;
