@@ -3,36 +3,21 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.*;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
+import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
-import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConfigXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConflictResolutionXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConstructSourceXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.DataSourceXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.OutputXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ParamXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.PrefixXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.PropertyResolutionStrategyXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.PropertyXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ResolutionStrategyXml;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.RestrictionXml;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
-import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
+import java.io.File;
+import java.util.*;
 
 /**
  * Reads the XML configuration file and produces instances of configuration in a {@link Config} instance.
@@ -95,8 +80,8 @@ public final class ConfigReader {
         
         // Data processing settings
         if (configXml.getDataProcessing() != null) {
-            RestrictionXml seedRestriction = configXml.getDataProcessing().getSeedResourceRestriction();
-            config.setSeedResourceRestriction(extractResourceRestriction(seedRestriction));
+            SeedResourceRestrictionXml seedRestriction = configXml.getDataProcessing().getSeedResourceRestriction();
+            config.setSeedResourceRestriction(extractSeedResourceRestriction(seedRestriction));
             List<ParamXml> params = configXml.getDataProcessing().getParams();
             if (params != null) {
                 extractDataProcessingParams(params, config);
@@ -198,8 +183,6 @@ public final class ConfigReader {
             } else if (ConfigParameters.PROCESSING_MAX_OUTPUT_TRIPLES.equalsIgnoreCase(param.getName())) {
                 long value = convertToLong(param.getValue(), "Value of maxOutputTriples is not a valid number");
                 config.setMaxOutputTriples(value);
-            } else if (ConfigParameters.PROCESSING_TRANSITIVE.equalsIgnoreCase(param.getName())) {
-                config.setIsProcessingTransitive(Boolean.parseBoolean(param.getValue()));
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");
@@ -332,19 +315,21 @@ public final class ConfigReader {
         return extractRestriction(restrictionXml, ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
     }
     
-    private SparqlRestriction extractResourceRestriction(RestrictionXml restrictionXml) {
-        return extractRestriction(restrictionXml, ConfigConstants.DEFAULT_RESTRICTION_RESOURCE_VAR);
+    private SeedResourceRestriction extractSeedResourceRestriction(SeedResourceRestrictionXml seedResourceRestrictionXml) {
+        SparqlRestriction restriction = extractRestriction(seedResourceRestrictionXml, ConfigConstants.DEFAULT_RESTRICTION_RESOURCE_VAR);
+        SeedResourceRestrictionImpl seedResourceRestriction = new SeedResourceRestrictionImpl(restriction.getPattern(), restriction.getVar());
+        if (!ODCSUtils.isNullOrEmpty(seedResourceRestrictionXml.getTransitive())) {
+            seedResourceRestriction.setTransitive(Boolean.parseBoolean(seedResourceRestrictionXml.getTransitive()));
+        }
+        return seedResourceRestriction;
     }
-    
+
     private SparqlRestriction extractRestriction(RestrictionXml restrictionXml, String defaultVarName) {
         if (restrictionXml == null) {
             return null;
         }
         String pattern = preprocessGroupGraphPattern(restrictionXml.getValue());
         
-        //if (pattern.isEmpty()) {
-        //    return null;
-        //}
         if (restrictionXml.getVar() == null) {
             return new SparqlRestrictionImpl(pattern, defaultVarName);
         } else {

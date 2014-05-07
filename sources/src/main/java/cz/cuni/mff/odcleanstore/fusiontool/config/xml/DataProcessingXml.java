@@ -3,11 +3,11 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config.xml;
 
-import java.util.List;
-
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
+
+import java.util.List;
 
 // CHECKSTYLE:OFF
 
@@ -20,13 +20,13 @@ public class DataProcessingXml {
     private List<ParamXml> params;
     
     @Element(name = "SeedResourceRestriction", required = false)
-    private RestrictionXml seedResourceRestriction;
+    private SeedResourceRestrictionXml seedResourceRestriction;
     
     public List<ParamXml> getParams() {
         return params;
     }
 
-    public RestrictionXml getSeedResourceRestriction() {
+    public SeedResourceRestrictionXml getSeedResourceRestriction() {
         return seedResourceRestriction;
     }
 

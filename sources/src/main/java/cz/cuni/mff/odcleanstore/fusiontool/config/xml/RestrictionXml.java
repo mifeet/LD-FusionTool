@@ -14,13 +14,12 @@ import org.simpleframework.xml.Text;
  */
 @Root
 public class RestrictionXml {
-
     // @Attribute(required = false)
     @Attribute
-    private String var;
+    protected String var;
 
     @Text
-    private String value;
+    protected String value;
 
     public String getVar() {
         return var;

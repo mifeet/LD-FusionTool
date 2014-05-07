@@ -102,17 +102,12 @@
          disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
     <Param name="enableFileCache" value="false" />
 
-	<!-- If set to true and <SeedResourceRestriction> is given, triples to be resolved are traversed transitively;
-	     in other words all resources that can be transitively reached from seed resources of a data source are processed;
-	     (optional, default to true) -->
-	<Param name="transitive" value="true" />
-    
     <!-- SPARQL group graph pattern giving seed resources for data fusion;
          if given, subjects matching the SPARQL variable given in attribute 'var' will be loaded as seed resources
          and only triples having these seed resources as subject will be processed;
-         if parameter 'transitive' is set to true, also resources transitively reachable from seed resources will be processed
+         if attribute 'transitive' is set (default) to true, also resources transitively reachable from seed resources will be processed;
          optional (if not given, all triples from source graphs are processed) -->
-    <SeedResourceRestriction var="s">
+    <SeedResourceRestriction var="s" transitive="true">
       ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
     </SeedResourceRestriction>
   </DataProcessing>      

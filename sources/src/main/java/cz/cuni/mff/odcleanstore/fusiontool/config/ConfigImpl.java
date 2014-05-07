@@ -16,7 +16,7 @@ public class ConfigImpl implements Config {
     private List<DataSourceConfig> dataSources = Collections.emptyList();
     private List<ConstructSourceConfig> sameAsSources = Collections.emptyList();
     private List<ConstructSourceConfig> metadataSources = Collections.emptyList();
-    private SparqlRestriction seedResourceRestriction;
+    private SeedResourceRestriction seedResourceRestriction;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
     private Map<String, String> prefixes = new HashMap<String, String>();
@@ -30,7 +30,6 @@ public class ConfigImpl implements Config {
     private boolean isProfilingOn = false;
     private boolean outputConflictsOnly = false;
     private boolean outputMappedSubjectsOnly = false;
-    private boolean isProcessingTransitive = true;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -75,7 +74,7 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public SparqlRestriction getSeedResourceRestriction() {
+    public SeedResourceRestriction getSeedResourceRestriction() {
         return seedResourceRestriction;
     }
 
@@ -84,7 +83,7 @@ public class ConfigImpl implements Config {
      *
      * @param restriction SPARQL group graph pattern
      */
-    public void setSeedResourceRestriction(SparqlRestriction restriction) {
+    public void setSeedResourceRestriction(SeedResourceRestriction restriction) {
         this.seedResourceRestriction = restriction;
     }
 
@@ -254,20 +253,6 @@ public class ConfigImpl implements Config {
      */
     public void setOutputMappedSubjectsOnly(boolean outputMappedSubjectsOnly) {
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
-    }
-
-    @Override
-    public boolean isProcessingTransitive() {
-        return isProcessingTransitive;
-    }
-
-    /**
-     * Sets value for {@link #isProcessingTransitive()}.
-     *
-     * @param isProcessingTransitive see {@link #isProcessingTransitive()}
-     */
-    public void setIsProcessingTransitive(boolean isProcessingTransitive) {
-        this.isProcessingTransitive = isProcessingTransitive;
     }
 
     @Override

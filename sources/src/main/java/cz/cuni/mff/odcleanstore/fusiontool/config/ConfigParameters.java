@@ -21,7 +21,6 @@ public final class ConfigParameters {
     public static final String PROCESSING_CANONICAL_URI_INPUT_FILE = "canonicalUriInputFile";
     public static final String PROCESSING_ENABLE_FILE_CACHE = "enableFileCache";
     public static final String PROCESSING_MAX_OUTPUT_TRIPLES = "maxOutputTriples";
-    public static final String PROCESSING_TRANSITIVE = "transitive";
 
     /** Disable constructor for a utility class. */
     private ConfigParameters() {
