@@ -1,13 +1,12 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import org.openrdf.model.URI;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import org.openrdf.model.URI;
-
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 
 /**
  * Encapsulation of ODCS-FusionTool configuration.
@@ -169,4 +168,10 @@ public interface Config {
      * @return directory for temporary files.
      */
     File getWorkingDirectory();
+
+    /**
+     * Maximum number of rows to be requested in any SPARQL query.
+     * @return maximum number of rows to be requested
+     */
+    int getSparqlResultMaxRows();
 }

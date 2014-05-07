@@ -1,17 +1,11 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.openrdf.model.URI;
-
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
+import org.openrdf.model.URI;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * Container of configuration values.
@@ -309,6 +303,11 @@ public class ConfigImpl implements Config {
     @Override
     public File getWorkingDirectory() {
         return ConfigConstants.WORKING_DIRECTORY;
+    }
+
+    @Override
+    public int getSparqlResultMaxRows() {
+        return ConfigConstants.SPARQL_RESULT_MAX_ROWS;
     }
 }
 

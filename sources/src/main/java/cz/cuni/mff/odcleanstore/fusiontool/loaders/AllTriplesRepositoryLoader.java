@@ -31,8 +31,6 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     private static final Logger LOG = LoggerFactory.getLogger(AllTriplesRepositoryLoader.class);
     public static final ValueFactoryImpl VALUE_FACTORY = ValueFactoryImpl.getInstance();
 
-    public static int DEFAULT_MAX_RESULT_SIZE = 100; // TODO
-
     private static final String SUBJECT_VAR = VAR_PREFIX + "s";
     private static final String PROPERTY_VAR = VAR_PREFIX + "p";
     private static final String OBJECT_VAR = VAR_PREFIX + "o";
@@ -61,14 +59,6 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     private RepositoryConnection connection;
     private final DataSource dataSource;
     private final int maxResultsSize;
-
-    /**
-     * Creates a new instance.
-     * @param dataSource an initialized data source
-     */
-    public AllTriplesRepositoryLoader(DataSource dataSource) {
-        this(dataSource, DEFAULT_MAX_RESULT_SIZE);
-    }
 
     /**
      * Creates a new instance.
