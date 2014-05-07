@@ -18,7 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
- * Loader of all triples from the given file data source to ghe given Created by jmichelf on 7. 5. 2014.
+ * Loader of all triples from the given file data source to the given RDF handler.
  */
 public class AllTriplesFileLoader implements AllTriplesLoader {
     private static final Logger LOG = LoggerFactory.getLogger(AllTriplesFileLoader.class);
@@ -83,5 +83,10 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
         RDFParser rdfParser = Rio.createParser(sesameFormat, VALUE_FACTORY);
         rdfParser.setRDFHandler(inputLoaderPreprocessor);
         rdfParser.parse(new FileInputStream(inputFile), baseURI);
+    }
+
+    @Override
+    public void close() throws ODCSFusionToolException {
+        // do nothing
     }
 }

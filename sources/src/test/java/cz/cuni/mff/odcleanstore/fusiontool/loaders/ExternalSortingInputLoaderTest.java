@@ -42,6 +42,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
 
+// TODO: mock file loader
 public class ExternalSortingInputLoaderTest {
     private static final ValueFactoryImpl VALUE_FACTORY = ValueFactoryImpl.getInstance();
     public static final SpogComparator SPOG_COMPARATOR = new SpogComparator();
@@ -121,7 +122,7 @@ public class ExternalSortingInputLoaderTest {
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());
@@ -149,7 +150,7 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -178,7 +179,7 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -203,7 +204,7 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -231,7 +232,7 @@ public class ExternalSortingInputLoaderTest {
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1), testDir.getRoot(), maxMemory, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), maxMemory, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());
@@ -251,7 +252,7 @@ public class ExternalSortingInputLoaderTest {
         // Act & assert
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(Collections.<Statement>emptySet()), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(Collections.<Statement>emptySet()), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
 
             assertFalse(inputLoader.hasNext());
@@ -266,7 +267,7 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
                 // call only once
@@ -288,13 +289,14 @@ public class ExternalSortingInputLoaderTest {
         ExternalSortingInputLoader inputLoader = null;
         Exception caughtException = null;
         try {
-            DataSourceConfig dataSource = createDataSourceConfig(testInput1);
+            DataSourceConfig dataSource = createFileDataSource(testInput1);
             File inputFile = new File(dataSource.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH));
             FileWriter inputFileWriter = new FileWriter(inputFile, true);
             inputFileWriter.append("xyz;");
             inputFileWriter.close();
 
-            inputLoader = new ExternalSortingInputLoader(Collections.singleton(dataSource), testDir.getRoot(), Long.MAX_VALUE, false);
+            Set<AllTriplesLoader> dataSources = Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSource));
+            inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
                 // call only once
@@ -317,7 +319,7 @@ public class ExternalSortingInputLoaderTest {
         // Act
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 Collection<Statement> statements = inputLoader.nextQuads();
@@ -341,7 +343,7 @@ public class ExternalSortingInputLoaderTest {
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createDataSources(testInput1, testInput2), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1, testInput2), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());
@@ -364,18 +366,20 @@ public class ExternalSortingInputLoaderTest {
         }
     }
 
-    private Collection<DataSourceConfig> createDataSources(Collection<Statement>... sourceStatements) throws IOException, RDFHandlerException {
+    private Collection<AllTriplesLoader> createFileAllTriplesLoader(Collection<Statement>... sourceStatements) throws IOException, RDFHandlerException {
         if (sourceStatements.length == 1) {
-            return Collections.singleton(createDataSourceConfig(sourceStatements[0]));
+            DataSourceConfig dataSourceConfig = createFileDataSource(sourceStatements[0]);
+            return Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig));
         }
-        ArrayList<DataSourceConfig> result = new ArrayList<DataSourceConfig>();
+        ArrayList<AllTriplesLoader> result = new ArrayList<AllTriplesLoader>();
         for (Collection<Statement> statements : sourceStatements) {
-            result.add(createDataSourceConfig(statements));
+            DataSourceConfig dataSourceConfig = createFileDataSource(statements);
+            result.add(new AllTriplesFileLoader(dataSourceConfig));
         }
         return result;
     }
 
-    private DataSourceConfig createDataSourceConfig(Collection<Statement> statements) throws IOException, RDFHandlerException {
+    private DataSourceConfig createFileDataSource(Collection<Statement> statements) throws IOException, RDFHandlerException {
         DataSourceConfigImpl result = new DataSourceConfigImpl(
                 EnumDataSourceType.FILE,
                 "test-input-file" + testFileCounter.getAndIncrement() + ".trig");

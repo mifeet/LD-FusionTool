@@ -3,7 +3,6 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import com.google.code.externalsorting.ExternalSort;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
@@ -70,7 +69,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     private static final Comparator<Statement> ORDER_COMPARATOR = new SpogComparator();
 
 
-    private final Collection<DataSourceConfig> dataSources;
+    private final Collection<AllTriplesLoader> dataSources;
     private final boolean outputMappedSubjectsOnly; // TODO
     private final File cacheDirectory;
     private final long maxMemoryLimit;
@@ -83,11 +82,11 @@ public class ExternalSortingInputLoader implements InputLoader {
     /**
      * @param maxMemoryLimit maximum memory amount to use for large operations
      * @param cacheDirectory directory for temporary files
-     * @param dataSources configuration of data sources
+     * @param dataSources initialized {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.AllTriplesLoader} loaders
      * @param outputMappedSubjectsOnly see {@link cz.cuni.mff.odcleanstore.fusiontool.config.Config#getOutputMappedSubjectsOnly()}
      */
     public ExternalSortingInputLoader(
-            Collection<DataSourceConfig> dataSources,
+            Collection<AllTriplesLoader> dataSources,
             File cacheDirectory,
             long maxMemoryLimit,
             boolean outputMappedSubjectsOnly) {
@@ -194,13 +193,12 @@ public class ExternalSortingInputLoader implements InputLoader {
                     ORDER_COMPARATOR);
 
             tempRdfWriter.startRDF();
-            for (DataSourceConfig dataSource : dataSources) {
-                AllTriplesLoader triplesLoader = getAllTriplesLoader(dataSource);
+            for (AllTriplesLoader dataSource : dataSources) {
                 try {
-                    inputLoaderPreprocessor.setDefaultContext(triplesLoader.getDefaultContext());
-                    triplesLoader.loadAllTriples(inputLoaderPreprocessor);
+                    inputLoaderPreprocessor.setDefaultContext(dataSource.getDefaultContext());
+                    dataSource.loadAllTriples(inputLoaderPreprocessor);
                 } finally {
-                    triplesLoader.close();
+                    dataSource.close();
                 }
             }
             tempRdfWriter.endRDF();
@@ -210,19 +208,6 @@ public class ExternalSortingInputLoader implements InputLoader {
         } catch (Exception e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT,
                     "Error while writing quads to temporary file in input loader", e);
-        }
-    }
-
-    public AllTriplesLoader getAllTriplesLoader(DataSourceConfig dataSourceConfig)
-            throws ODCSFusionToolException {
-        switch (dataSourceConfig.getType()) {
-            case FILE:
-                return new AllTriplesFileLoader(dataSourceConfig);
-            default:
-                throw new RuntimeException("balbla");
-                //Repository repository = REPOSITORY_FACTORY.createRepository(dataSourceConfig);
-                // TODO: something along the lines of RepositoryResourceQuadLoader, use named graph restriction pattern
-                // repository.shutDown();
         }
     }
 
