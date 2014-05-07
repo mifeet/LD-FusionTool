@@ -98,6 +98,6 @@ public final class ConfigConstants {
      * Maximum number of rows to be requested in any SPARQL query.
      * Use Virtuoso Default
      */
-    public static final int SPARQL_RESULT_MAX_ROWS = 100000; // TODO: load from configuration
+    public static final int DEFAULT_SPARQL_RESULT_MAX_ROWS = 100000; // TODO: load from configuration
 }
 

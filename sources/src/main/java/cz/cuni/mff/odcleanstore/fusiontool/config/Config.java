@@ -114,7 +114,7 @@ public interface Config {
      * that may not fit into the memory.
      * @return whether to disable algorithm file cache
      */
-    boolean getEnableFileCache();
+    boolean getEnableFileCache(); // TODO: detect automatically whether it's neccessary
     
     /**
      * Returns maximum number of triples allowed in the result.
@@ -168,4 +168,10 @@ public interface Config {
      * @return maximum number of rows to be requested
      */
     int getSparqlResultMaxRows();
+
+    /**
+     * Indicates whether data should be downloaded to a local file prior to processing.
+     * @return true iff data should be pre-downloaded to a local file
+     */
+    boolean isLocalCopyProcessing();
 }

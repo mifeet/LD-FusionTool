@@ -178,11 +178,16 @@ public final class ConfigReader {
                 } else {
                     config.setCanonicalURIsInputFile(null);
                 }
-            } else if (ConfigParameters.PROCESSING_ENABLE_FILE_CACHE.equalsIgnoreCase(param.getName())) {
+            } else if (ConfigParameters.PROCESSING_ENABLE_FILE_CACHE.equalsIgnoreCase(param.getName()) && !ODCSUtils.isNullOrEmpty(param.getValue())) {
                 config.setEnableFileCache(Boolean.parseBoolean(param.getValue()));                
             } else if (ConfigParameters.PROCESSING_MAX_OUTPUT_TRIPLES.equalsIgnoreCase(param.getName())) {
-                long value = convertToLong(param.getValue(), "Value of maxOutputTriples is not a valid number");
+                long value = convertToLong(param.getValue(), "Value of " + ConfigParameters.PROCESSING_MAX_OUTPUT_TRIPLES + " is not a valid number");
                 config.setMaxOutputTriples(value);
+            } else if (ConfigParameters.PROCESSING_LOCAL_COPY_PROCESSING.equalsIgnoreCase(param.getName()) && !ODCSUtils.isNullOrEmpty(param.getValue())) {
+                config.setLocalCopyProcessing(Boolean.parseBoolean(param.getValue()));
+            } else if (ConfigParameters.PROCESSING_SPARQL_RESULT_MAX_ROWS.equalsIgnoreCase(param.getName())) {
+                int value = convertToInt(param.getValue(), "Value of " + ConfigParameters.PROCESSING_SPARQL_RESULT_MAX_ROWS + " is not a valid number");
+                config.setSparqlResultMaxRows(value);
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");
@@ -298,6 +303,14 @@ public final class ConfigReader {
     private long convertToLong(String str, String errorMessage) throws InvalidInputException {
         try {
             return Long.parseLong(str);
+        } catch (NumberFormatException e) {
+            throw new InvalidInputException(errorMessage, e);
+        }
+    }
+
+    private int convertToInt(String str, String errorMessage) throws InvalidInputException {
+        try {
+            return Integer.parseInt(str);
         } catch (NumberFormatException e) {
             throw new InvalidInputException(errorMessage, e);
         }

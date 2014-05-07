@@ -22,6 +22,7 @@ public class ConfigImpl implements Config {
     private Map<String, String> prefixes = new HashMap<String, String>();
     private ResolutionStrategy defaultResolutionStrategy = new ResolutionStrategyImpl();
     private Map<URI, ResolutionStrategy> propertyResolutionStrategies = new HashMap<URI, ResolutionStrategy>();
+    private int sparqlResultMaxRows = ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS;
 
     private File canonicalURIsOutputFile = null;
     private File canonicalURIsInputFile;
@@ -30,6 +31,7 @@ public class ConfigImpl implements Config {
     private boolean isProfilingOn = false;
     private boolean outputConflictsOnly = false;
     private boolean outputMappedSubjectsOnly = false;
+    private boolean isLocalCopyProcessing = false;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -256,6 +258,32 @@ public class ConfigImpl implements Config {
     }
 
     @Override
+    public int getSparqlResultMaxRows() {
+        return sparqlResultMaxRows;
+    }
+
+    /**
+     * Sets value for {@link #getSparqlResultMaxRows()}.
+     * @param sparqlResultMaxRows see {@link #getSparqlResultMaxRows()}
+     */
+    public void setSparqlResultMaxRows(int sparqlResultMaxRows) {
+        this.sparqlResultMaxRows = sparqlResultMaxRows;
+    }
+
+    @Override
+    public boolean isLocalCopyProcessing() {
+        return isLocalCopyProcessing;
+    }
+
+    /**
+     * Sets value for {@link #isLocalCopyProcessing()}.
+     * @param isLocalCopyProcessing see {@link #isLocalCopyProcessing()}
+     */
+    public void setLocalCopyProcessing(boolean isLocalCopyProcessing) {
+        this.isLocalCopyProcessing = isLocalCopyProcessing;
+    }
+
+    @Override
     public Integer getQueryTimeout() {
         return ConfigConstants.DEFAULT_QUERY_TIMEOUT;
     }
@@ -288,11 +316,6 @@ public class ConfigImpl implements Config {
     @Override
     public File getWorkingDirectory() {
         return ConfigConstants.WORKING_DIRECTORY;
-    }
-
-    @Override
-    public int getSparqlResultMaxRows() {
-        return ConfigConstants.SPARQL_RESULT_MAX_ROWS;
     }
 }
 
