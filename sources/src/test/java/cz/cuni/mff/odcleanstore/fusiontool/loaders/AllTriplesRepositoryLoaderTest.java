@@ -117,7 +117,7 @@ public class AllTriplesRepositoryLoaderTest {
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 100);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -161,7 +161,7 @@ public class AllTriplesRepositoryLoaderTest {
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 100);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -178,7 +178,7 @@ public class AllTriplesRepositoryLoaderTest {
         DataSource dataSource = createDataSource(statements, EMPTY_SPARQL_RESTRICTION, new HashMap<String, String>(), "te<s>t");
 
         // Act
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 100);
         URI defaultContext = loader.getDefaultContext();
 
         // Assert
