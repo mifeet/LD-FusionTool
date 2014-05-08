@@ -3,9 +3,12 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import java.io.File;
-
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.Repository;
@@ -18,13 +21,9 @@ import org.openrdf.sail.Sail;
 import org.openrdf.sail.memory.MemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import virtuoso.sesame2.driver.VirtuosoRepository;
-import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+
+import java.io.File;
 
 /**
  * Factory class for RDF {@link Repository repositories}.
@@ -102,13 +101,17 @@ public final class RepositoryFactory {
                     "Unknown serialization format " + format + " for data source " + dataSourceName);
         }
 
-        URI context = ValueFactoryImpl.getInstance().createURI(baseURI);
         Repository repository = new SailRepository(createSail());
         try {
             repository.initialize();
             RepositoryConnection connection = repository.getConnection();
             try {
-                connection.add(file, baseURI, sesameFormat, context);
+                if (sesameFormat.supportsContexts()) {
+                    connection.add(file, baseURI, sesameFormat);
+                } else {
+                    URI context = ValueFactoryImpl.getInstance().createURI(baseURI);
+                    connection.add(file, baseURI, sesameFormat, context);
+                }
             } finally {
                 connection.close();
             }
