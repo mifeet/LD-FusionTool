@@ -119,8 +119,8 @@ public final class ODCSFusionToolApplication {
         System.out.println("Starting conflict resolution, this may take a while... \n");
 
         try {
-            ODCSFusionToolExecutor odcsFusionToolExecutor = new ODCSFusionToolExecutor(config);
-            odcsFusionToolExecutor.runFusionTool();
+            ODCSFusionToolExecutorRunner odcsFusionToolExecutorRunner = new ODCSFusionToolExecutorRunner(config);
+            odcsFusionToolExecutorRunner.runFusionTool();
         } catch (ODCSFusionToolException e) {
             System.err.println("Error:");
             System.err.println("  " + e.getMessage());

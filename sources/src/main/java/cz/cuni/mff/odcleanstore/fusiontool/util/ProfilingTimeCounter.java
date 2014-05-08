@@ -23,6 +23,7 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
     private static final long HOUR_MS = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
     private final long[] lengths;
     private final long[] starts;
+    private final Class<E> countersEnum;
 
     /** 
      * Returns a new instance with counters enabled or disabled according to profilingOn parameter.
@@ -40,6 +41,7 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
     }
     
     private ProfilingTimeCounter(Class<E> countersEnum) {
+        this.countersEnum = countersEnum;
         starts = new long[countersEnum.getEnumConstants().length];
         lengths = new long[countersEnum.getEnumConstants().length];
     }
@@ -76,7 +78,7 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
     public long getCounter(E counterId) {
         return lengths[counterId.ordinal()];
     }
-    
+
     /**
      * Returns the time measured for this counter formatted in a human-readable string.
      * @param counterId counter 
@@ -90,6 +92,16 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
                 timeInMs / HOUR_MS,
                 timeFormat.format(new Date(timeInMs)),
                 timeInMs);
+    }
+
+    /**
+     * Add lengths measured by {@code otherCounter} to this counter.
+     * @param otherCounter counter with values to be added to this counter
+     */
+    public void addProfilingTimeCounter(ProfilingTimeCounter<E> otherCounter) {
+        for (E counterId : countersEnum.getEnumConstants()) {
+            this.lengths[counterId.ordinal()] += otherCounter.lengths[counterId.ordinal()];
+        }
     }
     
     /**
