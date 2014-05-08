@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Config>
+    <Sources>
+        <DataSource type="sparql">
+            <Param name="endpointUrl" value="http://localhost:8890/sparql" />
+            <Param name="minQueryInterval" value="1000" />
+            <Param name="sparqlResultMaxRows" value="100000" />
+        </DataSource>
+
+        <DataSource type="sparql">
+            <Param name="endpointUrl" value="http://localhost:8890/sparql" />
+            <Param name="minQueryInterval" value="1000" />
+            <Param name="sparqlResultMaxRows" value="100000" />
+        </DataSource>
+
+        <SameAsSource type="sparql">
+            <Param name="endpointUrl" value="http://localhost:8890/sparql" />
+            <ConstructQuery>CONSTRUCT {?s owl:sameAs ?o} WHERE { ?s owl:sameAs ?o }</ConstructQuery>
+        </SameAsSource>
+    </Sources>
+
+    <!-- Definition of data processing settings; (optional) -->
+    <DataProcessing>
+    </DataProcessing>
+
+    <!-- Definition of conflict resolution settings (optional) -->
+    <ConflictResolution>
+        <DefaultStrategy function="NONE">
+            <Param name="name" value="value"/>
+        </DefaultStrategy>
+    </ConflictResolution>
+
+    <Outputs>
+        <Output type="sparql">
+            <Param name="endpointUrl" value="http://localhost:8890/sparql-auth" />
+            <Param name="username" value="dba" />
+            <Param name="password" value="dba" />
+        </Output>
+    </Outputs>
+</Config>

@@ -334,6 +334,9 @@ public final class ConfigReader {
     
     private SeedResourceRestriction extractSeedResourceRestriction(SeedResourceRestrictionXml seedResourceRestrictionXml) {
         SparqlRestriction restriction = extractRestriction(seedResourceRestrictionXml, ConfigConstants.DEFAULT_RESTRICTION_RESOURCE_VAR);
+        if (restriction == null) {
+            return null;
+        }
         SeedResourceRestrictionImpl seedResourceRestriction = new SeedResourceRestrictionImpl(restriction.getPattern(), restriction.getVar());
         if (!ODCSUtils.isNullOrEmpty(seedResourceRestrictionXml.getTransitive())) {
             seedResourceRestriction.setTransitive(Boolean.parseBoolean(seedResourceRestrictionXml.getTransitive()));

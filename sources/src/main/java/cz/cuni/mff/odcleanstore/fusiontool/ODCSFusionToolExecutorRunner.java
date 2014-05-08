@@ -197,7 +197,7 @@ public class ODCSFusionToolExecutorRunner {
                     loader = new AllTriplesFileLoader(dataSourceConfig);
                 } else {
                     DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
-                    Integer maxRowsParam = tryParseInt(dataSourceConfig.getParams().get(ConfigParameters.PROCESSING_SPARQL_RESULT_MAX_ROWS));
+                    Integer maxRowsParam = tryParseInt(dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS));
                     int maxSparqlResultsSize = maxRowsParam == null ? ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS : maxRowsParam;
                     loader = new AllTriplesRepositoryLoader(dataSource, maxSparqlResultsSize);
                 }

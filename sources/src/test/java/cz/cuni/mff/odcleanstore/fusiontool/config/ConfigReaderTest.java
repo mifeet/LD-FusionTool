@@ -23,7 +23,7 @@ public class ConfigReaderTest {
     @Test
      public void parsesMinimalConfigFile() throws Exception {
         // Arrange
-        File configFile = getResourceFile("/sample-config-minimal.xml");
+        File configFile = getResourceFile("/config/sample-config-minimal.xml");
 
         // Act
         Config config = ConfigReader.parseConfigXml(configFile);
@@ -84,7 +84,7 @@ public class ConfigReaderTest {
     @Test
     public void parsesFullConfigFile() throws Exception {
         // Arrange
-        File configFile = getResourceFile("/sample-config-full.xml");
+        File configFile = getResourceFile("/config/sample-config-full.xml");
 
         // Act
         Config config = ConfigReader.parseConfigXml(configFile);
@@ -143,7 +143,7 @@ public class ConfigReaderTest {
         assertThat(config.getEnableFileCache(), equalTo(true));
         assertThat(config.isLocalCopyProcessing(), equalTo(true));
         assertThat(config.getSeedResourceRestriction().getVar(), equalTo("s"));
-        assertThat(config.getSeedResourceRestriction().isTransitive(), equalTo(false));
+        assertThat(config.getSeedResourceRestriction().isTransitive(), equalTo(true));
         assertThat(config.getSeedResourceRestriction().getPattern(), equalTo("?s rdf:type <http://purl.org/procurement/public-contracts#Contract>"));
 
         assertThat(config.getDefaultResolutionStrategy(), notNullValue());
@@ -197,10 +197,51 @@ public class ConfigReaderTest {
         assertThat(config.getMemoryLimit(), equalTo(null));
     }
 
+    @Test
+    public void parsesFullConfigFile2() throws Exception {
+        // Arrange
+        File configFile = getResourceFile("/config/sample-config-full2.xml");
+
+        // Act
+        Config config = ConfigReader.parseConfigXml(configFile);
+
+        // Assert
+        assertThat(config.getDataSources().size(), equalTo(2));
+        assertThat(config.getDataSources().get(0).getName(), nullValue());
+        assertThat(config.getDataSources().get(0).getType(), equalTo(EnumDataSourceType.SPARQL));
+        assertThat(config.getDataSources().get(0).getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS), equalTo("100000"));
+
+        assertThat(config.getDataSources().get(1).getName(), nullValue());
+        assertThat(config.getDataSources().get(1).getType(), equalTo(EnumDataSourceType.SPARQL));
+        assertThat(config.getDataSources().get(1).getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS), equalTo("100000"));
+
+        assertThat(config.getSameAsSources().size(), equalTo(1));
+        assertThat(config.getSameAsSources().get(0).getType(), equalTo(EnumDataSourceType.SPARQL));
+        assertThat(config.getSameAsSources().get(0).getName(), nullValue());
+        assertThat(config.getSameAsSources().get(0).getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT), equalTo("http://localhost:8890/sparql"));
+        assertThat(config.getSameAsSources().get(0).getConstructQuery().trim(), equalTo("CONSTRUCT {?s owl:sameAs ?o} WHERE { ?s owl:sameAs ?o }"));
+
+        assertThat(config.getSeedResourceRestriction(), nullValue());
+
+        assertThat(config.getDefaultResolutionStrategy(), notNullValue());
+        assertThat(config.getDefaultResolutionStrategy().getResolutionFunctionName(), equalTo("NONE"));
+        assertThat(config.getDefaultResolutionStrategy().getAggregationErrorStrategy(), nullValue());
+        assertThat(config.getDefaultResolutionStrategy().getCardinality(), nullValue());
+        assertThat(config.getDefaultResolutionStrategy().getParams(),
+                equalTo((Map<String, String>) ImmutableMap.of("name", "value")));
+
+        assertThat(config.getOutputs().size(), equalTo(1));
+        assertThat(config.getOutputs().get(0).getName(), nullValue());
+        assertThat(config.getOutputs().get(0).getType(), equalTo(EnumOutputType.SPARQL));
+        assertThat(config.getOutputs().get(0).getMetadataContext(), nullValue());
+        assertThat(config.getOutputs().get(0).getDataContext(), nullValue());
+        assertThat(config.getOutputs().get(0).getParams().size(), equalTo(3));
+    }
+
     @Test(expected = InvalidInputException.class)
     public void throwsInvalidInputExceptionWhenInputFileInvalid() throws Exception {
         // Arrange
-        File configFile = getResourceFile("/sample-config-invalid.xml");
+        File configFile = getResourceFile("/config/sample-config-invalid.xml");
 
         // Act
         ConfigReader.parseConfigXml(configFile);

@@ -1,22 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.TimeZone;
-
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.simpleframework.xml.core.PersistenceException;
-
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
@@ -25,6 +13,17 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.simpleframework.xml.core.PersistenceException;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * The main entry point of the application.
@@ -71,7 +70,7 @@ public final class ODCSFusionToolApplication {
     }
     
     private static String getUsage() {
-        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--only-conflicts] [--only-mapped] <config file>.xml";
+        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--only-conflicts] [--only-mapped] <xml config file>";
     }
 
     /**

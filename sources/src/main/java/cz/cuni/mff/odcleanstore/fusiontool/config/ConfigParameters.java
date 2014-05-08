@@ -17,11 +17,11 @@ public final class ConfigParameters {
     public static final String DATA_SOURCE_VIRTUOSO_USERNAME = "username";
     public static final String DATA_SOURCE_VIRTUOSO_PORT = "port";
     public static final String DATA_SOURCE_VIRTUOSO_HOST = "host";
+    public static final String DATA_SOURCE_SPARQL_RESULT_MAX_ROWS = "sparqlResultMaxRows".toLowerCase();
     public static final String PROCESSING_CANONICAL_URI_OUTPUT_FILE = "canonicalUriOutputFile";
     public static final String PROCESSING_CANONICAL_URI_INPUT_FILE = "canonicalUriInputFile";
     public static final String PROCESSING_ENABLE_FILE_CACHE = "enableFileCache";
     public static final String PROCESSING_MAX_OUTPUT_TRIPLES = "maxOutputTriples";
-    public static final String PROCESSING_SPARQL_RESULT_MAX_ROWS = "sparqlResultMaxRows".toLowerCase();
     public static final String PROCESSING_LOCAL_COPY_PROCESSING = "localCopyProcessing";
 
     /** Disable constructor for a utility class. */
