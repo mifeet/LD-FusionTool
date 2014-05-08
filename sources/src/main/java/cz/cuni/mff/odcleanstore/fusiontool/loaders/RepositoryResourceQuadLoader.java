@@ -210,7 +210,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
     @Override
     public void close() throws ODCSFusionToolException {
         try {
-        closeConnection();
+            closeConnection();
         } catch (RepositoryException e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
         }

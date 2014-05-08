@@ -269,13 +269,13 @@ public final class ConfigReader {
             output.getParams().put(key, value);
         }
         
-        String metadataContextString = output.getParams().get(Output.METADATA_CONTEXT_PARAM);
+        String metadataContextString = output.getParams().get(ConfigParameters.OUTPUT_METADATA_CONTEXT);
         if (metadataContextString != null) {
             URI context = convertToURI(metadataContextString, "metadataContext is not a valid URI for output " + output);
             output.setMetadataContext(context);
         }
         
-        String dataContextString = output.getParams().get(Output.DATA_CONTEXT_PARAM);
+        String dataContextString = output.getParams().get(ConfigParameters.OUTPUT_DATA_CONTEXT);
         if (dataContextString != null) {
             URI context = convertToURI(dataContextString, "dataContext is not a valid URI for output " + output);
             output.setDataContext(context);
@@ -287,17 +287,17 @@ public final class ConfigReader {
     private void validateOutputParam(String key, String value, Output output) throws InvalidInputException {
         switch (output.getType()) {
         case FILE:
-            if (Output.FORMAT_PARAM.equals(key)) {
+            if (ConfigParameters.OUTPUT_FORMAT.equals(key)) {
                 if (value == null) {
                     throw new InvalidInputException("Output format must be specified");
                 } else if (EnumSerializationFormat.parseFormat(value) == null) {
                     throw new InvalidInputException("Unknown output format '" + value + "' for output " + output);
                 }
-            } else if (Output.PATH_PARAM.equals(key)) {
+            } else if (ConfigParameters.OUTPUT_PATH.equals(key)) {
                 if (value == null) {
                     throw new InvalidInputException("Name of the output file must be specified");
                 }
-            } else if (Output.SPLIT_BY_MB_PARAM.equals(key)) {
+            } else if (ConfigParameters.OUTPUT_SPLIT_BY_MB.equals(key)) {
                 if (value != null) {
                     final String errorMessage = "Value of splitByMB for output " + output + " is not a positive number";
                     long numericValue = convertToLong(value, errorMessage);

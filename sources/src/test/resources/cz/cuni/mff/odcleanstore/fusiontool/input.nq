@@ -1,0 +1,29 @@
+# Test input
+# Triples that map to the same statement
+<http://sa> <http://pa> <http://oa> <http://g1> .
+<http://sb> <http://pb> <http://ob> <http://g1> .
+
+# Two identical triples
+<http://s1> <http://p1> <http://o1> <http://g1> .
+<http://s1> <http://p1> <http://o1> <http://g1> .
+
+# A conflict cluster with three values
+<http://s2> <http://p2> <http://o1> <http://g1> .
+<http://s2> <http://p2> <http://o2> <http://g2> .
+<http://s2> <http://p2> <http://o3> <http://g3> .
+
+# Resource description with two conflict clusters
+<http://s3> <http://p1> <http://o1> <http://g4> .
+<http://s3> <http://p2> <http://o2> <http://g5> .
+<http://s3> <http://p2> <http://o3> <http://g5> .
+
+# Resource description with mapped property and object and no named graph
+<http://s4> <http://pa> <http://o1> .
+<http://s4> <http://p1> <http://oa> .
+
+# Some additional triples
+<http://sa> <http://n1> "12.5" <http://ga> .
+<http://sa> <http://n1> "13.5" <http://gb> .
+<http://sa> <http://n1> "a" <http://gb> .
+_:x1 <http://p1> <http://o1> <http://g1> .
+_:x1 <http://p1> _:x1 <http://g1> .

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Config>
+    <Prefixes>
+        <Prefix id="rdf" namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
+        <Prefix id="rdfs" namespace="http://www.w3.org/2000/01/rdf-schema#" />
+        <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
+        <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
+    </Prefixes>
+    <Sources>
+        <DataSource type="file">
+            <Param name="path" value="input.nq" />
+            <Param name="baseuri" value="http://example.com" />
+            <Param name="format" value="nquads"/>
+        </DataSource>
+
+        <SameAsSource type="file">
+            <Param name="path" value="sameAs.ttl" />
+            <ConstructQuery>
+                CONSTRUCT {?s owl:sameAs ?o} WHERE { ?s owl:sameAs ?o }
+            </ConstructQuery>
+        </SameAsSource>
+    </Sources>
+
+    <DataProcessing>
+        <Param name="canonicalUriOutputFile" value="output/canonical.txt" />
+        <Param name="canonicalUriInputFile" value="canonical.txt" />
+        <Param name="enableFileCache" value="true" />
+        <Param name="localCopyProcessing" value="false" />
+        <SeedResourceRestriction var="s" transitive="true">
+            ?s ?p ?o
+        </SeedResourceRestriction>
+    </DataProcessing>
+
+    <ConflictResolution>
+        <DefaultStrategy function="ALL" cardinality="MANYVALUED" aggregationErrorStrategy="RETURN_ALL" />
+        <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED" aggregationErrorStrategy="IGNORE">
+            <Property id="http://n1" />
+        </ResolutionStrategy>
+    </ConflictResolution>
+
+    <Outputs>
+        <Output type="file">
+            <Param name="path" value="output/out.trig"/>
+            <Param name="format" value="trig"/>
+            <Param name="sameAsFile" value="output/sameAs.trig"/>
+            <Param name="metadataContext" value="http://opendata.cz/infrastructure/odcleanstore/metadata/" />
+        </Output>
+        <!-- TODO: start own Sesame endpoint -->
+    </Outputs>
+</Config>

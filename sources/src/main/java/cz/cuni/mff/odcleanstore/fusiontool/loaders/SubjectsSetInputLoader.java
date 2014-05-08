@@ -102,12 +102,23 @@ public class SubjectsSetInputLoader implements InputLoader {
     @Override
     public void close() throws ODCSFusionToolException {
         try {
-            subjectsQueue.close();
+            if (resourceQuadLoader != null) {
+                resourceQuadLoader.close();
+            }
+        } catch (ODCSFusionToolException e) {
+            LOG.error("Error closing subject queue in InputLoader", e);
+        }
+        try {
+            if (subjectsQueue != null) {
+                subjectsQueue.close();
+            }
         } catch (IOException e) {
             LOG.error("Error closing subject queue in InputLoader", e);
         }
         try {
-            initialSubjects.close();
+            if (initialSubjects != null) {
+                initialSubjects.close();
+            }
         } catch (IOException e) {
             LOG.error("Error closing initial subjects collection in InputLoader", e);
         }

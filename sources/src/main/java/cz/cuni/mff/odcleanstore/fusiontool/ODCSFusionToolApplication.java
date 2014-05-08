@@ -207,8 +207,8 @@ public final class ODCSFusionToolApplication {
         
         // Check output settings
         for (Output output : config.getOutputs()) {
-            if (output.getType() == EnumOutputType.FILE && output.getParams().get(Output.PATH_PARAM) != null) {
-                File fileLocation = new File(output.getParams().get(Output.PATH_PARAM));
+            if (output.getType() == EnumOutputType.FILE && output.getParams().get(ConfigParameters.OUTPUT_PATH) != null) {
+                File fileLocation = new File(output.getParams().get(ConfigParameters.OUTPUT_PATH));
                 if (fileLocation.exists() && !fileLocation.canWrite()) {
                     throw new InvalidInputException("Cannot write to output file " + fileLocation.getPath());
                 }

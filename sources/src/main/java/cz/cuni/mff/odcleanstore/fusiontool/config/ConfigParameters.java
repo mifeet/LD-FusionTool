@@ -23,6 +23,17 @@ public final class ConfigParameters {
     public static final String PROCESSING_ENABLE_FILE_CACHE = "enableFileCache";
     public static final String PROCESSING_MAX_OUTPUT_TRIPLES = "maxOutputTriples";
     public static final String PROCESSING_LOCAL_COPY_PROCESSING = "localCopyProcessing";
+    public static final String OUTPUT_PATH = "path";
+    public static final String OUTPUT_FORMAT = "format";
+    public static final String OUTPUT_SPLIT_BY_MB = "splitByMb".toLowerCase();
+    public static final String OUTPUT_DATA_CONTEXT = "dataContext".toLowerCase();
+    public static final String OUTPUT_METADATA_CONTEXT = "metadataContext".toLowerCase();
+    public static final String OUTPUT_HOST = "host";
+    public static final String OUTPUT_PORT = "port";
+    public static final String OUTPUT_USERNAME = "username";
+    public static final String OUTPUT_PASSWORD = "password";
+    public static final String OUTPUT_ENDPOINT_URL = "endpointUrl".toLowerCase();
+    public static final String OUTPUT_SAME_AS_FILE = "sameAsFile".toLowerCase();
 
     /** Disable constructor for a utility class. */
     private ConfigParameters() {

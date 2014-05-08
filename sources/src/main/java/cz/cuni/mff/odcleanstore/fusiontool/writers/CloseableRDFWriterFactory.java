@@ -3,6 +3,7 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
@@ -22,7 +23,14 @@ import org.openrdf.rio.trig.TriGWriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 /**
  * Factory class for {@link CloseableRDFWriter} instances.
@@ -51,28 +59,28 @@ public class CloseableRDFWriterFactory {
         case VIRTUOSO:
             return createVirtuosoOutput(
                     name,
-                    output.getParams().get(Output.HOST_PARAM),
-                    output.getParams().get(Output.PORT_PARAM),
-                    output.getParams().get(Output.USERNAME_PARAM),
-                    output.getParams().get(Output.PASSWORD_PARAM),
+                    output.getParams().get(ConfigParameters.OUTPUT_HOST),
+                    output.getParams().get(ConfigParameters.OUTPUT_PORT),
+                    output.getParams().get(ConfigParameters.OUTPUT_USERNAME),
+                    output.getParams().get(ConfigParameters.OUTPUT_PASSWORD),
                     dataContext,
                     metadataContext);
         case SPARQL:
             return createSparqlOutput(
                     name,
-                    output.getParams().get(Output.ENDPOINT_URL_PARAM),
-                    output.getParams().get(Output.USERNAME_PARAM),
-                    output.getParams().get(Output.PASSWORD_PARAM),
+                    output.getParams().get(ConfigParameters.OUTPUT_ENDPOINT_URL),
+                    output.getParams().get(ConfigParameters.OUTPUT_USERNAME),
+                    output.getParams().get(ConfigParameters.OUTPUT_PASSWORD),
                     dataContext,
                     metadataContext);
         case FILE:
-            String pathString = output.getParams().get(Output.PATH_PARAM);
+            String pathString = output.getParams().get(ConfigParameters.OUTPUT_PATH);
             File fileLocation = pathString != null ? new File(pathString) : null;
 
-            String formatString = output.getParams().get(Output.FORMAT_PARAM);
+            String formatString = output.getParams().get(ConfigParameters.OUTPUT_FORMAT);
             EnumSerializationFormat format = EnumSerializationFormat.parseFormat(formatString);
 
-            String splitByMBString = output.getParams().get(Output.SPLIT_BY_MB_PARAM);
+            String splitByMBString = output.getParams().get(ConfigParameters.OUTPUT_SPLIT_BY_MB);
             Long splitByMB = null;
             if (splitByMBString != null) {
                 final String errorMessage = "Value of splitByMB for output " + output.getName() + " is not a positive number";

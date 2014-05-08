@@ -10,6 +10,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
@@ -475,14 +476,14 @@ public class ODCSFusionToolExecutorRunner {
         try {
             // Create output writers
             for (Output output : outputs) {
-                if (output.getType() != EnumOutputType.FILE || output.getParams().get(Output.SAME_AS_FILE_PARAM) == null) {
+                if (output.getType() != EnumOutputType.FILE || output.getParams().get(ConfigParameters.OUTPUT_SAME_AS_FILE) == null) {
                     continue;
                 }
 
                 OutputImpl sameAsOutput = new OutputImpl(EnumOutputType.FILE, output.toString() + "-sameAs");
-                sameAsOutput.getParams().put(Output.PATH_PARAM, output.getParams().get(Output.SAME_AS_FILE_PARAM));
-                sameAsOutput.getParams().put(Output.FORMAT_PARAM, output.getParams().get(Output.FORMAT_PARAM));
-                sameAsOutput.getParams().put(Output.SPLIT_BY_MB_PARAM, output.getParams().get(Output.SPLIT_BY_MB_PARAM));
+                sameAsOutput.getParams().put(ConfigParameters.OUTPUT_PATH, output.getParams().get(ConfigParameters.OUTPUT_SAME_AS_FILE));
+                sameAsOutput.getParams().put(ConfigParameters.OUTPUT_FORMAT, output.getParams().get(ConfigParameters.OUTPUT_FORMAT));
+                sameAsOutput.getParams().put(ConfigParameters.OUTPUT_SPLIT_BY_MB, output.getParams().get(ConfigParameters.OUTPUT_SPLIT_BY_MB));
                 CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(sameAsOutput);
                 writers.add(writer);
                 writer.addNamespace("owl", OWL.NAMESPACE);

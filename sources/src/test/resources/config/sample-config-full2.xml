@@ -19,11 +19,9 @@
         </SameAsSource>
     </Sources>
 
-    <!-- Definition of data processing settings; (optional) -->
     <DataProcessing>
     </DataProcessing>
 
-    <!-- Definition of conflict resolution settings (optional) -->
     <ConflictResolution>
         <DefaultStrategy function="NONE">
             <Param name="name" value="value"/>
