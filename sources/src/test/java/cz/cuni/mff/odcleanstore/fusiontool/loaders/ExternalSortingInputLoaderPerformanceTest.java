@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
 
-import static cz.cuni.mff.odcleanstore.fusiontool.ODCSFTTestUtils.createHttpUri;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpUri;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 

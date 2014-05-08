@@ -5,8 +5,6 @@ import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.EmptyURIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
-import cz.cuni.mff.odcleanstore.fusiontool.ContextAwareStatementIsEqual;
-import cz.cuni.mff.odcleanstore.fusiontool.ODCSFTTestUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.openrdf.model.Statement;
@@ -17,11 +15,10 @@ import org.openrdf.rio.helpers.StatementCollector;
 
 import java.util.ArrayList;
 
-import static cz.cuni.mff.odcleanstore.fusiontool.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
-import static cz.cuni.mff.odcleanstore.fusiontool.ODCSFTTestUtils.*;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class ExternalSortingInputLoaderPreprocessorTest {
     public static final SpogComparator COMPARATOR = new SpogComparator();

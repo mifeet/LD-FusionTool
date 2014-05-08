@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool;
+package cz.cuni.mff.odcleanstore.fusiontool.testutil;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import org.openrdf.model.Statement;

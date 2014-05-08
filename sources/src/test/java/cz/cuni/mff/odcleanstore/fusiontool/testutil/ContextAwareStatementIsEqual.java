@@ -1,12 +1,10 @@
-package cz.cuni.mff.odcleanstore.fusiontool;
+package cz.cuni.mff.odcleanstore.fusiontool.testutil;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.openrdf.model.Statement;
-
-import java.lang.reflect.Array;
 
 /**
  * Tests {@link org.openrdf.model.Statement} for equality.
