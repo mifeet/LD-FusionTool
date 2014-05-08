@@ -1,7 +1,9 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
@@ -19,7 +21,13 @@ import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.openrdf.sail.memory.MemoryStore;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
@@ -29,17 +37,6 @@ import static org.junit.Assert.assertTrue;
 
 public class AllTriplesRepositoryLoaderTest {
     public static final SparqlRestrictionImpl EMPTY_SPARQL_RESTRICTION = new SparqlRestrictionImpl("", "338ae1bdf9_x");
-
-    // TODO: remove
-    @Test
-    public void testName() throws Exception {
-        // private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
-        //DataSourceConfig dataSourceConfig;
-        //Map<String, String> prefixes;
-        //DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, prefixes, REPOSITORY_FACTORY);
-        //
-        //dataSource.getRepository().shutDown();
-    }
 
     @Test
     public void loadsAllTriplesWhenNumberOfStatementsIsNotDivisibleByMaxResultSize() throws Exception {
@@ -55,7 +52,7 @@ public class AllTriplesRepositoryLoaderTest {
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesLoader loader = new AllTriplesRepositoryLoader(dataSource, 2);
+        AllTriplesLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -77,7 +74,7 @@ public class AllTriplesRepositoryLoaderTest {
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 2);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -94,7 +91,7 @@ public class AllTriplesRepositoryLoaderTest {
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 2);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -117,7 +114,7 @@ public class AllTriplesRepositoryLoaderTest {
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 100);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(100));
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -137,7 +134,7 @@ public class AllTriplesRepositoryLoaderTest {
         DataSource dataSource = createDataSource(statements);
 
         // Act
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 2);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
         loader.loadAllTriples((rdfHandler));
         loader.close();
 
@@ -161,7 +158,7 @@ public class AllTriplesRepositoryLoaderTest {
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 100);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(100));
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -178,11 +175,15 @@ public class AllTriplesRepositoryLoaderTest {
         DataSource dataSource = createDataSource(statements, EMPTY_SPARQL_RESTRICTION, new HashMap<String, String>(), "te<s>t");
 
         // Act
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, 100);
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(100));
         URI defaultContext = loader.getDefaultContext();
 
         // Assert
         assertTrue(ODCSUtils.isValidIRI(defaultContext.stringValue()));
+    }
+
+    private Map<String, String> createParams(int maxSparqlResultRows) {
+        return ImmutableMap.of(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS, Integer.toString(maxSparqlResultRows));
     }
 
     private DataSource createDataSource(Collection<Statement> statements) throws RepositoryException {

@@ -14,7 +14,11 @@ import org.mockito.Mockito;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.rio.*;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFWriter;
+import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.StatementCollector;
 
 import java.io.File;
@@ -132,6 +136,27 @@ public class AllTriplesFileLoaderTest {
 
         // Assert
         assertTrue(ODCSUtils.isValidIRI(defaultContext.stringValue()));
+    }
+
+    @Test
+    public void returnsBaseUriAsDefaultContextWhenGiven() throws Exception {
+        // Arrange
+        String baseUri = "http://baseuri";
+        Collection<Statement> statements = Collections.emptySet();
+        DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(
+                EnumDataSourceType.FILE,
+                "test-input-file" + testFileCounter.getAndIncrement() + ".input");
+        dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_BASE_URI, baseUri);
+        File inputFile = createInputFile(statements, EnumSerializationFormat.RDF_XML.toSesameFormat());
+        dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_PATH, inputFile.getAbsolutePath());
+        dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_FORMAT, EnumSerializationFormat.RDF_XML.name());
+
+        // Act
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSourceConfig);
+        URI defaultContext = loader.getDefaultContext();
+
+        // Assert
+        assertThat(defaultContext.toString(), equalTo(baseUri));
     }
 
     private DataSourceConfig createFileDataSource(Collection<Statement> statements, EnumSerializationFormat format) throws IOException, RDFHandlerException {

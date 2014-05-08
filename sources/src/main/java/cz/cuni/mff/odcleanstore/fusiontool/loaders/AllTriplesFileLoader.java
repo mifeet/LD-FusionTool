@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
@@ -9,7 +10,12 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.rio.*;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.RDFParser;
+import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +60,15 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
 
     @Override
     public URI getDefaultContext() {
+        String uri = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+        if (uri != null && ODCSUtils.isValidIRI(uri)) {
+            return VALUE_FACTORY.createURI(uri);
+        }
         String path = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
-        return path == null ? null : VALUE_FACTORY.createURI(new File(path).toURI().toString());
+        if (path != null) {
+            return VALUE_FACTORY.createURI(new File(path).toURI().toString());
+        }
+        return null;
     }
 
     private void parseFileDataSource(RDFHandler inputLoaderPreprocessor)

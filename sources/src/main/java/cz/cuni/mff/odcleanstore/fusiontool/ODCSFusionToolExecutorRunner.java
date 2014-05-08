@@ -10,8 +10,6 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
@@ -197,9 +195,7 @@ public class ODCSFusionToolExecutorRunner {
                     loader = new AllTriplesFileLoader(dataSourceConfig);
                 } else {
                     DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
-                    Integer maxRowsParam = tryParseInt(dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS));
-                    int maxSparqlResultsSize = maxRowsParam == null ? ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS : maxRowsParam;
-                    loader = new AllTriplesRepositoryLoader(dataSource, maxSparqlResultsSize);
+                    loader = new AllTriplesRepositoryLoader(dataSource, dataSourceConfig.getParams());
                 }
                 loaders.add(loader);
             } catch (ODCSFusionToolException e) {
@@ -542,18 +538,6 @@ public class ODCSFusionToolExecutorRunner {
             } catch (Exception e2) {
                 // ignore
             }
-        }
-    }
-
-    protected Integer tryParseInt(String str) { // TODO: refactor
-        if (str == null) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(str);
-        } catch (NumberFormatException e) {
-            LOG.error("'{}' is not a valid number");
-            return null;
         }
     }
 
