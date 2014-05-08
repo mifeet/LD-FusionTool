@@ -42,7 +42,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
 
-// TODO: mock file loader
 public class ExternalSortingInputLoaderTest {
     private static final ValueFactoryImpl VALUE_FACTORY = ValueFactoryImpl.getInstance();
     public static final SpogComparator SPOG_COMPARATOR = new SpogComparator();
@@ -120,9 +119,8 @@ public class ExternalSortingInputLoaderTest {
     public void iteratesOverAllStatementsWithAppliedUriMapping() throws Exception {
         // Act
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = null;
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());
@@ -202,9 +200,8 @@ public class ExternalSortingInputLoaderTest {
     public void resourceIsDescribedInSingleNextQuadsResult() throws Exception {
         // Act
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
-        ExternalSortingInputLoader inputLoader = null;
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -230,9 +227,8 @@ public class ExternalSortingInputLoaderTest {
         // Act
         final long maxMemory = 1;
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = null;
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), maxMemory, false);
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), maxMemory, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());
@@ -250,9 +246,8 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void worksOnEmptyStatements() throws Exception {
         // Act & assert
-        ExternalSortingInputLoader inputLoader = null;
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(Collections.<Statement>emptySet()), testDir.getRoot(), Long.MAX_VALUE, false);
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(Collections.<Statement>emptySet()), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
 
             assertFalse(inputLoader.hasNext());
@@ -264,10 +259,8 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void clearsTemporaryFilesWhenClosed() throws Exception {
         // Act
-        List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
-        ExternalSortingInputLoader inputLoader = null;
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
                 // call only once
@@ -285,7 +278,6 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void clearsTemporaryFilesOnError() throws Exception {
         // Act
-        List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         Exception caughtException = null;
         try {
@@ -317,9 +309,8 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void updateWithResolvedStatementsDoesNotThrowException() throws Exception {
         // Act
-        ExternalSortingInputLoader inputLoader = null;
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 Collection<Statement> statements = inputLoader.nextQuads();
@@ -333,17 +324,11 @@ public class ExternalSortingInputLoaderTest {
     }
 
     @Test
-    public void outputsMappedSubjectsOnly() throws Exception {
-        // TODO
-    }
-
-    @Test
     public void readsMultipleInputFiles() throws Exception {
         // Act
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = null;
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1, testInput2), testDir.getRoot(), Long.MAX_VALUE, false);
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1, testInput2), testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());

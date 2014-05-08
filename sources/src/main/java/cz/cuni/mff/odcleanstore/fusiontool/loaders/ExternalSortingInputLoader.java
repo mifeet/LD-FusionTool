@@ -180,9 +180,10 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     /** Read all inputs and write quads to a temporary file. */
     private void copyInputsToTempInputFile(URIMappingIterable uriMapping) throws ODCSFusionToolException {
+        Writer tempOutputWriter = null;
         try {
             tempInputFile = ODCSFusionToolUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
-            Writer tempOutputWriter = createTempFileWriter(tempInputFile, USE_GZIP);
+            tempOutputWriter = createTempFileWriter(tempInputFile, USE_GZIP);
             RDFWriter tempRdfWriter = Rio.createWriter(TEMP_FILE_SERIALIZATION, tempOutputWriter);
             ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor(
                     uriMapping,
@@ -208,6 +209,14 @@ public class ExternalSortingInputLoader implements InputLoader {
         } catch (Exception e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT,
                     "Error while writing quads to temporary file in input loader", e);
+        } finally {
+            if (tempOutputWriter != null) {
+                try {
+                    tempOutputWriter.close();
+                } catch (IOException e) {
+                    LOG.error("Error closing output writer", e);
+                }
+            }
         }
     }
 
