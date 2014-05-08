@@ -1,14 +1,13 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.writers;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import org.openrdf.rio.RDFHandler;
 
 import java.io.Closeable;
 import java.io.IOException;
-
-import org.openrdf.rio.RDFHandler;
-
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 
 /**
  * Implementation of {@link CloseableRDFWriter} writing to a given Sesame {@link RDFHandler} writing only triples

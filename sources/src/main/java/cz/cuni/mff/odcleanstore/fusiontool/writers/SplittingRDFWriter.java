@@ -1,21 +1,23 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.writers;
+
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
+import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
+import cz.cuni.mff.odcleanstore.fusiontool.io.SplitFileNameGenerator;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 
 /**
  * {@link CloseableRDFWriter} implementation which splits output across several files with the given maximum size.

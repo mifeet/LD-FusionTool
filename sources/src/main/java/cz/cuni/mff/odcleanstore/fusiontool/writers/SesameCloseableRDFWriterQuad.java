@@ -1,11 +1,10 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
-import java.io.Closeable;
-import java.io.IOException;
-
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -13,8 +12,8 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.RDFHandler;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * Implementation of {@link CloseableRDFWriter} writing to a given Sesame {@link RDFHandler} with support for named graphs. The

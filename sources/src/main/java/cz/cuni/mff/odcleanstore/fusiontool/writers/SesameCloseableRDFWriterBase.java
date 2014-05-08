@@ -1,17 +1,16 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Iterator;
-
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Iterator;
 
 
 /**

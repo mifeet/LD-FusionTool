@@ -19,6 +19,9 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.*;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.*;
+import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.writers.FederatedRDFWriter;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
@@ -45,7 +48,7 @@ import java.util.*;
 public class ODCSFusionToolExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolExecutor.class);
 
-    /** An instance of {@link CloseableRDFWriterFactory}. */
+    /** An instance of {@link cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory}. */
     protected static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory();
 
     /** An instance of {@link RepositoryFactory}. */
@@ -84,7 +87,7 @@ public class ODCSFusionToolExecutor {
      */
     public void runFusionTool() throws ODCSFusionToolException, IOException, ConflictResolutionException {
         InputLoader inputLoader = null;
-        List<CloseableRDFWriter> rdfWriters = null;
+        CloseableRDFWriter rdfWriter = null;
         resetProfilers();
         try {
             timeProfiler.startCounter(EnumProfilingCounters.INITIALIZATION);
@@ -103,14 +106,16 @@ public class ODCSFusionToolExecutor {
             ConflictResolver conflictResolver = createConflictResolver(metadata, uriMapping);
 
             // Initialize output writer
-            rdfWriters = createRDFWriters();
+            rdfWriter = createRDFWriter();
+            timeProfiler.stopAddCounter(EnumProfilingCounters.INITIALIZATION);
 
-            // Initialize triple counter
-            boolean checkMaxOutputTriples = config.getMaxOutputTriples() != null && config.getMaxOutputTriples() >= 0;
-            long maxOutputTriples = checkMaxOutputTriples ? config.getMaxOutputTriples() : -1;
+
+            Long maxOutputTriples = config.getMaxOutputTriples();
+
+            // Initialize triple counters
             long outputTriples = 0;
             long inputTriples = 0;
-            timeProfiler.stopAddCounter(EnumProfilingCounters.INITIALIZATION);
+            boolean checkMaxOutputTriples = maxOutputTriples != null && maxOutputTriples >= 0;
 
             // Load & process input quads
             timeProfiler.startCounter(EnumProfilingCounters.BUFFERING);
@@ -143,7 +148,7 @@ public class ODCSFusionToolExecutor {
 
                 // Write result to output
                 timeProfiler.startCounter(EnumProfilingCounters.OUTPUT_WRITING);
-                writeOutput(rdfWriters, resolvedQuads);
+                rdfWriter.writeResolvedStatements(resolvedQuads.iterator());
                 timeProfiler.stopAddCounter(EnumProfilingCounters.OUTPUT_WRITING);
 
                 memoryProfiler.capture();
@@ -157,10 +162,8 @@ public class ODCSFusionToolExecutor {
             writeSameAsLinks(uriMapping, config.getOutputs(), config.getPrefixes(), ValueFactoryImpl.getInstance());
             printProfilingInformation(timeProfiler, memoryProfiler);
         } finally {
-            if (rdfWriters != null) {
-                for (CloseableRDFWriter writer : rdfWriters) {
-                    writer.close();
-                }
+            if (rdfWriter != null) {
+                rdfWriter.close();
             }
             if (inputLoader != null) {
                 inputLoader.close();
@@ -300,19 +303,22 @@ public class ODCSFusionToolExecutor {
     }
 
     /**
-     * Creates and initializes output writers.
-     * @return output writers
+     * Creates and initializes output writer (which can be composed of multiple writers if multiple outputs are defined).
+     * @return output writer
      * @throws IOException I/O error
      * @throws ODCSFusionToolException configuration error
      */
-    protected List<CloseableRDFWriter> createRDFWriters() throws IOException, ODCSFusionToolException {
-        List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
+    protected CloseableRDFWriter createRDFWriter() throws IOException, ODCSFusionToolException {
+        List<CloseableRDFWriter> writers = new ArrayList<CloseableRDFWriter>(config.getOutputs().size());
         for (Output output : config.getOutputs()) {
             CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(output);
             writers.add(writer);
             writeNamespaceDeclarations(writer, config.getPrefixes());
         }
-        return writers;
+
+        return writers.size() == 1
+                ? writers.get(0)
+                : new FederatedRDFWriter(writers);
     }
 
     /**
@@ -378,18 +384,6 @@ public class ODCSFusionToolExecutor {
         preferredURIs.addAll(preferredCanonicalURIs);
 
         return preferredURIs;
-    }
-
-    /**
-     * Write resolved quads to output.
-     * @param rdfWriters list of data output writers
-     * @param resolvedQuads quads to be written
-     * @throws IOException I/O error
-     */
-    protected void writeOutput(List<CloseableRDFWriter> rdfWriters, Collection<ResolvedStatement> resolvedQuads) throws IOException {
-        for (CloseableRDFWriter writer : rdfWriters) {
-            writer.writeResolvedStatements(resolvedQuads.iterator());
-        }
     }
 
     /**

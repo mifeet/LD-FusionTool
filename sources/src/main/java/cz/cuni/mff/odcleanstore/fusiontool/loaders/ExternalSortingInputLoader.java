@@ -90,6 +90,9 @@ public class ExternalSortingInputLoader implements InputLoader {
             File cacheDirectory,
             long maxMemoryLimit,
             boolean outputMappedSubjectsOnly) {
+
+        ODCSFusionToolUtils.checkNotNull(dataSources);
+        ODCSFusionToolUtils.checkNotNull(cacheDirectory);
         this.dataSources = dataSources;
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         this.maxMemoryLimit = maxMemoryLimit;
@@ -99,6 +102,8 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException {
+        ODCSFusionToolUtils.checkNotNull(uriMapping);
+
         memoryLimit = calculateMemoryLimit();
         LOG.info("Initializing input loader, maximum memory limit is {} MB",
                 String.format("%,.2f", memoryLimit / (double) ODCSFusionToolUtils.MB_BYTES));

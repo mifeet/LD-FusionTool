@@ -1,15 +1,14 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
-
-import java.io.IOException;
-import java.util.Iterator;
-
-import org.openrdf.model.Statement;
+package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
+import org.openrdf.model.Statement;
+
+import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * RDF writer to which multiple triples can be written and which should be closed once it is no longer needed.

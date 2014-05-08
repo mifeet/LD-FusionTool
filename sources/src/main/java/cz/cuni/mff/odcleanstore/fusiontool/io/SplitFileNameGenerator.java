@@ -4,6 +4,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Generator of {@link File files} distinguished by suffixes. 
@@ -15,7 +16,7 @@ public class SplitFileNameGenerator {
     /** Separator of file name and appended suffix. */
     public static final String SUFFIX_SEPARATOR = "-";
     private final File baseFileName;
-    private int fileCount = 0;
+    private AtomicInteger fileCount = new AtomicInteger(0);
     
     /**
      * @param baseFileName base file to which distinguishing suffixes will be appended
@@ -30,20 +31,10 @@ public class SplitFileNameGenerator {
      * @return file with numeric suffix appended to base file
      */
     public File nextFile() {
-        return nextFile(Integer.toString(fileCount + 1));
-    }
-    
-    /**
-     * Returns next file with the given suffix appended to base file.
-     * The suffix is appended before file extension if there is one.
-     * @param suffix suffix to append to file name
-     * @return file with the given suffix appended to base file
-     */
-    public File nextFile(String suffix) {
-        fileCount++;
+        String suffix = Integer.toString(fileCount.incrementAndGet());
         return addFileNameSuffix(baseFileName, suffix);
     }
-    
+
     private static File addFileNameSuffix(File file, String suffix) {
         String originalName = file.getName();
         String newName;

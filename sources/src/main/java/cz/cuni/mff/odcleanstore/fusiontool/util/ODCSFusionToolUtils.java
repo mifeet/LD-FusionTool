@@ -111,4 +111,15 @@ public final class ODCSFusionToolUtils {
         LOG.debug("Creating temporary file {} in the working directory", file.getName());
         return file;
     }
+
+    /**
+     * Throw an exception if the given object is null.
+     * @param object object to test
+     * @throws NullPointerException if {@code object} is null
+     */
+    public static <T> void checkNotNull(T object) {
+        if (object == null) {
+            throw new NullPointerException();
+        }
+    }
 }
