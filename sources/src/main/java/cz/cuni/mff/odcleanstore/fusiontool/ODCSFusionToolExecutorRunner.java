@@ -174,12 +174,12 @@ public class ODCSFusionToolExecutorRunner {
     }
 
     private InputLoader getInputLoader() throws IOException, ODCSFusionToolException {
-        Collection<DataSource> dataSources = getDataSources();
         long memoryLimit = calculateMemoryLimit();
         if (config.isLocalCopyProcessing()) {
             Collection<AllTriplesLoader> allTriplesLoaders = getAllTriplesLoaders();
             return new ExternalSortingInputLoader(allTriplesLoaders, config.getTempDirectory(), memoryLimit, config.getOutputMappedSubjectsOnly());
         } else {
+            Collection<DataSource> dataSources = getDataSources();
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
             LargeCollectionFactory largeCollectionFactory = createLargeCollectionFactory();
             return (isTransitive)
@@ -563,7 +563,7 @@ public class ODCSFusionToolExecutorRunner {
      */
     protected long calculateMemoryLimit() {
         return Math.min(
-                config.getMemoryLimit(),
+                config.getMemoryLimit() != null ? config.getMemoryLimit() : Long.MAX_VALUE,
                 (long) (ExternalSort.estimateAvailableMemory() * config.getMaxFreeMemoryUsage()));
     }
 
