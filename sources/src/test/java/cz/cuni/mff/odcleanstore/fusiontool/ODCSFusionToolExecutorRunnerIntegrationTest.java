@@ -1,6 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
 import com.google.common.collect.Sets;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
@@ -26,6 +27,7 @@ import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -84,8 +86,13 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         }
 
         // Assert - output
-        Model dataOutput = parseModel(outputFile, RDFFormat.TRIG);
-
+        Statement[] dataOutput = parseStatements(outputFile, RDFFormat.TRIG).toArray(new Statement[0]);
+        Statement[] expectedOutput = parseStatements(new File(resourceDir, "expectedOutput.trig"), RDFFormat.TRIG).toArray(new Statement[0]);
+        assertThat(dataOutput.length, equalTo(expectedOutput.length));
+        for (int i = 0; i < dataOutput.length; i++) {
+            assertThat(dataOutput[i], equalTo(expectedOutput[i]));
+            assertThat(dataOutput[i].getContext(), equalTo(expectedOutput[i].getContext()));
+        }
     }
 
     private Set<String> parseCanonicalUris(File file) throws IOException {
@@ -118,15 +125,13 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         return new File(testDir.getRoot(), path);
     }
 
-    private HashSet<Statement> parseStatements(File sameAsFile, RDFFormat rdfFormat) throws IOException, RDFParseException {
-        Model model = parseModel(sameAsFile, rdfFormat);
-        return Sets.newHashSet(model.iterator());
-    }
-
-    private Model parseModel(File sameAsFile, RDFFormat rdfFormat) throws IOException, RDFParseException {
-        return Rio.parse(
+    private TreeSet<Statement> parseStatements(File sameAsFile, RDFFormat rdfFormat) throws IOException, RDFParseException {
+        Model model = Rio.parse(
                 new FileInputStream(sameAsFile),
                 sameAsFile.toURI().toString(),
                 rdfFormat);
+        TreeSet<Statement> result = Sets.newTreeSet(new SpogComparator());
+        result.addAll(model);
+        return result;
     }
 }

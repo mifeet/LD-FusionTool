@@ -9,7 +9,7 @@
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
 	<http://opendata.cz/infrastructure/odcleanstore/CR/results/1> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+		odcs:sourceGraph <http://g1> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/2> {
@@ -18,7 +18,7 @@
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
 	<http://opendata.cz/infrastructure/odcleanstore/CR/results/2> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+		odcs:sourceGraph <http://g1> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/3> {
@@ -27,7 +27,7 @@
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
 	<http://opendata.cz/infrastructure/odcleanstore/CR/results/3> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+		odcs:sourceGraph <http://g2> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/4> {
@@ -36,7 +36,7 @@
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
 	<http://opendata.cz/infrastructure/odcleanstore/CR/results/4> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+		odcs:sourceGraph <http://g3> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/5> {
@@ -45,7 +45,7 @@
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
 	<http://opendata.cz/infrastructure/odcleanstore/CR/results/5> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+		odcs:sourceGraph <http://g4> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/6> {
@@ -54,7 +54,7 @@
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
 	<http://opendata.cz/infrastructure/odcleanstore/CR/results/6> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+		odcs:sourceGraph <http://g5> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/7> {
@@ -63,50 +63,23 @@
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
 	<http://opendata.cz/infrastructure/odcleanstore/CR/results/7> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+		odcs:sourceGraph <http://g5> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/8> {
-	<http://s4> <http://p1> <http://ox> .
+	<http://sx> <http://n1> "13.0"^^<http://www.w3.org/2001/XMLSchema#double> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
-	<http://opendata.cz/infrastructure/odcleanstore/CR/results/8> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+	<http://opendata.cz/infrastructure/odcleanstore/CR/results/8> odcs:quality "0.32050807744481435"^^<http://www.w3.org/2001/XMLSchema#double> ;
+		odcs:sourceGraph <http://gb> , <http://ga> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/9> {
-	<http://s4> <http://px> <http://o1> .
-}
-
-<http://opendata.cz/infrastructure/odcleanstore/metadata/> {
-	<http://opendata.cz/infrastructure/odcleanstore/CR/results/9> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
-}
-
-<http://opendata.cz/infrastructure/odcleanstore/CR/results/10> {
-	<http://sx> <http://p1> "12.5" .
-}
-
-<http://opendata.cz/infrastructure/odcleanstore/metadata/> {
-	<http://opendata.cz/infrastructure/odcleanstore/CR/results/10> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
-}
-
-<http://opendata.cz/infrastructure/odcleanstore/CR/results/11> {
-	<http://sx> <http://p1> "13.5" .
-}
-
-<http://opendata.cz/infrastructure/odcleanstore/metadata/> {
-	<http://opendata.cz/infrastructure/odcleanstore/CR/results/11> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
-}
-
-<http://opendata.cz/infrastructure/odcleanstore/CR/results/12> {
 	<http://sx> <http://px> <http://ox> .
 }
 
 <http://opendata.cz/infrastructure/odcleanstore/metadata/> {
-	<http://opendata.cz/infrastructure/odcleanstore/CR/results/12> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://example.com> .
+	<http://opendata.cz/infrastructure/odcleanstore/CR/results/9> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
+		odcs:sourceGraph <http://g1> .
 }
