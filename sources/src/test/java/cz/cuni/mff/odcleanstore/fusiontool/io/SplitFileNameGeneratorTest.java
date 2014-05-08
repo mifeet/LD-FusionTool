@@ -21,7 +21,7 @@ public class SplitFileNameGeneratorTest {
     public void generatesNamesWhenFileWithExtensionGiven() throws Exception {
         // Arrange
         File file = new File(directory, "abc.txt");
-        String pathPrefix = file.getAbsolutePath() + File.separatorChar;
+        String pathPrefix = directory.getAbsolutePath() + File.separatorChar;
 
         // Act && assert
         SplitFileNameGenerator generator = new SplitFileNameGenerator(file);

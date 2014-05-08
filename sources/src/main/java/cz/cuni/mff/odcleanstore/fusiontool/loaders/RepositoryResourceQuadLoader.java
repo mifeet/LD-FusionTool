@@ -117,7 +117,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
             restriction = EMPTY_RESTRICTION;
         }
         
-        List<String> alternativeURIs = alternativeURINavigator.listAlternativeURIs(uri);
+        List<String> alternativeURIs = alternativeURINavigator.listAlternativeUris(uri);
         if (alternativeURIs.size() <= 1) {
             String query = formatQuery(QUADS_QUERY_SIMPLE, restriction, uri);
             try {

@@ -92,12 +92,17 @@ public final class ConfigConstants {
     /**
      * Default directory for temporary files.
      */
-    public static final File WORKING_DIRECTORY = new File(".");
+    public static final File TEMP_DIRECTORY = new File(".");
 
     /**
      * Maximum number of rows to be requested in any SPARQL query.
      * Use Virtuoso Default
      */
-    public static final int DEFAULT_SPARQL_RESULT_MAX_ROWS = 100000; // TODO: load from configuration
+    public static final int DEFAULT_SPARQL_RESULT_MAX_ROWS = 100000;
+
+    /**
+     * Max portion of free memory to use.
+     */
+    public static final float MAX_FREE_MEMORY_USAGE = 0.8f;
 }
 

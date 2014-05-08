@@ -161,7 +161,7 @@ public interface Config {
      * Directory for temporary files.
      * @return directory for temporary files.
      */
-    File getWorkingDirectory();
+    File getTempDirectory();
 
     /**
      * Maximum number of rows to be requested in any SPARQL query.
@@ -174,4 +174,18 @@ public interface Config {
      * @return true iff data should be pre-downloaded to a local file
      */
     boolean isLocalCopyProcessing();
+
+
+    /**
+     * Maximum memory amount to use for large operations.
+     * Null means no limit.
+     * If the limit is too high, it may cause OutOfMemory exceptions.
+     * @return memory limit in bytes or null for no limit
+     */
+    Long getMemoryLimit();
+
+    /**
+     * Max portion of free memory to use.
+     */
+    float getMaxFreeMemoryUsage();
 }

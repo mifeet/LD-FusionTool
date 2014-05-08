@@ -58,17 +58,17 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
 
     private RepositoryConnection connection;
     private final DataSource dataSource;
-    private final int maxResultsSize;
+    private final int maxSparqlResultsSize;
 
     /**
      * Creates a new instance.
      * @param dataSource an initialized data source
-     * @param maxResultsSize maximum number of triples to be returned in a single query (LIMIT clause)
+     * @param maxSparqlResultsSize maximum number of triples to be returned in a single query (LIMIT clause)
      */
-    public AllTriplesRepositoryLoader(DataSource dataSource, int maxResultsSize) {
+    public AllTriplesRepositoryLoader(DataSource dataSource, int maxSparqlResultsSize) {
         super(dataSource);
         this.dataSource = dataSource;
-        this.maxResultsSize = maxResultsSize;
+        this.maxSparqlResultsSize = maxSparqlResultsSize;
     }
 
     @Override
@@ -79,8 +79,8 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
             rdfHandler.startRDF();
             SparqlRestriction restriction = getSparqlRestriction();
             int loadedQuads = Integer.MAX_VALUE;
-            for (int offset = 0; loadedQuads >= maxResultsSize; offset += maxResultsSize) {
-                query = formatQuery(LOAD_SPARQL_QUERY, restriction, maxResultsSize, offset);
+            for (int offset = 0; loadedQuads >= maxSparqlResultsSize; offset += maxSparqlResultsSize) {
+                query = formatQuery(LOAD_SPARQL_QUERY, restriction, maxSparqlResultsSize, offset);
                 long startTime = System.currentTimeMillis();
                 loadedQuads = addQuadsFromQuery(query, rdfHandler);
                 if (LOG.isTraceEnabled()) {

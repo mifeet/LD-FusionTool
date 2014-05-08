@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
+import com.google.code.externalsorting.ExternalSort;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory.ConflictResolverBuilder;
@@ -126,13 +127,44 @@ public class ODCSFusionToolExecutorRunner {
 
     private InputLoader getInputLoader() throws IOException, ODCSFusionToolException {
         Collection<DataSource> dataSources = getDataSources();
-        UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
-        LargeCollectionFactory largeCollectionFactory = createLargeCollectionFactory();
-        if (isTransitive) {
-            return new TransitiveSubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
+        long memoryLimit = calculateMemoryLimit();
+        if (config.isLocalCopyProcessing()) {
+            Collection<AllTriplesLoader> allTriplesLoaders = getAllTriplesLoaders();
+            return new ExternalSortingInputLoader(allTriplesLoaders, config.getTempDirectory(), memoryLimit, config.getOutputMappedSubjectsOnly());
         } else {
-            return new SubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
+            UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
+            LargeCollectionFactory largeCollectionFactory = createLargeCollectionFactory();
+            return (isTransitive)
+                ? new TransitiveSubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly())
+                : new SubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
         }
+    }
+
+    protected Collection<AllTriplesLoader> getAllTriplesLoaders() throws ODCSFusionToolException {
+        List<AllTriplesLoader> loaders = new ArrayList<AllTriplesLoader>(config.getDataSources().size());
+        for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
+            try {
+                AllTriplesLoader loader;
+                if (dataSourceConfig.getType() == EnumDataSourceType.FILE) {
+                    loader = new AllTriplesFileLoader(dataSourceConfig);
+                } else {
+                    DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
+                    loader = new AllTriplesRepositoryLoader(dataSource, config.getSparqlResultMaxRows());
+                }
+                loaders.add(loader);
+            } catch (ODCSFusionToolException e) {
+                // clean up already initialized loaders
+                for (AllTriplesLoader initializedLoader : loaders) {
+                    try {
+                        initializedLoader.close();
+                    } catch (Exception e2) {
+                        // ignore
+                    }
+                }
+                throw e;
+            }
+        }
+        return loaders;
     }
 
     /**
@@ -141,7 +173,7 @@ public class ODCSFusionToolExecutorRunner {
      * @throws ODCSFusionToolException I/O error
      */
     protected Collection<DataSource> getDataSources() throws ODCSFusionToolException {
-        List<DataSource> dataSources = new ArrayList<DataSource>();
+        List<DataSource> dataSources = new ArrayList<DataSource>(config.getDataSources().size());
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
                 DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
@@ -249,7 +281,7 @@ public class ODCSFusionToolExecutorRunner {
      */
     protected LargeCollectionFactory createLargeCollectionFactory() throws IOException {
         if (config.getEnableFileCache()) {
-            return new MapdbCollectionFactory(config.getWorkingDirectory());
+            return new MapdbCollectionFactory(config.getTempDirectory());
         } else {
             return new MemoryCollectionFactory();
         }
@@ -457,6 +489,16 @@ public class ODCSFusionToolExecutorRunner {
             }
         }
         return false;
+    }
+
+    /**
+     * Calculates maximum memory limit available for data structures.
+     * @return memory limit in bytes
+     */
+    protected long calculateMemoryLimit() {
+        return Math.min(
+                config.getMemoryLimit(),
+                (long) (ExternalSort.estimateAvailableMemory() * config.getMaxFreeMemoryUsage()));
     }
 
     /**

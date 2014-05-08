@@ -3,15 +3,11 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.urimapping;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class for listing of alternative URIs based on a given mapping of URIs to canonical URIs.
- * When {@link #listAlternativeURIs(String)} is called for the first time, the map of alternative 
+ * When {@link #listAlternativeUris(String)} is called for the first time, the map of alternative
  * URIs is build in O(N log N) time and O(N) space where N is number of mapped URIs.
  * 
  * @author Jan Michelfeit
@@ -31,28 +27,40 @@ public class AlternativeURINavigator {
     
     /**
      * Returns iterator over all URIs that map to the same canonical URIs.
-     * First call of this method has O(N log N) complexity (N is number of mapped URIs).
+     * First call of this method may have O(N log N) complexity (N is number of mapped URIs).
      * @param uri URI
      * @return iterator over alternative URIs
      */
-    public List<String> listAlternativeURIs(String uri) {
+    public List<String> listAlternativeUris(String uri) {
         String canonicalURI = uriMapping.getCanonicalURI(uri);
-        List<String> alternativeURIs = getAlternativeURIMap().get(canonicalURI);
+        List<String> alternativeURIs = getAlternativeUriMap().get(canonicalURI);
         if (alternativeURIs == null) {
             return Collections.singletonList(uri);
         } else {
             return alternativeURIs;
         }
     }
+
+    /**
+     * Indicates whether there exist other distinct URIs that map to the same canonical URIs as {@code uri}.
+     * First call of this method may have O(N log N) complexity (N is number of mapped URIs).
+     * @param uri URI
+     * @return iterator over alternative URIs
+     */
+    public boolean hasAlternativeUris(String uri) {
+        String canonicalURI = uriMapping.getCanonicalURI(uri);
+        List<String> alternativeURIs = getAlternativeUriMap().get(canonicalURI);
+        return alternativeURIs != null && alternativeURIs.size() > 1;
+    }
     
-    private Map<String, List<String>> getAlternativeURIMap() {
+    private Map<String, List<String>> getAlternativeUriMap() {
         if (alternativeURIMap == null) {
-            alternativeURIMap = findAlternativeURIs();
+            alternativeURIMap = findAlternativeUris();
         }
         return alternativeURIMap;
     }
 
-    private Map<String, List<String>> findAlternativeURIs() {
+    private Map<String, List<String>> findAlternativeUris() {
         HashMap<String, List<String>> alternativeURIMap = new HashMap<String, List<String>>();
 
         for (String mappedURI : uriMapping) {

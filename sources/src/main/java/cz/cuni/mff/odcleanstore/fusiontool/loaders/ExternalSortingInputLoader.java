@@ -57,11 +57,6 @@ public class ExternalSortingInputLoader implements InputLoader {
     public static final int GZIP_BUFFER_SIZE = 2048;
 
     /**
-     * Max portion of free memory to use.
-     */
-    private static final float MAX_FREE_MEMORY_USAGE = 0.8f;
-
-    /**
      * Comparator used for statement preprocessing.
      * Comparing by subject (and predicate) would be enough but sorting by spog
      * alleviates the string-based external sort.
@@ -72,15 +67,15 @@ public class ExternalSortingInputLoader implements InputLoader {
     private final Collection<AllTriplesLoader> dataSources;
     private final boolean outputMappedSubjectsOnly; // TODO
     private final File cacheDirectory;
-    private final long maxMemoryLimit;
+    private final Long maxMemoryLimit;
 
     private File tempSortedFile = null;
     private File tempInputFile = null;
     private NQuadsParserIterator quadIterator;
-    private long memoryLimit = -1;
 
     /**
-     * @param maxMemoryLimit maximum memory amount to use for large operations
+     * @param maxMemoryLimit maximum memory amount to use for large operations;
+     *      if the limit is too high, it may cause OutOfMemory exceptions
      * @param cacheDirectory directory for temporary files
      * @param dataSources initialized {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.AllTriplesLoader} loaders
      * @param outputMappedSubjectsOnly see {@link cz.cuni.mff.odcleanstore.fusiontool.config.Config#getOutputMappedSubjectsOnly()}
@@ -103,10 +98,11 @@ public class ExternalSortingInputLoader implements InputLoader {
     @Override
     public void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException {
         ODCSFusionToolUtils.checkNotNull(uriMapping);
+        LOG.info("Initializing input loader");
+        if (maxMemoryLimit < Long.MAX_VALUE) {
+            LOG.info("  maximum memory limit is {} MB", String.format("%,.2f", maxMemoryLimit / (double) ODCSFusionToolUtils.MB_BYTES));
+        }
 
-        memoryLimit = calculateMemoryLimit();
-        LOG.info("Initializing input loader, maximum memory limit is {} MB",
-                String.format("%,.2f", memoryLimit / (double) ODCSFusionToolUtils.MB_BYTES));
         try {
             copyInputsToTempInputFile(uriMapping);
             sortTempInputFileToTempSortedFile();
@@ -116,7 +112,6 @@ public class ExternalSortingInputLoader implements InputLoader {
             closeOnException();
             throw e;
         }
-        // TODO: if all quads fit into memory, do not write do disc at all
     }
 
     @Override
@@ -130,12 +125,12 @@ public class ExternalSortingInputLoader implements InputLoader {
             }
             ArrayList<Statement> result = new ArrayList<Statement>();
             Statement first = quadIterator.next();
-            result.add(first);
             Resource firstSubject = first.getSubject();
+            result.add(first);
             while (quadIterator.hasNext() && quadIterator.peek().getSubject().equals(firstSubject)) {
                 result.add(quadIterator.next());
             }
-            LOG.debug("Loaded {} quads for resource <{}>", result.size(), first.getSubject());
+            LOG.debug("Loaded {} quads for resource <{}>", result.size(), firstSubject);
             return result;
         } catch (Exception e) {
             closeOnException();
@@ -194,7 +189,7 @@ public class ExternalSortingInputLoader implements InputLoader {
                     uriMapping,
                     tempRdfWriter,
                     VALUE_FACTORY,
-                    memoryLimit,
+                    maxMemoryLimit,
                     ORDER_COMPARATOR);
 
             tempRdfWriter.startRDF();
@@ -232,7 +227,7 @@ public class ExternalSortingInputLoader implements InputLoader {
                     tempInputFile.length(),
                     comparator,
                     MAX_SORT_TMP_FILES,
-                    memoryLimit,
+                    maxMemoryLimit,
                     CHARSET,
                     cacheDirectory,
                     true,
@@ -287,12 +282,6 @@ public class ExternalSortingInputLoader implements InputLoader {
         tempInputFile = null;
     }
 
-    private long calculateMemoryLimit() {
-        return Math.min( // TODO: move outside
-                maxMemoryLimit,
-                (long) (ExternalSort.estimateAvailableMemory() * MAX_FREE_MEMORY_USAGE));
-    }
-
     private void closeOnException() {
         try {
             close(); // clean up temporary files just in case the caller doesn't call close() on exception
@@ -300,5 +289,4 @@ public class ExternalSortingInputLoader implements InputLoader {
             // ignore
         }
     }
-
 }

@@ -34,25 +34,14 @@ public class ConfigReaderTest {
         assertThat(config.getDefaultResolutionStrategy().getCardinality(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getParams(), notNullValue());
         assertThat(config.getEnableFileCache(), equalTo(false));
-        assertThat(config.getMaxDateDifference(), equalTo(ConfigConstants.MAX_DATE_DIFFERENCE));
         assertThat(config.getMaxOutputTriples(), nullValue());
         assertThat(config.getMetadataSources(), equalTo(Collections.<ConstructSourceConfig>emptyList()));
         assertThat(config.getSameAsSources().size(), equalTo(0));
-        assertThat(config.getOutputConflictsOnly(), equalTo(false));
-        assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
-        assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
         assertThat(config.getPrefixes(), equalTo(Collections.<String, String>emptyMap()));
-        assertThat(config.getWorkingDirectory(), equalTo(ConfigConstants.WORKING_DIRECTORY));
         assertThat(config.getSparqlResultMaxRows(), equalTo(100000)); // Virtuoso default
         assertThat(config.getSeedResourceRestriction(), nullValue());
-        assertThat(config.getResultDataURIPrefix(), notNullValue());
-        assertThat(config.getPublisherScoreWeight(), equalTo(ConfigConstants.PUBLISHER_SCORE_WEIGHT));
-        assertThat(config.getAgreeCoefficient(), equalTo(ConfigConstants.AGREE_COEFFICIENT));
-        assertThat(config.getQueryTimeout(), equalTo(ConfigConstants.DEFAULT_QUERY_TIMEOUT));
-        assertThat(config.getScoreIfUnknown(), equalTo(ConfigConstants.SCORE_IF_UNKNOWN));
         assertThat(config.getPropertyResolutionStrategies(), equalTo(Collections.<URI, ResolutionStrategy>emptyMap()));
         assertThat(config.isLocalCopyProcessing(), equalTo(false));
-        assertThat(config.isProfilingOn(), equalTo(false));
 
         assertThat(config.getDataSources().size(), equalTo(1));
         DataSourceConfig dataSourceConfig = config.getDataSources().get(0);
@@ -73,6 +62,20 @@ public class ConfigReaderTest {
         assertThat(output.getName(), nullValue());
         assertThat(output.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH), equalTo("out.n3"));
         assertThat(output.getParams().get(ConfigParameters.DATA_SOURCE_FILE_FORMAT), equalTo("ntriples"));
+
+        assertThat(config.getMaxDateDifference(), equalTo(ConfigConstants.MAX_DATE_DIFFERENCE));
+        assertThat(config.getOutputConflictsOnly(), equalTo(false));
+        assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
+        assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
+        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.TEMP_DIRECTORY));
+        assertThat(config.getResultDataURIPrefix(), notNullValue());
+        assertThat(config.getPublisherScoreWeight(), equalTo(ConfigConstants.PUBLISHER_SCORE_WEIGHT));
+        assertThat(config.getAgreeCoefficient(), equalTo(ConfigConstants.AGREE_COEFFICIENT));
+        assertThat(config.getQueryTimeout(), equalTo(ConfigConstants.DEFAULT_QUERY_TIMEOUT));
+        assertThat(config.getScoreIfUnknown(), equalTo(ConfigConstants.SCORE_IF_UNKNOWN));
+        assertThat(config.isProfilingOn(), equalTo(false));
+        assertThat(config.getMaxFreeMemoryUsage(), equalTo(ConfigConstants.MAX_FREE_MEMORY_USAGE));
+        assertThat(config.getMemoryLimit(), equalTo(null));
     }
 
     @Test
@@ -177,13 +180,15 @@ public class ConfigReaderTest {
         assertThat(config.getOutputConflictsOnly(), equalTo(false));
         assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
         assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
-        assertThat(config.getWorkingDirectory(), equalTo(ConfigConstants.WORKING_DIRECTORY));
+        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.TEMP_DIRECTORY));
         assertThat(config.getResultDataURIPrefix(), notNullValue());
         assertThat(config.getPublisherScoreWeight(), equalTo(ConfigConstants.PUBLISHER_SCORE_WEIGHT));
         assertThat(config.getAgreeCoefficient(), equalTo(ConfigConstants.AGREE_COEFFICIENT));
         assertThat(config.getQueryTimeout(), equalTo(ConfigConstants.DEFAULT_QUERY_TIMEOUT));
         assertThat(config.getScoreIfUnknown(), equalTo(ConfigConstants.SCORE_IF_UNKNOWN));
         assertThat(config.isProfilingOn(), equalTo(false));
+        assertThat(config.getMaxFreeMemoryUsage(), equalTo(ConfigConstants.MAX_FREE_MEMORY_USAGE));
+        assertThat(config.getMemoryLimit(), equalTo(null));
     }
 
     private File getResourceFile(String resourcePath) {

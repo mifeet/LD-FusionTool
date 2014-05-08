@@ -32,6 +32,7 @@ public class ConfigImpl implements Config {
     private boolean outputConflictsOnly = false;
     private boolean outputMappedSubjectsOnly = false;
     private boolean isLocalCopyProcessing = false;
+    private Long memoryLimit = null;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -284,6 +285,19 @@ public class ConfigImpl implements Config {
     }
 
     @Override
+    public Long getMemoryLimit() {
+        return memoryLimit;
+    }
+
+    /**
+     * Sets value for {@link #getMemoryLimit()}.
+     * @param memoryLimit see {@link #getMemoryLimit()}
+     */
+    public void setMemoryLimit(Long memoryLimit) {
+        this.memoryLimit = memoryLimit;
+    }
+
+    @Override
     public Integer getQueryTimeout() {
         return ConfigConstants.DEFAULT_QUERY_TIMEOUT;
     }
@@ -314,8 +328,13 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public File getWorkingDirectory() {
-        return ConfigConstants.WORKING_DIRECTORY;
+    public File getTempDirectory() {
+        return ConfigConstants.TEMP_DIRECTORY;
+    }
+
+    @Override
+    public float getMaxFreeMemoryUsage() {
+        return ConfigConstants.MAX_FREE_MEMORY_USAGE;
     }
 }
 
