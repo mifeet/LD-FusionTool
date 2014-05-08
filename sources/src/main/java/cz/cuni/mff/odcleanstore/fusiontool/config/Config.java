@@ -164,12 +164,6 @@ public interface Config {
     File getTempDirectory();
 
     /**
-     * Maximum number of rows to be requested in any SPARQL query.
-     * @return maximum number of rows to be requested
-     */
-    int getSparqlResultMaxRows();
-
-    /**
      * Indicates whether data should be downloaded to a local file prior to processing.
      * @return true iff data should be pre-downloaded to a local file
      */

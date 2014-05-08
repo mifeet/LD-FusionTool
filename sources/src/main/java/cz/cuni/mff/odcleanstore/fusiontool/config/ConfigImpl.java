@@ -5,7 +5,12 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import org.openrdf.model.URI;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Container of configuration values.
@@ -22,7 +27,6 @@ public class ConfigImpl implements Config {
     private Map<String, String> prefixes = new HashMap<String, String>();
     private ResolutionStrategy defaultResolutionStrategy = new ResolutionStrategyImpl();
     private Map<URI, ResolutionStrategy> propertyResolutionStrategies = new HashMap<URI, ResolutionStrategy>();
-    private int sparqlResultMaxRows = ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS;
 
     private File canonicalURIsOutputFile = null;
     private File canonicalURIsInputFile;
@@ -256,19 +260,6 @@ public class ConfigImpl implements Config {
      */
     public void setOutputMappedSubjectsOnly(boolean outputMappedSubjectsOnly) {
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
-    }
-
-    @Override
-    public int getSparqlResultMaxRows() {
-        return sparqlResultMaxRows;
-    }
-
-    /**
-     * Sets value for {@link #getSparqlResultMaxRows()}.
-     * @param sparqlResultMaxRows see {@link #getSparqlResultMaxRows()}
-     */
-    public void setSparqlResultMaxRows(int sparqlResultMaxRows) {
-        this.sparqlResultMaxRows = sparqlResultMaxRows;
     }
 
     @Override

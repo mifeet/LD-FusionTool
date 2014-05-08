@@ -6,7 +6,18 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.xml.*;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConfigXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConflictResolutionXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ConstructSourceXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.DataSourceXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.OutputXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ParamXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.PrefixXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.PropertyResolutionStrategyXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.PropertyXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.ResolutionStrategyXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.RestrictionXml;
+import cz.cuni.mff.odcleanstore.fusiontool.config.xml.SeedResourceRestrictionXml;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
@@ -17,7 +28,11 @@ import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Reads the XML configuration file and produces instances of configuration in a {@link Config} instance.
@@ -185,9 +200,6 @@ public final class ConfigReader {
                 config.setMaxOutputTriples(value);
             } else if (ConfigParameters.PROCESSING_LOCAL_COPY_PROCESSING.equalsIgnoreCase(param.getName()) && !ODCSUtils.isNullOrEmpty(param.getValue())) {
                 config.setLocalCopyProcessing(Boolean.parseBoolean(param.getValue()));
-            } else if (ConfigParameters.PROCESSING_SPARQL_RESULT_MAX_ROWS.equalsIgnoreCase(param.getName())) {
-                int value = convertToInt(param.getValue(), "Value of " + ConfigParameters.PROCESSING_SPARQL_RESULT_MAX_ROWS + " is not a valid number");
-                config.setSparqlResultMaxRows(value);
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
                         + " used in conflict resolution parameters");
@@ -303,14 +315,6 @@ public final class ConfigReader {
     private long convertToLong(String str, String errorMessage) throws InvalidInputException {
         try {
             return Long.parseLong(str);
-        } catch (NumberFormatException e) {
-            throw new InvalidInputException(errorMessage, e);
-        }
-    }
-
-    private int convertToInt(String str, String errorMessage) throws InvalidInputException {
-        try {
-            return Integer.parseInt(str);
         } catch (NumberFormatException e) {
             throw new InvalidInputException(errorMessage, e);
         }

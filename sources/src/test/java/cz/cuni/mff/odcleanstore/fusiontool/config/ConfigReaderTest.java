@@ -14,7 +14,9 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class ConfigReaderTest {
@@ -40,7 +42,6 @@ public class ConfigReaderTest {
         assertThat(config.getMetadataSources(), equalTo(Collections.<ConstructSourceConfig>emptyList()));
         assertThat(config.getSameAsSources().size(), equalTo(0));
         assertThat(config.getPrefixes(), equalTo(Collections.<String, String>emptyMap()));
-        assertThat(config.getSparqlResultMaxRows(), equalTo(100000)); // Virtuoso default
         assertThat(config.getSeedResourceRestriction(), nullValue());
         assertThat(config.getPropertyResolutionStrategies(), equalTo(Collections.<URI, ResolutionStrategy>emptyMap()));
         assertThat(config.isLocalCopyProcessing(), equalTo(false));
@@ -140,7 +141,6 @@ public class ConfigReaderTest {
         assertThat(config.getCanonicalURIsOutputFile(), equalTo(new File("output/canonicalUris2.txt")));
         assertThat(config.getMaxOutputTriples(), equalTo(999l));
         assertThat(config.getEnableFileCache(), equalTo(true));
-        assertThat(config.getSparqlResultMaxRows(), equalTo(100001));
         assertThat(config.isLocalCopyProcessing(), equalTo(true));
         assertThat(config.getSeedResourceRestriction().getVar(), equalTo("s"));
         assertThat(config.getSeedResourceRestriction().isTransitive(), equalTo(false));

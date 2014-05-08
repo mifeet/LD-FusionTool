@@ -46,6 +46,9 @@
       
       <!-- Specifies a minimum interval between SPARQL queries in milliseconds -->
       <Param name="minQueryInterval" value="1000" />
+
+      <!-- Maximum number of rows to be requested in any SPARQL query; (optional, defaults to 100000) -->
+      <Param name="sparqlResultMaxRows" value="100000" />
       
       <!-- <GraphRestriction /> can optionally be used here as well -->
     </DataSource>
@@ -101,9 +104,6 @@
     <!-- If set to true, enables file cache for objects needed by the algorithm that may not fit in the memory;
          disabling this option increases performance but may cause OutOfMemory errors; (optional, defaults to false) -->
     <Param name="enableFileCache" value="false" />
-
-    <!-- Maximum number of rows to be requested in any SPARQL query; (optional, defaults to 100000) -->
-    <Param name="sparqlResultMaxRows" value="100000" />
 
     <!-- If set to true, all data are downloaded to a local file prior to processing;
          this is slower for smaller datasets but much faster for large data sets accessed via a SPARQL endpoint;
