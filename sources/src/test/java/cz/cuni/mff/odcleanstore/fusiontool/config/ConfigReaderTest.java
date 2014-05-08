@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import org.junit.Test;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
@@ -33,6 +34,7 @@ public class ConfigReaderTest {
         assertThat(config.getDefaultResolutionStrategy().getAggregationErrorStrategy(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getCardinality(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getParams(), notNullValue());
+        assertThat(config.getDefaultResolutionStrategy().getParams().size(), equalTo(0));
         assertThat(config.getEnableFileCache(), equalTo(false));
         assertThat(config.getMaxOutputTriples(), nullValue());
         assertThat(config.getMetadataSources(), equalTo(Collections.<ConstructSourceConfig>emptyList()));
@@ -152,10 +154,14 @@ public class ConfigReaderTest {
         assertThat(config.getPropertyResolutionStrategies().size(), equalTo(3));
         assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://www.w3.org/2000/01/rdf-schema#label")).getResolutionFunctionName(),
                 equalTo("BEST"));
+        assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://www.w3.org/2000/01/rdf-schema#label")).getParams(),
+                equalTo((Map<String, String>)ImmutableMap.of("name", "value")));
         assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://rdf.freebase.com/ns/location.geocode.longtitude")).getResolutionFunctionName(),
                 equalTo("AVG"));
         assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://rdf.freebase.com/ns/location.geocode.latitude")).getResolutionFunctionName(),
                 equalTo("AVG"));
+        assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://rdf.freebase.com/ns/location.geocode.latitude")).getParams(),
+                equalTo((Map<String, String>)ImmutableMap.<String, String>of()));
 
         assertThat(config.getOutputs().size(), equalTo(3));
         assertThat(config.getOutputs().get(0).getName(), equalTo("n3-output"));
@@ -189,6 +195,15 @@ public class ConfigReaderTest {
         assertThat(config.isProfilingOn(), equalTo(false));
         assertThat(config.getMaxFreeMemoryUsage(), equalTo(ConfigConstants.MAX_FREE_MEMORY_USAGE));
         assertThat(config.getMemoryLimit(), equalTo(null));
+    }
+
+    @Test(expected = InvalidInputException.class)
+    public void throwsInvalidInputExceptionWhenInputFileInvalid() throws Exception {
+        // Arrange
+        File configFile = getResourceFile("/sample-config-invalid.xml");
+
+        // Act
+        ConfigReader.parseConfigXml(configFile);
     }
 
     private File getResourceFile(String resourcePath) {

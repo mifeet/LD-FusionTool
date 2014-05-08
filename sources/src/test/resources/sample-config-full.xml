@@ -146,6 +146,7 @@
     </ResolutionStrategy>
     <ResolutionStrategy function="BEST">
       <Property id="rdfs:label"/>
+      <Param name="name" value="value"/>
     </ResolutionStrategy>
   </ConflictResolution>
   

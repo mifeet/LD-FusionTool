@@ -366,6 +366,46 @@ public class ExternalSortingInputLoaderTest {
         }
     }
 
+    @Test
+    public void filtersUnmappedSubjectsWhenOutputMappedSubjectsOnlyIsTrue() throws Exception {
+        // Arrange
+        ArrayList<Statement> statements = new ArrayList<Statement>();
+        statements.add(createHttpStatement("s1", "p1", "o1", "g1"));
+        statements.add(createHttpStatement("s3", "p1", "o1", "g1"));
+        statements.add(createHttpStatement("s2", "p1", "o1", "g1"));
+        statements.add(createHttpStatement("s4", "p1", "o1", "g1"));
+
+        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
+                createHttpUri("sx").toString(), createHttpUri("s2").toString()));
+        uriMapping.addLink(createHttpUri("s1").toString(), createHttpUri("sx").toString());
+        uriMapping.addLink(createHttpUri("s2").toString(), createHttpUri("sy").toString());
+
+        // Act
+        SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
+        ExternalSortingInputLoader inputLoader = null;
+        try {
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(statements), testDir.getRoot(), Long.MAX_VALUE, true);
+            inputLoader.initialize(uriMapping);
+            while (inputLoader.hasNext()) {
+                result.addAll(inputLoader.nextQuads());
+            }
+        } finally {
+            inputLoader.close();
+        }
+
+        // Assert
+        SortedSet<Statement> expectedStatementsSet = new TreeSet<Statement>(SPOG_COMPARATOR);
+        expectedStatementsSet.add(createHttpStatement("sx", "p1", "o1", "g1"));
+        expectedStatementsSet.add(createHttpStatement("s2", "p1", "o1", "g1"));
+
+        assertThat(result.size(), equalTo(expectedStatementsSet.size()));
+        Statement[] expectedStatements = expectedStatementsSet.toArray(new Statement[0]);
+        Statement[] actualStatements = result.toArray(new Statement[0]);
+        for (int i = 0; i < expectedStatements.length; i++) {
+            assertThat(actualStatements[i], contextAwareStatementIsEqual(expectedStatements[i]));
+        }
+    }
+
     private Collection<AllTriplesLoader> createFileAllTriplesLoader(Collection<Statement>... sourceStatements) throws IOException, RDFHandlerException {
         if (sourceStatements.length == 1) {
             DataSourceConfig dataSourceConfig = createFileDataSource(sourceStatements[0]);

@@ -2,6 +2,8 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.GrowingStatementArray;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.StatementSizeEstimator;
 import org.openrdf.model.*;
 import org.openrdf.rio.RDFHandler;
@@ -28,21 +30,26 @@ public class ExternalSortingInputLoaderPreprocessor extends RDFHandlerBase imple
     private final ValueFactory valueFactory;
     private final Comparator<Statement> orderComparator;
     private final long memoryLimit;
+    private final boolean outputMappedSubjectsOnly;
+    private final AlternativeURINavigator alternativeUriNavigator;
     private URI defaultContext = null;
     GrowingStatementArray buffer;
     private long bufferedSize;
 
     public ExternalSortingInputLoaderPreprocessor(
-            URIMapping uriMapping,
+            URIMappingIterable uriMapping,
             RDFHandler outputWriter,
-            ValueFactory valueFactory,
             long memoryLimit,
-            Comparator<Statement> orderComparator) {
+            ValueFactory valueFactory,
+            Comparator<Statement> orderComparator,
+            boolean outputMappedSubjectsOnly) {
         this.uriMapping = uriMapping;
         this.outputWriter = outputWriter;
         this.valueFactory = valueFactory;
         this.orderComparator = orderComparator;
         this.memoryLimit = memoryLimit;
+        this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
+        this.alternativeUriNavigator = outputMappedSubjectsOnly ? new AlternativeURINavigator(uriMapping) : null;
     }
 
     public void setDefaultContext(URI defaultContext) {
@@ -63,6 +70,13 @@ public class ExternalSortingInputLoaderPreprocessor extends RDFHandlerBase imple
 
     @Override
     public void handleStatement(Statement statement) throws RDFHandlerException {
+        if (outputMappedSubjectsOnly && alternativeUriNavigator != null) {
+            Resource subject = statement.getSubject();
+            if (!(subject instanceof URI) || !alternativeUriNavigator.hasAlternativeUris(subject.toString())) {
+                return; // skip statement whose subject has no alternative URIs
+            }
+        }
+
         Statement mappedStatement = applyUriMapping(statement);
         long estimatedSize = StatementSizeEstimator.estimatedSizeOf(mappedStatement);
         if (bufferedSize + estimatedSize > memoryLimit) {

@@ -138,4 +138,33 @@ public class ODCSFusionToolExecutorTest {
         // Assert
         assertThat(inputLoader.getCollectedResolvedStatements(), equalTo(rdfWriter.collectedResolvedStatements));
     }
+
+    @Test
+    public void processesAllInputStatementsWhenHasVirtuosoSource() throws Exception {
+        // Arrange
+        ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor(true, Long.MAX_VALUE, true);
+        TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
+                (Collection<Statement>) ImmutableList.<Statement>of(),
+
+                ImmutableList.of(
+                        createHttpStatement("s1", "p1", "o1", "g1"),
+                        createHttpStatement("s1", "p1", "o1", "g2")),
+
+
+                ImmutableList.of(
+                        createHttpStatement("s2", "p2", "o1", "g3"),
+                        createHttpStatement("s2", "p2", "o2", "g3"))
+        ));
+        TestRDFWriter rdfWriter = new TestRDFWriter();
+
+        // Act
+        executor.execute(inputLoader, rdfWriter, new TestConflictResolver());
+
+        // Assert
+        List<ResolvedStatement> resolvedStatements = rdfWriter.getCollectedResolvedStatements();
+        assertThat(resolvedStatements.get(0).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s1", "p1", "o1", "g1")));
+        assertThat(resolvedStatements.get(1).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s1", "p1", "o1", "g2")));
+        assertThat(resolvedStatements.get(2).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s2", "p2", "o1", "g3")));
+        assertThat(resolvedStatements.get(3).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s2", "p2", "o2", "g3")));
+    }
 }

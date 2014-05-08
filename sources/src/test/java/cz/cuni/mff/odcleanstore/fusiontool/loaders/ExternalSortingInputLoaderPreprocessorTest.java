@@ -1,10 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableSet;
-import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.EmptyURIMapping;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.EmptyURIMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.openrdf.model.Statement;
@@ -32,7 +32,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
         statements.add(createHttpStatement("s1", "p1", "o1", "g1"));
         statements.add(createHttpStatement("s2", "p2", "o2", "g2"));
 
-        URIMappingImpl uriMapping = new URIMappingImpl(ImmutableSet.of(
+        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
                 createHttpUri("sx").toString(),
                 createHttpUri("px").toString(),
                 createHttpUri("ox").toString(),
@@ -65,7 +65,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
         statements.add(createHttpStatement("s1", "p1", "o1", "g1"));
         statements.add(createHttpStatement("s2", "p3", "o2", "g3"));
 
-        URIMapping uriMapping = new EmptyURIMapping();
+        URIMappingIterable uriMapping = new EmptyURIMappingIterable();
 
         // Act
         ArrayList<Statement> result = collectResultsFromPreprocessor(statements, uriMapping, Long.MAX_VALUE);
@@ -81,11 +81,11 @@ public class ExternalSortingInputLoaderPreprocessorTest {
     @Test
     public void flushesIntermediateResultsWhenLowMemoryLimit() throws Exception {
         // Arrange
-        URIMapping uriMapping = new EmptyURIMapping();
+        URIMappingIterable uriMapping = new EmptyURIMappingIterable();
         RDFHandler handlerMock = Mockito.mock(RDFHandler.class);
 
         // Act & assert
-        ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(uriMapping, handlerMock, VALUE_FACTORY, 1, COMPARATOR);
+        ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(uriMapping, handlerMock, 1, VALUE_FACTORY, COMPARATOR, false);
         preprocessor.startRDF();
 
         Statement statement1 = createStatement();
@@ -106,11 +106,11 @@ public class ExternalSortingInputLoaderPreprocessorTest {
     @Test
     public void respectsSetContext() throws Exception {
         // Arrange
-        URIMapping uriMapping = new EmptyURIMapping();
+        URIMappingIterable uriMapping = new EmptyURIMappingIterable();
 
         // Act
         ArrayList<Statement> result = new ArrayList<Statement>();
-        ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(uriMapping, new StatementCollector(result), ValueFactoryImpl.getInstance(), Long.MAX_VALUE, COMPARATOR);
+        ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(uriMapping, new StatementCollector(result), Long.MAX_VALUE, ValueFactoryImpl.getInstance(), COMPARATOR, false);
         preprocessor.startRDF();
 
         Statement statement1 = VALUE_FACTORY.createStatement(createHttpUri("a"), createHttpUri("b"), createHttpUri("c"));
@@ -129,16 +129,52 @@ public class ExternalSortingInputLoaderPreprocessorTest {
         assertThat(result.get(1), contextAwareStatementIsEqual(createHttpStatement("x", "y", "z", "g2")));
     }
 
-    private ArrayList<Statement> collectResultsFromPreprocessor(ArrayList<Statement> statements, URIMapping uriMapping, long memoryLimit)
+    @Test
+    public void filtersUnmappedSubjectsWhenOutputMappedSubjectsOnlyIsTrue() throws Exception {
+        // Arrange
+        ArrayList<Statement> statements = new ArrayList<Statement>();
+        statements.add(createHttpStatement("s1", "p1", "o1", "g1"));
+        statements.add(createHttpStatement("s3", "p1", "o1", "g1"));
+        statements.add(createHttpStatement("s2", "p1", "o1", "g1"));
+        statements.add(createHttpStatement("s4", "p1", "o1", "g1"));
+
+        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
+                createHttpUri("s1").toString(), createHttpUri("s2").toString()));
+        uriMapping.addLink(createHttpUri("s1").toString(), createHttpUri("sx").toString());
+        uriMapping.addLink(createHttpUri("s2").toString(), createHttpUri("sy").toString());
+
+        // Act
+        ArrayList<Statement> result = new ArrayList<Statement>();
+        ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(
+                uriMapping,
+                new StatementCollector(result),
+                Long.MAX_VALUE,
+                VALUE_FACTORY,
+                COMPARATOR,
+                true);
+        preprocessor.startRDF();
+        for (Statement statement : statements) {
+            preprocessor.handleStatement(statement);
+        }
+        preprocessor.endRDF();
+
+        // Assert
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), contextAwareStatementIsEqual(createHttpStatement("s1", "p1", "o1", "g1")));
+        assertThat(result.get(1), contextAwareStatementIsEqual(createHttpStatement("s2", "p1", "o1", "g1")));
+    }
+
+    private ArrayList<Statement> collectResultsFromPreprocessor(ArrayList<Statement> statements, URIMappingIterable uriMapping, long memoryLimit)
             throws RDFHandlerException {
 
         ArrayList<Statement> result = new ArrayList<Statement>();
         ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(
                 uriMapping,
                 new StatementCollector(result),
-                VALUE_FACTORY,
                 memoryLimit,
-                COMPARATOR);
+                VALUE_FACTORY,
+                COMPARATOR,
+                false);
         preprocessor.startRDF();
         for (Statement statement : statements) {
             preprocessor.handleStatement(statement);

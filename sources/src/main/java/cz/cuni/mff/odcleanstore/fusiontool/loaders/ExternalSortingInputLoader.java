@@ -37,7 +37,6 @@ public class ExternalSortingInputLoader implements InputLoader {
     private static final Logger LOG = LoggerFactory.getLogger(ExternalSortingInputLoader.class);
 
     private static final ValueFactory VALUE_FACTORY = ValueFactoryImpl.getInstance();
-    //private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
     private static final RDFFormat TEMP_FILE_SERIALIZATION = RDFFormat.NQUADS;
     private static final String TEMP_FILE_PREFIX = "odcs-ft.sort-loader.";
     private static final Charset CHARSET = Charset.defaultCharset();
@@ -65,7 +64,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
 
     private final Collection<AllTriplesLoader> dataSources;
-    private final boolean outputMappedSubjectsOnly; // TODO
+    private final boolean outputMappedSubjectsOnly;
     private final File cacheDirectory;
     private final Long maxMemoryLimit;
 
@@ -188,9 +187,10 @@ public class ExternalSortingInputLoader implements InputLoader {
             ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor(
                     uriMapping,
                     tempRdfWriter,
-                    VALUE_FACTORY,
                     maxMemoryLimit,
-                    ORDER_COMPARATOR);
+                    VALUE_FACTORY,
+                    ORDER_COMPARATOR,
+                    outputMappedSubjectsOnly);
 
             tempRdfWriter.startRDF();
             for (AllTriplesLoader dataSource : dataSources) {
