@@ -18,9 +18,23 @@ import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -225,6 +239,7 @@ public class ExternalSortingInputLoader implements InputLoader {
         try {
             LOG.info("Sorting temporary data file (size on disk {} MB)",
                     String.format("%,.2f", tempInputFile.length() / (double) ODCSFusionToolUtils.MB_BYTES));
+            long startTime = System.currentTimeMillis();
             tempSortedFile = ODCSFusionToolUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
             // compare lines as string, which works fine for NQuads;
             // the only requirement is that quads with the same subject and predicate are
@@ -250,6 +265,7 @@ public class ExternalSortingInputLoader implements InputLoader {
                     true, // distinct
                     false,
                     USE_GZIP);
+            LOG.debug("Sorting finished in {}", ODCSFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
         } catch (IOException e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_SORT,
                     "Error while sorting quads in input loader", e);

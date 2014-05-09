@@ -98,6 +98,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
             rdfHandler.startRDF();
             SparqlRestriction restriction = getSparqlRestriction();
             int loadedQuads = Integer.MAX_VALUE;
+            boolean isFirst = true;
             for (int offset = 0; loadedQuads >= maxSparqlResultsSize; offset += maxSparqlResultsSize) {
                 query = formatQuery(LOAD_SPARQL_QUERY, restriction, maxSparqlResultsSize, offset);
                 long startTime = System.currentTimeMillis();
@@ -106,6 +107,13 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
                     LOG.trace("ODCS-FusionTool: Loaded {} quads from source {} in {} ms",
                             new Object[]{loadedQuads, source, System.currentTimeMillis() - startTime});
                 }
+                if (isFirst && loadedQuads < maxSparqlResultsSize) {
+                    LOG.warn("Only one page of results with {} quads in total was loaded from query with limit {}."
+                            + "\n       If you expect more data, the SPARQL endpoint may have a lower limit of rows returned from a SPARQL query."
+                            + "\n       Try setting parameter {} to a value lower than {}.",
+                            new Object[] { loadedQuads, maxSparqlResultsSize, ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS, loadedQuads});
+                }
+                isFirst = false;
             }
             rdfHandler.endRDF();
         } catch (OpenRDFException e) {
@@ -208,11 +216,6 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
         if (uri != null && ODCSUtils.isValidIRI(uri)) {
             return VALUE_FACTORY.createURI(uri);
         }
-        if (ODCSUtils.isValidIRI(dataSource.getName())) {
-            uri = dataSource.getName();
-        } else {
-            uri = "http://" + dataSource.getName().replaceAll("[<>\"{}|^`\\x00-\\x20']", "");
-        }
-        return VALUE_FACTORY.createURI(uri);
+        return null;
     }
 }

@@ -2,7 +2,6 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
@@ -12,7 +11,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -22,18 +20,15 @@ import org.openrdf.rio.helpers.StatementCollector;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class AllTriplesRepositoryLoaderTest {
     public static final SparqlRestrictionImpl EMPTY_SPARQL_RESTRICTION = new SparqlRestrictionImpl("", "338ae1bdf9_x");
@@ -166,20 +161,6 @@ public class AllTriplesRepositoryLoaderTest {
         assertThat(result.size(), equalTo(1));
         assertThat(result.iterator().next(), contextAwareStatementIsEqual(statement1));
         dataSource.getRepository().shutDown();
-    }
-
-    @Test
-    public void returnsNonNullDefaultContext() throws Exception {
-        // Arrange
-        Set<Statement> statements = Collections.emptySet();
-        DataSource dataSource = createDataSource(statements, EMPTY_SPARQL_RESTRICTION, new HashMap<String, String>(), "te<s>t");
-
-        // Act
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(100));
-        URI defaultContext = loader.getDefaultContext();
-
-        // Assert
-        assertTrue(ODCSUtils.isValidIRI(defaultContext.stringValue()));
     }
 
     private Map<String, String> createParams(int maxSparqlResultRows) {

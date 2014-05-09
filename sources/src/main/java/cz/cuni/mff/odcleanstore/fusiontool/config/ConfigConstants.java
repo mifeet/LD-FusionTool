@@ -4,7 +4,11 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.vocabulary.*;
+import org.openrdf.model.vocabulary.DC;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.RDF;
+import org.openrdf.model.vocabulary.RDFS;
 
 import java.io.File;
 import java.util.Arrays;
@@ -98,7 +102,7 @@ public final class ConfigConstants {
      * Maximum number of rows to be requested in any SPARQL query.
      * Use Virtuoso Default
      */
-    public static final int DEFAULT_SPARQL_RESULT_MAX_ROWS = 100000;
+    public static final int DEFAULT_SPARQL_RESULT_MAX_ROWS = 10000;
 
     /**
      * Max portion of free memory to use.

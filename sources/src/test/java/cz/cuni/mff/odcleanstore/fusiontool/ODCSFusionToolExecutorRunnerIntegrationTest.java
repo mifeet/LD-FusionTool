@@ -126,10 +126,12 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
     }
 
     private TreeSet<Statement> parseStatements(File sameAsFile, RDFFormat rdfFormat) throws IOException, RDFParseException {
+        FileInputStream inputStream = new FileInputStream(sameAsFile);
         Model model = Rio.parse(
-                new FileInputStream(sameAsFile),
+                inputStream,
                 sameAsFile.toURI().toString(),
                 rdfFormat);
+        inputStream.close();
         TreeSet<Statement> result = Sets.newTreeSet(new SpogComparator());
         result.addAll(model);
         return result;

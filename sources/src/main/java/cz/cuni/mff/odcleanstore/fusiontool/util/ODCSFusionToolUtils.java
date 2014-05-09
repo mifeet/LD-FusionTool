@@ -9,6 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Various utility methods.
@@ -18,8 +23,7 @@ import java.io.IOException;
 public final class ODCSFusionToolUtils {
     private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolUtils.class);
 
-    /** Time unit 60. */
-    public static final int TIME_UNIT_60 = 60;
+    private static final long HOUR_MS = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
 
     /** Number of bytes in a kilobyte. */
     public static final int KB_BYTES = 1024;
@@ -121,5 +125,19 @@ public final class ODCSFusionToolUtils {
         if (object == null) {
             throw new NullPointerException();
         }
+    }
+
+    /**
+     * Formats time in milliseconds.
+     * @param timeInMs time in milliseconds
+     * @return formatted string
+     */
+    public static String formatProfilingTime(long timeInMs) {
+        DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
+        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return String.format(Locale.ROOT, "%d:%s (%d ms)\n",
+                timeInMs / HOUR_MS,
+                timeFormat.format(new Date(timeInMs)),
+                timeInMs);
     }
 }

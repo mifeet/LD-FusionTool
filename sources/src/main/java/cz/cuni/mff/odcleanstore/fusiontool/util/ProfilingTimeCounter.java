@@ -3,14 +3,6 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
-
-import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-
 /**
  * Class providing methods for measurement of time spent by operations.
  * Counter are identified by values of enum &lt;E&gt;.
@@ -20,7 +12,6 @@ import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 // CHECKSTYLE:OFF
 public class ProfilingTimeCounter<E extends Enum<E>> {
 // CHECKSTYLE:ON
-    private static final long HOUR_MS = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
     private final long[] lengths;
     private final long[] starts;
     private final Class<E> countersEnum;
@@ -86,12 +77,7 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
      */
     public String formatCounter(E counterId) {
         long timeInMs = lengths[counterId.ordinal()];
-        DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
-        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return String.format(Locale.ROOT, "%d:%s (%d ms)\n", 
-                timeInMs / HOUR_MS,
-                timeFormat.format(new Date(timeInMs)),
-                timeInMs);
+        return ODCSFusionToolUtils.formatProfilingTime(timeInMs);
     }
 
     /**
