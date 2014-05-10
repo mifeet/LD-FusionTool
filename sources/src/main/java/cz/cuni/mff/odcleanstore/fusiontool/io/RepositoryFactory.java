@@ -1,6 +1,3 @@
-/**
- * 
- */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
@@ -11,21 +8,24 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
 import org.openrdf.model.URI;
-import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.repository.sparql.SPARQLRepository;
+import org.openrdf.repository.util.RDFLoader;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
 import org.openrdf.sail.Sail;
-import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import virtuoso.sesame2.driver.VirtuosoRepository;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Factory class for RDF {@link Repository repositories}.
@@ -52,24 +52,24 @@ public final class RepositoryFactory {
         String name = dataSourceConfig.toString();
         ParamReader paramReader = new ParamReader(dataSourceConfig);
         switch (dataSourceConfig.getType()) {
-        case VIRTUOSO:
-            String host = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_HOST);
-            String port = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PORT);
-            String username = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME);
-            String password = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
-            return createVirtuosoRepository(name, host, port, username, password);
-        case SPARQL:
-            String endpointUrl = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
-            long minQueryIntervalMs = paramReader.getLongValue(ConfigParameters.DATA_SOURCE_SPARQL_MIN_QUERY_INTERVAL, -1);
-            return createSparqlRepository(name, endpointUrl, minQueryIntervalMs);
-        case FILE:
-            String path = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
-            String format = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
-            String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
-            return createFileRepository(name, path, format, baseURI);
-        default:
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
-                    + dataSourceConfig.getType() + " is not supported");
+            case VIRTUOSO:
+                String host = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_HOST);
+                String port = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PORT);
+                String username = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME);
+                String password = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
+                return createVirtuosoRepository(name, host, port, username, password);
+            case SPARQL:
+                String endpointUrl = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
+                long minQueryIntervalMs = paramReader.getLongValue(ConfigParameters.DATA_SOURCE_SPARQL_MIN_QUERY_INTERVAL, -1);
+                return createSparqlRepository(name, endpointUrl, minQueryIntervalMs);
+            case FILE:
+                String path = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
+                String format = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
+                String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+                return createFileRepository(name, path, format, baseURI);
+            default:
+                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
+                        + dataSourceConfig.getType() + " is not supported");
         }
     }
 
@@ -93,7 +93,7 @@ public final class RepositoryFactory {
         if (!file.isFile() || !file.canRead()) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_FILE, "Cannot read input file " + path);
         }
-        if (baseURI == null) {
+        if (baseURI == null || ODCSUtils.isValidIRI(baseURI)) {
             baseURI = file.toURI().toString();
         }
 
@@ -106,18 +106,7 @@ public final class RepositoryFactory {
         Repository repository = new SailRepository(createSail());
         try {
             repository.initialize();
-            RepositoryConnection connection = repository.getConnection();
-            connection.setParserConfig(parserConfig);
-            try {
-                if (sesameFormat.supportsContexts()) {
-                    connection.add(file, baseURI, sesameFormat);
-                } else {
-                    URI context = ValueFactoryImpl.getInstance().createURI(baseURI);
-                    connection.add(file, baseURI, sesameFormat, context);
-                }
-            } finally {
-                connection.close();
-            }
+            loadFileToRepository(repository, file, sesameFormat, baseURI);
         } catch (Exception e) {
             try {
                 repository.shutDown();
@@ -131,8 +120,25 @@ public final class RepositoryFactory {
         return repository;
     }
 
+    private void loadFileToRepository(Repository repository, File file, RDFFormat sesameFormat, String baseURI)
+            throws RepositoryException, IOException, RDFParseException, RDFHandlerException {
+
+        RepositoryConnection connection = repository.getConnection();
+        try {
+            connection.setParserConfig(parserConfig);
+
+            // Avoid placing any triples in the default graph - current implementation wouldn't see them
+            URI defaultContext = connection.getValueFactory().createURI(baseURI);
+            DefaultContextRDFInserter inserter = new DefaultContextRDFInserter(connection, defaultContext);
+            RDFLoader loader = new RDFLoader(parserConfig, repository.getValueFactory());
+            loader.load(file, baseURI, sesameFormat, inserter);
+        } finally {
+            connection.close();
+        }
+    }
+
     private Sail createSail() {
-        return new MemoryStore(); // TODO file-backed store if file caching is enabled?
+        return new NativeStore(); // TODO file-backed store if file caching is enabled?
     }
 
     /**
@@ -164,7 +170,7 @@ public final class RepositoryFactory {
         LOG.debug("Initialized Virtuoso repository {}", dataSourceName);
         return repository;
     }
-    
+
     /**
      * Creates a repository backed by a SPARQL endpoint.
      * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
@@ -174,9 +180,9 @@ public final class RepositoryFactory {
      * @return initialized repository
      * @throws ODCSFusionToolException error creating repository
      */
-    public Repository createSparqlRepository(String dataSourceName, String endpointUrl, long minQueryIntervalMs) 
+    public Repository createSparqlRepository(String dataSourceName, String endpointUrl, long minQueryIntervalMs)
             throws ODCSFusionToolException {
-        
+
         if (ODCSUtils.isNullOrEmpty(endpointUrl)) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Missing required parameters for data source " + dataSourceName);
@@ -191,7 +197,7 @@ public final class RepositoryFactory {
         LOG.debug("Initialized SPARQL repository {}", dataSourceName);
         return repository;
     }
-    
+
     /**
      * Creates a repository backed by a SPARQL endpoint with update capabilities.
      * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
@@ -205,7 +211,7 @@ public final class RepositoryFactory {
      */
     public Repository createSparqlRepository(String dataSourceName, String endpointUrl, String updateEndpointUrl,
             String username, String password) throws ODCSFusionToolException {
-        
+
         if (ODCSUtils.isNullOrEmpty(updateEndpointUrl) || ODCSUtils.isNullOrEmpty(endpointUrl)) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Missing required parameters for data source " + dataSourceName);

@@ -9,12 +9,12 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryRDFInserter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.openrdf.model.URI;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.util.RDFInserter;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.n3.N3WriterFactory;
@@ -213,7 +213,7 @@ public class CloseableRDFWriterFactory {
             Repository repository = REPOSITORY_FACTORY.createSparqlRepository(
                     name, endpointURL, endpointURL, username, password);
             RepositoryConnection connection  = repository.getConnection();
-            RepositoryRDFInserter rdfWriter = new RepositoryRDFInserter(connection);
+            RDFInserter rdfWriter = new RDFInserter(connection);
             Closeable connectionCloser = new ConnectionCloser(connection);
             LOG.debug("Initialized SPARQL output {}", name);
             return new SesameCloseableRDFWriterQuad(rdfWriter, connectionCloser, dataContext, metadataContext);
