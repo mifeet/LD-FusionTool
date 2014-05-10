@@ -55,7 +55,7 @@
     
     <!-- Data source loading RDF data from a file -->
     <DataSource type="file">
-      <!-- Path to the source file; (required) -->
+      <!-- Path to the source file; gzipped files are also supported; (required) -->
       <Param name="path" value="data.rdf" />
       
       <!-- Base URI for loaded data; (optional, defaults is URI representing the file) -->

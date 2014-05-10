@@ -1,8 +1,12 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import java.util.Locale;
-import java.util.NoSuchElementException;
-
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
@@ -14,19 +18,14 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
+import java.util.Locale;
+import java.util.NoSuchElementException;
 
 /**
  * Loads subjects of triples to be processed.
  * If seed resource restriction is given, only subjects matching this restriction will be returned.
  * In the current implementation, the collection uses an open cursor in the database.
- * @author Jan Michelfeit
+ * TODO: apply LIMIT/OFFSET
  */
 public class SeedSubjectsLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SeedSubjectsLoader.class);

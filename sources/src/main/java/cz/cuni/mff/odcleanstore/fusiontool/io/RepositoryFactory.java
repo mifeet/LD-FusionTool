@@ -4,6 +4,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
@@ -105,6 +106,7 @@ public final class RepositoryFactory {
         try {
             repository.initialize();
             RepositoryConnection connection = repository.getConnection();
+            connection.setParserConfig(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
             try {
                 if (sesameFormat.supportsContexts()) {
                     connection.add(file, baseURI, sesameFormat);

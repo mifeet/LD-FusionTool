@@ -1,14 +1,13 @@
 /**
- * 
+ *
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.vocabulary.DC;
-import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
+import org.openrdf.model.vocabulary.*;
+import org.openrdf.rio.ParserConfig;
+import org.openrdf.rio.helpers.BasicParserSettings;
+import org.openrdf.rio.helpers.NTriplesParserSettings;
 
 import java.io.File;
 import java.util.Arrays;
@@ -16,9 +15,9 @@ import java.util.Collection;
 
 /**
  * Global configuration constants.
- * Contains default values and values which cannot be currently set via the configuration file. 
+ * Contains default values and values which cannot be currently set via the configuration file.
  * @author Jan Michelfeit
- */ 
+ */
 public final class ConfigConstants {
 
     /** Disable constructor for a utility class. */
@@ -108,5 +107,19 @@ public final class ConfigConstants {
      * Max portion of free memory to use.
      */
     public static final float MAX_FREE_MEMORY_USAGE = 0.8f;
+
+    /**
+     * Default configuration for Sesame file parsers.
+     */
+    public static final ParserConfig DEFAULT_FILE_PARSER_CONFIG;
+
+    static {
+        DEFAULT_FILE_PARSER_CONFIG = new ParserConfig();
+        DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES, false);
+        DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, false);
+        DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.VERIFY_DATATYPE_VALUES, false);
+        DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, false);
+        DEFAULT_FILE_PARSER_CONFIG.addNonFatalError(NTriplesParserSettings.FAIL_ON_NTRIPLES_INVALID_LINES);
+    }
 }
 

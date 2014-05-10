@@ -29,7 +29,7 @@ import java.util.Locale;
  * Loads triples containing statements about a given URI resource (having the URI as their subject)
  * from graphs matching the given named graph constraint pattern, taking into consideration
  * given owl:sameAs alternatives.
- * @author Jan Michelfeit
+ * TODO: apply LIMIT/OFFSET
  */
 public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implements ResourceQuadLoader {
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryResourceQuadLoader.class);

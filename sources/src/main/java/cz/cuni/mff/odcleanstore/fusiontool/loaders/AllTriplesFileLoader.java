@@ -6,6 +6,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.FusionToolRdfLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -14,13 +15,10 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.RDFParser;
-import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -93,9 +91,8 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
                     "Unknown serialization format " + format + " for data source " + sourceLabel);
         }
 
-        RDFParser rdfParser = Rio.createParser(sesameFormat, VALUE_FACTORY);
-        rdfParser.setRDFHandler(inputLoaderPreprocessor);
-        rdfParser.parse(new FileInputStream(inputFile), baseURI);
+        FusionToolRdfLoader rdfLoader = new FusionToolRdfLoader();
+        rdfLoader.load(inputFile, baseURI, sesameFormat, inputLoaderPreprocessor);
     }
 
     @Override
