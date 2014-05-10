@@ -26,9 +26,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
+import java.util.UUID;
 
 /**
  * Loader of all triples from  graphs matching the given named graph constraint pattern from an RDF repository.
+ * TODO: integration test
  */
 public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements AllTriplesLoader {
     private static final Logger LOG = LoggerFactory.getLogger(AllTriplesRepositoryLoader.class);
@@ -106,6 +108,19 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
         } catch (OpenRDFException e) {
             throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.ALL_TRIPLES_QUERY_QUADS, query, source.getName(), e);
         }
+    }
+
+    @Override
+    public URI getDefaultContext() {
+        String uri = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+        if (uri != null && ODCSUtils.isValidIRI(uri)) {
+            return VALUE_FACTORY.createURI(uri);
+        }
+        uri = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
+        if (uri != null && ODCSUtils.isValidIRI(uri)) {
+            return VALUE_FACTORY.createURI(uri);
+        }
+        return VALUE_FACTORY.createURI("urn:uuid:", UUID.randomUUID().toString());
     }
 
     @Override
@@ -195,14 +210,5 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
                 connection = null;
             }
         }
-    }
-
-    @Override
-    public URI getDefaultContext() {
-        String uri = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
-        if (uri != null && ODCSUtils.isValidIRI(uri)) {
-            return VALUE_FACTORY.createURI(uri);
-        }
-        return null;
     }
 }

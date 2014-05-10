@@ -17,7 +17,7 @@ import org.openrdf.repository.util.RDFLoader;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.sail.Sail;
-import org.openrdf.sail.nativerdf.NativeStore;
+import org.openrdf.sail.memory.MemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import virtuoso.sesame2.driver.VirtuosoRepository;
@@ -107,7 +107,7 @@ public final class RepositoryFactory {
     }
 
     private Sail createSail() {
-        return new NativeStore(); // TODO file-backed store if file caching is enabled?
+        return new MemoryStore(); // TODO file-backed store if file caching is enabled?
     }
 
     private Repository createVirtuosoRepository(String name, ParamReader paramReader) throws ODCSFusionToolException {

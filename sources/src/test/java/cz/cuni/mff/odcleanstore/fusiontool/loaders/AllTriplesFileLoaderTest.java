@@ -122,6 +122,7 @@ public class AllTriplesFileLoaderTest {
         // Arrange
         Collection<Statement> statements = Collections.emptySet();
         DataSourceConfig dataSource = createFileDataSource(statements, EnumSerializationFormat.RDF_XML);
+        dataSource.getParams().remove(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
 
         // Act
         AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
