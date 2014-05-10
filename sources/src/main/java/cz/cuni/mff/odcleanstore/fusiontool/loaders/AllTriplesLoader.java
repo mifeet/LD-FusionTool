@@ -22,5 +22,5 @@ public interface AllTriplesLoader extends Closeable<ODCSFusionToolException> {
      * Returns the default context to be used for loaded statements if they don't have a context themselves.
      * @return the default context URI
      */
-    URI getDefaultContext();
+    URI getDefaultContext() throws ODCSFusionToolException;
 }

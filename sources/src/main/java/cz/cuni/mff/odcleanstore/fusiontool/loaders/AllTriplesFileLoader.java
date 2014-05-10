@@ -6,12 +6,12 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.FusionToolRdfLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.repository.util.RDFLoader;
 import org.openrdf.rio.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,7 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
 
         String displayPath = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH, "");
         try {
-            parseFileDataSource(rdfHandler);
+            parseFileDataSource(sourceLabel, rdfHandler);
         } catch (IOException e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_READ_FILE, "I/O Error while reading input file " + displayPath, e);
         } catch (RDFParseException e) {
@@ -60,36 +60,34 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
     }
 
     @Override
-    public URI getDefaultContext() {
-        String uri = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
-        if (uri != null && ODCSUtils.isValidIRI(uri)) {
-            return VALUE_FACTORY.createURI(uri);
+    public URI getDefaultContext() throws ODCSFusionToolException {
+        String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+        if (baseURI == null || !ODCSUtils.isValidIRI(baseURI)) {
+            String path = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
+            File file = new File(path);
+            baseURI = file.toURI().toString();
         }
-        String path = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
-        if (path != null) {
-            return VALUE_FACTORY.createURI(new File(path).toURI().toString());
-        }
-        return null;
+        return VALUE_FACTORY.createURI(baseURI);
     }
 
-    private void parseFileDataSource(RDFHandler inputLoaderPreprocessor)
+    private void parseFileDataSource(String sourceLabel, RDFHandler inputLoaderPreprocessor)
             throws ODCSFusionToolException, IOException, RDFParseException, RDFHandlerException {
-        String sourceLabel = dataSourceConfig.getName() != null ? dataSourceConfig.getName() : dataSourceConfig.getType().toString();
 
         String path = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
-        File inputFile = new File(path);
-
-        String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI, inputFile.toURI().toString());
-
+        File file = new File(path);
+        String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+        if (baseURI == null || ODCSUtils.isValidIRI(baseURI)) {
+            baseURI = file.toURI().toString();
+        }
         String format = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
-        RDFFormat sesameFormat = ODCSFusionToolUtils.getSesameSerializationFormat(format, inputFile.getName());
+        RDFFormat sesameFormat = ODCSFusionToolUtils.getSesameSerializationFormat(format, file.getName());
         if (sesameFormat == null) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Unknown serialization format " + format + " for data source " + sourceLabel);
         }
 
-        FusionToolRdfLoader rdfLoader = new FusionToolRdfLoader(parserConfig);
-        rdfLoader.load(inputFile, baseURI, sesameFormat, inputLoaderPreprocessor);
+        RDFLoader loader = new RDFLoader(parserConfig, VALUE_FACTORY);
+        loader.load(file, baseURI, sesameFormat, inputLoaderPreprocessor);
     }
 
     @Override
