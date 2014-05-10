@@ -1,7 +1,7 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.source;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 

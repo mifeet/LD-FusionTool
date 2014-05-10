@@ -6,8 +6,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.openrdf.model.Statement;
@@ -19,11 +19,7 @@ import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.openrdf.sail.memory.MemoryStore;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;

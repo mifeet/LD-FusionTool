@@ -4,7 +4,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSource;
+import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Statement;
 import org.openrdf.query.GraphQueryResult;

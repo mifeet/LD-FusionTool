@@ -1,15 +1,15 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
-
-import java.util.Map;
-
-import org.openrdf.repository.Repository;
+package cz.cuni.mff.odcleanstore.fusiontool.source;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
+import org.openrdf.repository.Repository;
+
+import java.util.Map;
 
 /**
  * Container for RDF {@link Repository} and related settings.

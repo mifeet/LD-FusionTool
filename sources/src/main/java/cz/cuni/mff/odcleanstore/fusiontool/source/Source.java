@@ -1,13 +1,12 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
-
-import java.util.Map;
-
-import org.openrdf.repository.Repository;
+package cz.cuni.mff.odcleanstore.fusiontool.source;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import org.openrdf.repository.Repository;
+
+import java.util.Map;
 
 /**
  * Settings for an RDF data source.

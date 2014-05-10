@@ -1,12 +1,13 @@
 /**
  * 
  */
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.source;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import org.openrdf.repository.Repository;
 
 import java.util.Map;

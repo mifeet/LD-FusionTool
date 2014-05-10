@@ -1,13 +1,12 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import org.openrdf.model.Statement;
 
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject)

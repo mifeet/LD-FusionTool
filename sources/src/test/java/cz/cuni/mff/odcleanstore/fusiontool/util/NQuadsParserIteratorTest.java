@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
+import cz.cuni.mff.odcleanstore.fusiontool.io.NQuadsParserIterator;
 import org.junit.Test;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFFormat;

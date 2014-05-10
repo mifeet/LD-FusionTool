@@ -1,11 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import java.util.Collection;
-
-import org.openrdf.model.Statement;
-
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
+import org.openrdf.model.Statement;
+
+import java.util.Collection;
 
 /**
  * Loads triples containing statements about a given URI resource (having the URI as their subject).
@@ -17,7 +16,7 @@ public interface ResourceQuadLoader extends Closeable<ODCSFusionToolException> {
      * @param uri searched subject URI
      * @param quadCollection collection to which the result will be added
      * @throws ODCSFusionToolException error
-     * @see cz.cuni.mff.odcleanstore.fusiontool.io.DataSource#getNamedGraphRestriction()
+     * @see cz.cuni.mff.odcleanstore.fusiontool.source.DataSource#getNamedGraphRestriction()
      */
     void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException;
 }
