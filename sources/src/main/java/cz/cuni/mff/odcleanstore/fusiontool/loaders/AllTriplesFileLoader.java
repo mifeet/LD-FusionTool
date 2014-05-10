@@ -8,6 +8,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.FusionToolRdfLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -28,11 +29,13 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
 
     private final DataSourceConfig dataSourceConfig;
     private final ParserConfig parserConfig;
+    private final ParamReader paramReader;
 
     public AllTriplesFileLoader(DataSourceConfig dataSourceConfig, ParserConfig parserConfig) {
         ODCSFusionToolUtils.checkNotNull(dataSourceConfig);
         ODCSFusionToolUtils.checkNotNull(parserConfig);
         this.dataSourceConfig = dataSourceConfig;
+        this.paramReader = new ParamReader(dataSourceConfig);
         if (dataSourceConfig.getType() != EnumDataSourceType.FILE) {
             throw new IllegalArgumentException("The given data source must be of type FILE, " + dataSourceConfig.getType() + " given");
         }
@@ -44,8 +47,7 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
         String sourceLabel = dataSourceConfig.getName() != null ? dataSourceConfig.getName() : dataSourceConfig.getType().toString();
         LOG.info("Parsing all quads from data source {}", sourceLabel);
 
-        String displayPath = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
-        displayPath = displayPath == null ? "" : displayPath;
+        String displayPath = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH, "");
         try {
             parseFileDataSource(rdfHandler);
         } catch (IOException e) {
@@ -59,11 +61,11 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
 
     @Override
     public URI getDefaultContext() {
-        String uri = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+        String uri = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
         if (uri != null && ODCSUtils.isValidIRI(uri)) {
             return VALUE_FACTORY.createURI(uri);
         }
-        String path = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
+        String path = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
         if (path != null) {
             return VALUE_FACTORY.createURI(new File(path).toURI().toString());
         }
@@ -74,18 +76,12 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
             throws ODCSFusionToolException, IOException, RDFParseException, RDFHandlerException {
         String sourceLabel = dataSourceConfig.getName() != null ? dataSourceConfig.getName() : dataSourceConfig.getType().toString();
 
-        String path = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
-        if (path == null) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG, "Missing required parameter path for data source " + sourceLabel);
-        }
+        String path = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
         File inputFile = new File(path);
 
-        String baseURI = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
-        if (baseURI == null) {
-            baseURI = inputFile.toURI().toString();
-        }
+        String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI, inputFile.toURI().toString());
 
-        String format = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
+        String format = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
         RDFFormat sesameFormat = ODCSFusionToolUtils.getSesameSerializationFormat(format, inputFile.getName());
         if (sesameFormat == null) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,

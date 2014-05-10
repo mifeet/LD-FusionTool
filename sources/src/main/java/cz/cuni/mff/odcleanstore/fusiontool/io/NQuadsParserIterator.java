@@ -1,5 +1,7 @@
-package cz.cuni.mff.odcleanstore.fusiontool.util;
+package cz.cuni.mff.odcleanstore.fusiontool.io;
 
+import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.nquads.NQuadsParser;
@@ -77,6 +79,7 @@ public class NQuadsParserIterator
         }
 
         private int parseQuad(int c) throws IOException, RDFParseException {
+            // TODO: fix error handling && ParserConfig
             c = parseSubject(c);
             c = skipWhitespace(c);
             c = parsePredicate(c);

@@ -37,4 +37,10 @@ public interface Source {
      * @return type of the data source
      */
     EnumDataSourceType getType();
+
+    /**
+     * Returns additional source parameters.
+     * @return additional source parameters
+     */
+    Map<String, String> getParams();
 }

@@ -35,6 +35,7 @@ public class SubjectsSetInputLoader implements InputLoader {
     private ResourceQuadLoader resourceQuadLoader;
     private Set<String> resolvedCanonicalURIs;
     private URIMappingIterable uriMapping;
+    private AlternativeURINavigator alternativeURINavigator;
 
     /**
      * @param subjects collections of subjects to be processed;
@@ -60,7 +61,8 @@ public class SubjectsSetInputLoader implements InputLoader {
     @Override
     public void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException {
         this.uriMapping = uriMapping;
-        this.resourceQuadLoader = createResourceQuadLoader(dataSources, new AlternativeURINavigator(uriMapping));
+        alternativeURINavigator = new AlternativeURINavigator(uriMapping);
+        this.resourceQuadLoader = createResourceQuadLoader(dataSources, alternativeURINavigator);
         this.resolvedCanonicalURIs = largeCollectionFactory.createSet();
         this.subjectsQueue = createSubjectsQueue(initialSubjects);
     }
@@ -186,7 +188,7 @@ public class SubjectsSetInputLoader implements InputLoader {
                 String nextSubject = subjectsQueue.next();
                 String canonicalURI = uriMapping.getCanonicalURI(nextSubject);
 
-                if (outputMappedSubjectsOnly && nextSubject.equals(canonicalURI)) {
+                if (outputMappedSubjectsOnly && !alternativeURINavigator.hasAlternativeUris(nextSubject)) {
                     // Skip subjects with no mapping
                     LOG.debug("Skipping not mapped subject <{}>", nextSubject);
                     continue;

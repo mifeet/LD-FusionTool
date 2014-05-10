@@ -9,6 +9,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.Repository;
@@ -49,29 +50,22 @@ public final class RepositoryFactory {
      */
     public Repository createRepository(SourceConfig dataSourceConfig) throws ODCSFusionToolException {
         String name = dataSourceConfig.toString();
+        ParamReader paramReader = new ParamReader(dataSourceConfig);
         switch (dataSourceConfig.getType()) {
         case VIRTUOSO:
-            String host = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_HOST);
-            String port = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_PORT);
-            String username = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME);
-            String password = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
+            String host = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_HOST);
+            String port = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PORT);
+            String username = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME);
+            String password = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
             return createVirtuosoRepository(name, host, port, username, password);
         case SPARQL:
-            String endpointUrl = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
-            String minQueryIntervalString = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_MIN_QUERY_INTERVAL);
-            long minQueryIntervalMs = -1;
-            if (minQueryIntervalString != null) {
-                try {
-                    minQueryIntervalMs = Long.parseLong(minQueryIntervalString);
-                } catch (NumberFormatException e) {
-                    // leave default
-                }
-            }
+            String endpointUrl = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
+            long minQueryIntervalMs = paramReader.getLongValue(ConfigParameters.DATA_SOURCE_SPARQL_MIN_QUERY_INTERVAL, -1);
             return createSparqlRepository(name, endpointUrl, minQueryIntervalMs);
         case FILE:
-            String path = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH);
-            String format = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
-            String baseURI = dataSourceConfig.getParams().get(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+            String path = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
+            String format = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
+            String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
             return createFileRepository(name, path, format, baseURI);
         default:
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
@@ -171,19 +165,6 @@ public final class RepositoryFactory {
         return repository;
     }
     
-    /**
-     * Creates a repository backed by a SPARQL endpoint.
-     * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
-     * @param dataSourceName data source name (for logging)
-     * @param endpointUrl SPARQL endpoint URL
-     * @return initialized repository
-     * @throws ODCSFusionToolException error creating repository
-     */
-    public Repository createSparqlRepository(String dataSourceName, String endpointUrl) 
-            throws ODCSFusionToolException {
-        return createSparqlRepository(dataSourceName, endpointUrl, -1);
-    }
-
     /**
      * Creates a repository backed by a SPARQL endpoint.
      * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.

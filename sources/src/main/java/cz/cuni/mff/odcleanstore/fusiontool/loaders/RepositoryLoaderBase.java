@@ -19,7 +19,7 @@ public abstract class RepositoryLoaderBase {
     /**
      * SPARQL query BASE declaration.
      */
-    private static final Pattern BASE_PATTERN = Pattern.compile("^\\s*BASE\\s+<[^>]+>");
+    private static final Pattern BASE_PATTERN = Pattern.compile("^\\s*BASE\\s+<[^>]+>"); // TODO: replace with query parser
 
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .

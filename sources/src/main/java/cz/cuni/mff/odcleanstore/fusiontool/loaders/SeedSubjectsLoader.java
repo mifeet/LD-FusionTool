@@ -25,7 +25,6 @@ import java.util.NoSuchElementException;
  * Loads subjects of triples to be processed.
  * If seed resource restriction is given, only subjects matching this restriction will be returned.
  * In the current implementation, the collection uses an open cursor in the database.
- * TODO: apply LIMIT/OFFSET
  */
 public class SeedSubjectsLoader extends RepositoryLoaderBase {
     private static final Logger LOG = LoggerFactory.getLogger(SeedSubjectsLoader.class);
@@ -53,6 +52,8 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      * (4) seed resource restriction pattern
      * (5) seed resource restriction variable
      */
+    // TODO: preload matching named graphs
+    // TODO: add limit/offset clauses
     private static final String SUBJECTS_QUERY = "%1$s"
             + "\n SELECT DISTINCT (?%5$s AS ?" + SUBJECT_VARIABLE + ")"
             + "\n WHERE {"
@@ -93,8 +94,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
         SparqlRestriction seedRestriction = seedResourceRestriction != null
                 ? seedResourceRestriction
                 : EMPTY_SEED_RESTRICTION;
-                
-                
+
         if (graphRestriction.getVar().equals(seedRestriction.getVar())) {
             throw new ODCSFusionToolException(
                     ODCSFusionToolErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
@@ -134,8 +134,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 this.subjectsResultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
             } catch (OpenRDFException e) {
                 close();
-                throw new ODCSFusionToolQueryException(
-                        ODCSFusionToolErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
+                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
             }
 
             next = getNextResult();
@@ -148,7 +147,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                     BindingSet bindings = subjectsResultSet.next();
                     
                     Value subject = bindings.getValue(subjectVar);
-                    String uri = ODCSUtils.getVirtuosoNodeURI(subject); // TODO
+                    String uri = ODCSUtils.getNodeUri(subject);
                     if (uri != null) {
                         return uri;
                     }

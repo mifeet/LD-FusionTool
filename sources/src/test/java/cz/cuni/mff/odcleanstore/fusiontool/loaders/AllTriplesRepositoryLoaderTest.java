@@ -39,11 +39,11 @@ public class AllTriplesRepositoryLoaderTest {
                 createHttpStatement("s4", "p", "o", "g4"),
                 createHttpStatement("s5", "p", "o", "g5")
         );
-        DataSource dataSource = createDataSource(statements);
+        DataSource dataSource = createDataSource(statements, 2);
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
+        AllTriplesLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -61,11 +61,11 @@ public class AllTriplesRepositoryLoaderTest {
                 createHttpStatement("s3", "p", "o", "g3"),
                 createHttpStatement("s4", "p", "o", "g4")
         );
-        DataSource dataSource = createDataSource(statements);
+        DataSource dataSource = createDataSource(statements, 2);
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -78,11 +78,11 @@ public class AllTriplesRepositoryLoaderTest {
     public void returnsEmptyResultWhenNoMatchingTriplesExist() throws Exception {
         // Arrange
         Collection<Statement> statements = ImmutableList.of();
-        DataSource dataSource = createDataSource(statements);
+        DataSource dataSource = createDataSource(statements, 2);
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -101,11 +101,11 @@ public class AllTriplesRepositoryLoaderTest {
         SparqlRestriction namedGraphRestriction = new SparqlRestrictionImpl(
                 "FILTER(?gg = <" + statement1.getContext().stringValue() + ">)",
                 "gg");
-        DataSource dataSource = createDataSource(statements, namedGraphRestriction, new HashMap<String, String>(), "test");
+        DataSource dataSource = createDataSource(statements, namedGraphRestriction, new HashMap<String, String>(), 100, "test");
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(100));
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -122,10 +122,10 @@ public class AllTriplesRepositoryLoaderTest {
         Collection<Statement> statements = ImmutableList.of(
                 createHttpStatement("s1", "p", "o", "g1")
         );
-        DataSource dataSource = createDataSource(statements);
+        DataSource dataSource = createDataSource(statements, 2);
 
         // Act
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(2));
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples((rdfHandler));
         loader.close();
 
@@ -145,11 +145,11 @@ public class AllTriplesRepositoryLoaderTest {
         HashMap<String, String> prefixes = new HashMap<String, String>();
         prefixes.put("ex1", "http://example1.com/");
         prefixes.put("ex2", "http://example2.com/");
-        DataSource dataSource = createDataSource(statements, namedGraphRestriction, prefixes, "test");
+        DataSource dataSource = createDataSource(statements, namedGraphRestriction, prefixes, 100, "test");
 
         // Act
         Collection<Statement> result = new HashSet<Statement>();
-        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource, createParams(100));
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -159,25 +159,27 @@ public class AllTriplesRepositoryLoaderTest {
         dataSource.getRepository().shutDown();
     }
 
-    private Map<String, String> createParams(int maxSparqlResultRows) {
-        return ImmutableMap.of(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS, Integer.toString(maxSparqlResultRows));
-    }
-
-    private DataSource createDataSource(Collection<Statement> statements) throws RepositoryException {
+    private DataSource createDataSource(Collection<Statement> statements, int maxSparqlResultRows) throws RepositoryException {
         return createDataSource(
                 statements,
                 EMPTY_SPARQL_RESTRICTION,
                 new HashMap<String, String>(),
+                maxSparqlResultRows,
                 "test");
     }
 
-    private DataSource createDataSource(Collection<Statement> statements, SparqlRestriction namedGraphRestriction, Map<String, String> prefixes, String name)
+    private DataSource createDataSource(Collection<Statement> statements,
+            SparqlRestriction namedGraphRestriction,
+            Map<String, String> prefixes,
+            int maxSparqlResultRows,
+            String name)
             throws RepositoryException {
         Repository repository = new SailRepository(new MemoryStore());
         repository.initialize();
         RepositoryConnection connection = repository.getConnection();
         connection.add(statements);
         connection.close();
-        return new DataSourceImpl(repository, prefixes, name, EnumDataSourceType.SPARQL, namedGraphRestriction);
+        Map<String, String> params = ImmutableMap.of(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS, Integer.toString(maxSparqlResultRows));
+        return new DataSourceImpl(repository, prefixes, name, EnumDataSourceType.SPARQL, params, namedGraphRestriction);
     }
 }

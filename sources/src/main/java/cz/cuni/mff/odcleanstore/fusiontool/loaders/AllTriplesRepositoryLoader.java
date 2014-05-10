@@ -9,6 +9,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
@@ -25,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Loader of all triples from  graphs matching the given named graph constraint pattern from an RDF repository.
@@ -61,33 +61,20 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     private RepositoryConnection connection;
 
     private final DataSource dataSource;
-    private final Map<String, String> params;
     private final int maxSparqlResultsSize;
+    private final ParamReader paramReader;
 
     /**
      * Creates a new instance.
      * @param dataSource an initialized data source
-     * @param params map with additional parameters
-     *      (see {@link cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters#DATA_SOURCE_FILE_BASE_URI},
-     *      {@link cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters#DATA_SOURCE_SPARQL_RESULT_MAX_ROWS}.
      */
-    public AllTriplesRepositoryLoader(DataSource dataSource, Map<String, String> params) {
+    public AllTriplesRepositoryLoader(DataSource dataSource) {
         super(dataSource);
         this.dataSource = dataSource;
-        this.params = params;
-        this.maxSparqlResultsSize = getMaxSparqlResultsSize(params);
-    }
-
-    private int getMaxSparqlResultsSize(Map<String, String> params) {
-        String paramValue = params.get(ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS);
-        if (paramValue != null) {
-            try {
-                return Integer.parseInt(paramValue);
-            } catch (NumberFormatException e) {
-                LOG.error("Value of parameter {} '{}' is not a valid number", ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS, paramValue);
-            }
-        }
-        return ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS;
+        paramReader = new ParamReader(dataSource);
+        this.maxSparqlResultsSize = paramReader.getIntValue(
+                ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS,
+                ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS);
     }
 
     @Override
@@ -212,7 +199,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
 
     @Override
     public URI getDefaultContext() {
-        String uri = params.get(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
+        String uri = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
         if (uri != null && ODCSUtils.isValidIRI(uri)) {
             return VALUE_FACTORY.createURI(uri);
         }

@@ -1,17 +1,17 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.openrdf.model.Statement;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.helpers.RDFHandlerBase;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * An RDFHandler that adds RDF data to a repository.
- * 
+ * // TODO: replace with RDFInserter
  * @author Jan Michelfeit
  */
 public class RepositoryRDFInserter extends RDFHandlerBase {

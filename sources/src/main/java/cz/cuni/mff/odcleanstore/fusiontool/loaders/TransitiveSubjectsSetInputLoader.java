@@ -59,12 +59,12 @@ public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
         // Add discovered objects to the queue
         URIMapping uriMapping = getUriMapping();
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
-            String uri = ODCSUtils.getVirtuosoNodeURI(resolvedStatement.getStatement().getObject()); // TODO Virtuoso dependency
+            String uri = ODCSUtils.getNodeUri(resolvedStatement.getStatement().getObject());
             if (uri == null) {
-                // a literal, skip it
+                // not a referenceable node
                 continue;
             }
-            // only add canonical URIs to save space
+            // only add canonical URIs in order to save space
             String canonicalURI = uriMapping.getCanonicalURI(uri);
             if (!isResolvedCanonicalUri(canonicalURI)) {
                 // only add new URIs

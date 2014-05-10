@@ -24,11 +24,12 @@ public final class ConstructSourceImpl extends SourceImpl implements ConstructSo
      * @param prefixes map of namespace prefixes
      * @param label name of this data source
      * @param type type of this data source
+     * @param params additional data source params
      * @param constructQuery SPARQL CONSTRUCT query generating input data
      */
     public ConstructSourceImpl(Repository repository, Map<String, String> prefixes,
-            String label, EnumDataSourceType type, String constructQuery) {
-        super(repository, prefixes, label, type);
+            String label, EnumDataSourceType type, Map<String, String> params, String constructQuery) {
+        super(repository, prefixes, label, type, params);
         this.constructQuery = constructQuery;
     }
     
@@ -51,6 +52,7 @@ public final class ConstructSourceImpl extends SourceImpl implements ConstructSo
                 prefixes,
                 label,
                 config.getType(),
+                config.getParams(),
                 config.getConstructQuery());
     }
 

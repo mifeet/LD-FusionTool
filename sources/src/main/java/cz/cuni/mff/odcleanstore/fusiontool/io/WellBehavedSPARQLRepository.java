@@ -1,17 +1,11 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import java.io.IOException;
-
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpConnectionManager;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpState;
-import org.apache.commons.httpclient.ProxyHost;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.openrdf.http.client.HTTPClient;
 import org.openrdf.repository.sparql.SPARQLRepository;
+
+import java.io.IOException;
 
 /**
  * SPARQL repository which issues at most one query per the given time interval 
@@ -53,8 +47,8 @@ public class WellBehavedSPARQLRepository extends SPARQLRepository {
 
         @Override
         public void initialize() {
+            super.initialize();
             if (httpClient == null) {
-                super.initialize();
                 httpClient = new WellBehavedHttpClient(httpClient.getHttpConnectionManager());
                 configureProxySettings(httpClient);
             }

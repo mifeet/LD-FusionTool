@@ -25,11 +25,12 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
      * @param prefixes map of namespace prefixes
      * @param label name of this data source
      * @param type type of this data source
+     * @param params additional data source params
      * @param namedGraphRestriction SPARQL restriction on named graphs from which data are loaded
      */
     public DataSourceImpl(Repository repository, Map<String, String> prefixes,
-            String label, EnumDataSourceType type, SparqlRestriction namedGraphRestriction) {
-        super(repository, prefixes, label, type);
+            String label, EnumDataSourceType type, Map<String, String> params, SparqlRestriction namedGraphRestriction) {
+        super(repository, prefixes, label, type, params);
         this.namedGraphRestriction = namedGraphRestriction;
     }
     
@@ -52,6 +53,7 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
                 prefixes,
                 label,
                 config.getType(),
+                config.getParams(),
                 config.getNamedGraphRestriction());
     }
     

@@ -155,7 +155,7 @@ public class ODCSFusionToolExecutorRunner {
                     loader = new AllTriplesFileLoader(dataSourceConfig, config.getParserConfig());
                 } else {
                     DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), repositoryFactory);
-                    loader = new AllTriplesRepositoryLoader(dataSource, dataSourceConfig.getParams());
+                    loader = new AllTriplesRepositoryLoader(dataSource);
                 }
                 loaders.add(loader);
             } catch (ODCSFusionToolException e) {
