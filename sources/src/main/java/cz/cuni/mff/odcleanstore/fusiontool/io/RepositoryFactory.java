@@ -12,7 +12,6 @@ import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.repository.sparql.SPARQLRepository;
 import org.openrdf.repository.util.RDFLoader;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFFormat;
@@ -198,35 +197,4 @@ public final class RepositoryFactory {
         return repository;
     }
 
-    /**
-     * Creates a repository backed by a SPARQL endpoint with update capabilities.
-     * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
-     * @param dataSourceName data source name (for logging)
-     * @param endpointUrl SPARQL endpoint URL
-     * @param updateEndpointUrl SPARQL update endpoint URL
-     * @param username user name for the endpoint
-     * @param password password for the endpoint
-     * @return initialized repository
-     * @throws ODCSFusionToolException error creating repository
-     */
-    public Repository createSparqlRepository(String dataSourceName, String endpointUrl, String updateEndpointUrl,
-            String username, String password) throws ODCSFusionToolException {
-
-        if (ODCSUtils.isNullOrEmpty(updateEndpointUrl) || ODCSUtils.isNullOrEmpty(endpointUrl)) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
-                    "Missing required parameters for data source " + dataSourceName);
-        }
-        SPARQLRepository repository = new SPARQLRepository(updateEndpointUrl, updateEndpointUrl);
-        if (username != null || password != null) {
-            repository.setUsernameAndPassword(username, password);
-        }
-        try {
-            repository.initialize();
-        } catch (RepositoryException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_SPARQL,
-                    "Error when initializing repository for " + dataSourceName, e);
-        }
-        LOG.debug("Initialized SPARQL repository {}", dataSourceName);
-        return repository;
-    }
 }

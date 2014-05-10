@@ -36,6 +36,17 @@ public class ParamReaderTest {
         paramReader.getRequiredStringValue("key1");
     }
 
+    @Test(expected = ODCSFusionToolException.class)
+    public void throwsWhenRequiredStringParamEmpty() throws Exception {
+        // Arrange
+        DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, "name");
+        dataSourceConfig.getParams().put("key1", "");
+
+        // Act
+        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        paramReader.getRequiredStringValue("key1");
+    }
+
     @Test()
     public void returnsNullWhenNonRequiredStringParamMissing() throws Exception {
         // Arrange

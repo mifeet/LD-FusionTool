@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
+import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
@@ -15,17 +16,33 @@ import java.util.Map;
  */
 public class ParamReader {
     private static final Logger LOG = LoggerFactory.getLogger(ParamReader.class);
-    private Map<String, String> params;
-    private String sourceName;
+    private final Map<String, String> params;
+    private final String ioName;
+    private final String ioType;
+
+    private ParamReader(Map<String, String> params, String ioName, String ioType) {
+        this.params = params;
+        this.ioName = ioName;
+        this.ioType = ioType;
+    }
+
+    public ParamReader(Output output) {
+        this(output.getParams(),
+                output.getName() != null ? output.getName() : output.getType().name(),
+                "output");
+    }
+
 
     public ParamReader(SourceConfig sourceConfig) {
-        this.params = sourceConfig.getParams();
-        this.sourceName = sourceConfig.getName() != null ? sourceConfig.getName() : sourceConfig.getType().name();
+        this(sourceConfig.getParams(),
+                sourceConfig.getName() != null ? sourceConfig.getName() : sourceConfig.getType().name(),
+                "input");
     }
 
     public ParamReader(Source source) {
-        this.params = source.getParams();
-        this.sourceName = source.getName() != null ? source.getName() : source.getType().name();
+        this(source.getParams(),
+                source.getName() != null ? source.getName() : source.getType().name(),
+                "input");
     }
 
     public String getRequiredStringValue(String paramName) throws ODCSFusionToolException {
@@ -101,15 +118,15 @@ public class ParamReader {
 
     private String getRequiredValue(String paramName) throws ODCSFusionToolException {
         String value = params.get(paramName);
-        if (value == null) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.MISSING_REQUIRED_PARAM,
-                    "Missing required parameter " + paramName + " for input '" + sourceName + "'");
+        if (value == null || value.length() == 0) {
+            String message = String.format(Locale.ROOT, "Missing required parameter %s for %s '%s'", paramName, ioType, ioName);
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.MISSING_REQUIRED_PARAM, message);
         }
         return value;
     }
 
     private String getNumberFormatErrorMessage(String paramName, String value) {
-        return String.format(Locale.ROOT, "Value of parameter %s '%s' for input '%s' is not a valid number",
-                paramName, value, sourceName);
+        return String.format(Locale.ROOT, "Value of parameter %s '%s' for %s '%s' is not a valid number",
+                paramName, value, ioType, ioName);
     }
 }
