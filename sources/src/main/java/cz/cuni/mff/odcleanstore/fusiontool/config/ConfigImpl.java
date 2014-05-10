@@ -3,14 +3,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import org.openrdf.model.URI;
+import org.openrdf.rio.ParserConfig;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Container of configuration values.
@@ -37,6 +33,8 @@ public class ConfigImpl implements Config {
     private boolean outputMappedSubjectsOnly = false;
     private boolean isLocalCopyProcessing = false;
     private Long memoryLimit = null;
+    private File tempDirectory = ConfigConstants.DEFAULT_TEMP_DIRECTORY;
+    private ParserConfig parserConfig = ConfigConstants.DEFAULT_FILE_PARSER_CONFIG;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -289,6 +287,32 @@ public class ConfigImpl implements Config {
     }
 
     @Override
+    public File getTempDirectory() {
+        return tempDirectory;
+    }
+
+    /**
+     * Sets value for {@link #getTempDirectory()}.
+     * @param tempDirectory see {@link #getTempDirectory()}
+     */
+    public void setTempDirectory(File tempDirectory) {
+        this.tempDirectory = tempDirectory;
+    }
+
+    @Override
+    public ParserConfig getParserConfig() {
+        return parserConfig;
+    }
+
+    /**
+     * Sets value for {@link #getParserConfig()}.
+     * @param parserConfig see {@link #getParserConfig()}
+     */
+    public void setParserConfig(ParserConfig parserConfig) {
+        this.parserConfig = parserConfig;
+    }
+
+    @Override
     public Integer getQueryTimeout() {
         return ConfigConstants.DEFAULT_QUERY_TIMEOUT;
     }
@@ -316,11 +340,6 @@ public class ConfigImpl implements Config {
     @Override
     public Collection<String> getPreferredCanonicalURIs() {
         return ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS;
-    }
-
-    @Override
-    public File getTempDirectory() {
-        return ConfigConstants.TEMP_DIRECTORY;
     }
 
     @Override

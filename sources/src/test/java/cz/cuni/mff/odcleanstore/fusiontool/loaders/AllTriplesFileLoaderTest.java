@@ -2,10 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableList;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,11 +11,7 @@ import org.mockito.Mockito;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFWriter;
-import org.openrdf.rio.Rio;
+import org.openrdf.rio.*;
 import org.openrdf.rio.helpers.StatementCollector;
 
 import java.io.File;
@@ -58,7 +51,7 @@ public class AllTriplesFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>();
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -77,7 +70,7 @@ public class AllTriplesFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>();
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -97,7 +90,7 @@ public class AllTriplesFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>(0);
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -115,7 +108,7 @@ public class AllTriplesFileLoaderTest {
         DataSourceConfig dataSource = createFileDataSource(statements, EnumSerializationFormat.RDF_XML);
 
         // Act
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples((rdfHandler));
         loader.close();
 
@@ -131,7 +124,7 @@ public class AllTriplesFileLoaderTest {
         DataSourceConfig dataSource = createFileDataSource(statements, EnumSerializationFormat.RDF_XML);
 
         // Act
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         URI defaultContext = loader.getDefaultContext();
 
         // Assert
@@ -152,7 +145,7 @@ public class AllTriplesFileLoaderTest {
         dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_FORMAT, EnumSerializationFormat.RDF_XML.name());
 
         // Act
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSourceConfig);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         URI defaultContext = loader.getDefaultContext();
 
         // Assert

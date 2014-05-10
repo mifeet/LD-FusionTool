@@ -14,9 +14,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 public class ConfigReaderTest {
@@ -70,7 +68,7 @@ public class ConfigReaderTest {
         assertThat(config.getOutputConflictsOnly(), equalTo(false));
         assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
         assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
-        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.TEMP_DIRECTORY));
+        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.DEFAULT_TEMP_DIRECTORY));
         assertThat(config.getResultDataURIPrefix(), notNullValue());
         assertThat(config.getPublisherScoreWeight(), equalTo(ConfigConstants.PUBLISHER_SCORE_WEIGHT));
         assertThat(config.getAgreeCoefficient(), equalTo(ConfigConstants.AGREE_COEFFICIENT));
@@ -79,6 +77,7 @@ public class ConfigReaderTest {
         assertThat(config.isProfilingOn(), equalTo(false));
         assertThat(config.getMaxFreeMemoryUsage(), equalTo(ConfigConstants.MAX_FREE_MEMORY_USAGE));
         assertThat(config.getMemoryLimit(), equalTo(null));
+        assertThat(config.getParserConfig(), equalTo(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
     }
 
     @Test
@@ -186,7 +185,7 @@ public class ConfigReaderTest {
         assertThat(config.getOutputConflictsOnly(), equalTo(false));
         assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
         assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
-        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.TEMP_DIRECTORY));
+        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.DEFAULT_TEMP_DIRECTORY));
         assertThat(config.getResultDataURIPrefix(), notNullValue());
         assertThat(config.getPublisherScoreWeight(), equalTo(ConfigConstants.PUBLISHER_SCORE_WEIGHT));
         assertThat(config.getAgreeCoefficient(), equalTo(ConfigConstants.AGREE_COEFFICIENT));
@@ -195,6 +194,7 @@ public class ConfigReaderTest {
         assertThat(config.isProfilingOn(), equalTo(false));
         assertThat(config.getMaxFreeMemoryUsage(), equalTo(ConfigConstants.MAX_FREE_MEMORY_USAGE));
         assertThat(config.getMemoryLimit(), equalTo(null));
+        assertThat(config.getParserConfig(), equalTo(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
     }
 
     @Test

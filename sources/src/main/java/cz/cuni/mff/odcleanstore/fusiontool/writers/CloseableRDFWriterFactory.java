@@ -15,6 +15,7 @@ import org.openrdf.model.URI;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.n3.N3WriterFactory;
 import org.openrdf.rio.nquads.NQuadsWriterFactory;
@@ -23,14 +24,7 @@ import org.openrdf.rio.trig.TriGWriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 
 /**
  * Factory class for {@link CloseableRDFWriter} instances.
@@ -38,7 +32,9 @@ import java.io.Writer;
  */
 public class CloseableRDFWriterFactory {
     private static final Logger LOG = LoggerFactory.getLogger(CloseableRDFWriterFactory.class);
-    private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
+
+    // here we don't mind using default parser config instead of one from configuration because there is no parsing
+    private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory(new ParserConfig());
 
     /**
      * Creates a new {@link CloseableRDFWriter} according to settings given in output configuration.

@@ -9,46 +9,14 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
-import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSource;
-import cz.cuni.mff.odcleanstore.fusiontool.io.ConstructSourceImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.io.DataSourceImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.AllTriplesFileLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.AllTriplesLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.AllTriplesRepositoryLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.ExternalSortingInputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.FederatedSeedSubjectsLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.MetadataLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.SameAsLinkLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.SubjectsSetInputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.TransitiveSubjectsSetInputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.UriCollection;
+import cz.cuni.mff.odcleanstore.fusiontool.io.*;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.*;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ConflictingClusterConflictClusterFilter;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
-import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
-import cz.cuni.mff.odcleanstore.fusiontool.util.GenericConverter;
-import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
+import cz.cuni.mff.odcleanstore.fusiontool.util.*;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.FederatedRDFWriter;
@@ -64,22 +32,8 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 /**
  * Loads and prepares all inputs for data fusion executor, executes data fusion and outputs additional metadata
@@ -93,10 +47,10 @@ public class ODCSFusionToolExecutorRunner {
     private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolExecutorRunner.class);
 
     /** An instance of {@link cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory}. */
-    protected static final CloseableRDFWriterFactory RDF_WRITER_FACTORY = new CloseableRDFWriterFactory();
+    protected final CloseableRDFWriterFactory rdfWriterFactory = new CloseableRDFWriterFactory();
 
     /** An instance of {@link RepositoryFactory}. */
-    protected static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory();
+    protected final RepositoryFactory repositoryFactory;
 
     /** Global configuration. */
     protected final Config config;
@@ -112,6 +66,7 @@ public class ODCSFusionToolExecutorRunner {
         this.config = config;
         isTransitive = config.getSeedResourceRestriction() != null
             && config.getSeedResourceRestriction().isTransitive();
+        repositoryFactory = new RepositoryFactory(config.getParserConfig());
     }
 
     /**
@@ -193,9 +148,9 @@ public class ODCSFusionToolExecutorRunner {
             try {
                 AllTriplesLoader loader;
                 if (dataSourceConfig.getType() == EnumDataSourceType.FILE) {
-                    loader = new AllTriplesFileLoader(dataSourceConfig);
+                    loader = new AllTriplesFileLoader(dataSourceConfig, config.getParserConfig());
                 } else {
-                    DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
+                    DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), repositoryFactory);
                     loader = new AllTriplesRepositoryLoader(dataSource, dataSourceConfig.getParams());
                 }
                 loaders.add(loader);
@@ -217,7 +172,7 @@ public class ODCSFusionToolExecutorRunner {
         List<DataSource> dataSources = new ArrayList<DataSource>(config.getDataSources().size());
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
-                DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
+                DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), repositoryFactory);
                 dataSources.add(dataSource);
             } catch (ODCSFusionToolException e) {
                 // clean up already initialized repositories
@@ -246,7 +201,7 @@ public class ODCSFusionToolExecutorRunner {
         for (ConstructSourceConfig constructSourceConfig : constructSourceConfigs) {
             try {
                 ConstructSource constructSource =
-                        ConstructSourceImpl.fromConfig(constructSourceConfig, config.getPrefixes(), REPOSITORY_FACTORY);
+                        ConstructSourceImpl.fromConfig(constructSourceConfig, config.getPrefixes(), repositoryFactory);
                 constructSources.add(constructSource);
             } catch (ODCSFusionToolException e) {
                 // clean up already initialized repositories
@@ -337,7 +292,7 @@ public class ODCSFusionToolExecutorRunner {
     protected CloseableRDFWriter createRDFWriter() throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new ArrayList<CloseableRDFWriter>(config.getOutputs().size());
         for (Output output : config.getOutputs()) {
-            CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(output);
+            CloseableRDFWriter writer = rdfWriterFactory.createRDFWriter(output);
             writers.add(writer);
             writeNamespaceDeclarations(writer, config.getPrefixes());
         }
@@ -484,7 +439,7 @@ public class ODCSFusionToolExecutorRunner {
                 sameAsOutput.getParams().put(ConfigParameters.OUTPUT_PATH, output.getParams().get(ConfigParameters.OUTPUT_SAME_AS_FILE));
                 sameAsOutput.getParams().put(ConfigParameters.OUTPUT_FORMAT, output.getParams().get(ConfigParameters.OUTPUT_FORMAT));
                 sameAsOutput.getParams().put(ConfigParameters.OUTPUT_SPLIT_BY_MB, output.getParams().get(ConfigParameters.OUTPUT_SPLIT_BY_MB));
-                CloseableRDFWriter writer = RDF_WRITER_FACTORY.createRDFWriter(sameAsOutput);
+                CloseableRDFWriter writer = rdfWriterFactory.createRDFWriter(sameAsOutput);
                 writers.add(writer);
                 writer.addNamespace("owl", OWL.NAMESPACE);
                 writeNamespaceDeclarations(writer, nsPrefixes);

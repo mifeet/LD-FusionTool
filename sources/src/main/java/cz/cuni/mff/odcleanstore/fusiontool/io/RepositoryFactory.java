@@ -4,7 +4,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
@@ -17,6 +16,7 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.repository.sparql.SPARQLRepository;
+import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.sail.Sail;
 import org.openrdf.sail.memory.MemoryStore;
@@ -32,6 +32,13 @@ import java.io.File;
  */
 public final class RepositoryFactory {
     private static final Logger LOG = LoggerFactory.getLogger(RepositoryFactory.class);
+
+    private final ParserConfig parserConfig;
+
+    public RepositoryFactory(ParserConfig parserConfig) {
+        ODCSFusionToolUtils.checkNotNull(parserConfig);
+        this.parserConfig = parserConfig;
+    }
 
     /**
      * Creates a {@link Repository} based on the given configuration.
@@ -106,7 +113,7 @@ public final class RepositoryFactory {
         try {
             repository.initialize();
             RepositoryConnection connection = repository.getConnection();
-            connection.setParserConfig(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+            connection.setParserConfig(parserConfig);
             try {
                 if (sesameFormat.supportsContexts()) {
                     connection.add(file, baseURI, sesameFormat);

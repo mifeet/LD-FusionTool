@@ -11,10 +11,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,13 +26,17 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
 
     private static final ValueFactory VALUE_FACTORY = ValueFactoryImpl.getInstance();
 
-    private DataSourceConfig dataSourceConfig;
+    private final DataSourceConfig dataSourceConfig;
+    private final ParserConfig parserConfig;
 
-    public AllTriplesFileLoader(DataSourceConfig dataSourceConfig) {
+    public AllTriplesFileLoader(DataSourceConfig dataSourceConfig, ParserConfig parserConfig) {
+        ODCSFusionToolUtils.checkNotNull(dataSourceConfig);
+        ODCSFusionToolUtils.checkNotNull(parserConfig);
         this.dataSourceConfig = dataSourceConfig;
         if (dataSourceConfig.getType() != EnumDataSourceType.FILE) {
             throw new IllegalArgumentException("The given data source must be of type FILE, " + dataSourceConfig.getType() + " given");
         }
+        this.parserConfig = parserConfig;
     }
 
     @Override
@@ -91,7 +92,7 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
                     "Unknown serialization format " + format + " for data source " + sourceLabel);
         }
 
-        FusionToolRdfLoader rdfLoader = new FusionToolRdfLoader();
+        FusionToolRdfLoader rdfLoader = new FusionToolRdfLoader(parserConfig);
         rdfLoader.load(inputFile, baseURI, sesameFormat, inputLoaderPreprocessor);
     }
 

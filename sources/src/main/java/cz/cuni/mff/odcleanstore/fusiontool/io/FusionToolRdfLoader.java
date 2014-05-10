@@ -1,12 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.util.RDFLoader;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +10,8 @@ import java.io.IOException;
 public class FusionToolRdfLoader {
     private final RDFLoader rdfLoader;
 
-    public FusionToolRdfLoader() {
-        rdfLoader = new RDFLoader(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, ValueFactoryImpl.getInstance());
+    public FusionToolRdfLoader(ParserConfig parserConfig) {
+        rdfLoader = new RDFLoader(parserConfig, ValueFactoryImpl.getInstance());
     }
 
     /**

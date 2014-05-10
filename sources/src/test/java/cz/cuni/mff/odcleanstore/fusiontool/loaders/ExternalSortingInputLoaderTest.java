@@ -6,10 +6,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
@@ -119,7 +116,11 @@ public class ExternalSortingInputLoaderTest {
     public void iteratesOverAllStatementsWithAppliedUriMapping() throws Exception {
         // Act
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
+                createFileAllTriplesLoader(testInput1),
+                testDir.getRoot(),
+                Long.MAX_VALUE,
+                false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -246,7 +247,11 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void worksOnEmptyStatements() throws Exception {
         // Act & assert
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(Collections.<Statement>emptySet()), testDir.getRoot(), Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
+                createFileAllTriplesLoader(Collections.<Statement>emptySet()),
+                testDir.getRoot(),
+                Long.MAX_VALUE,
+                false);
         try {
             inputLoader.initialize(uriMapping);
 
@@ -287,7 +292,8 @@ public class ExternalSortingInputLoaderTest {
             inputFileWriter.append("xyz;");
             inputFileWriter.close();
 
-            Set<AllTriplesLoader> dataSources = Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSource));
+            Set<AllTriplesLoader> dataSources = Collections.singleton(
+                    (AllTriplesLoader) new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
             inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(), Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
@@ -327,7 +333,11 @@ public class ExternalSortingInputLoaderTest {
     public void readsMultipleInputFiles() throws Exception {
         // Act
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1, testInput2), testDir.getRoot(), Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
+                createFileAllTriplesLoader(testInput1, testInput2),
+                testDir.getRoot(),
+                Long.MAX_VALUE,
+                false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -394,12 +404,12 @@ public class ExternalSortingInputLoaderTest {
     private Collection<AllTriplesLoader> createFileAllTriplesLoader(Collection<Statement>... sourceStatements) throws IOException, RDFHandlerException {
         if (sourceStatements.length == 1) {
             DataSourceConfig dataSourceConfig = createFileDataSource(sourceStatements[0]);
-            return Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig));
+            return Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
         }
         ArrayList<AllTriplesLoader> result = new ArrayList<AllTriplesLoader>();
         for (Collection<Statement> statements : sourceStatements) {
             DataSourceConfig dataSourceConfig = createFileDataSource(statements);
-            result.add(new AllTriplesFileLoader(dataSourceConfig));
+            result.add(new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
         }
         return result;
     }

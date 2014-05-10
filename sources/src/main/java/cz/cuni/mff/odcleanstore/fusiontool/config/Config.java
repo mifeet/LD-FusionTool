@@ -2,6 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import org.openrdf.model.URI;
+import org.openrdf.rio.ParserConfig;
 
 import java.io.File;
 import java.util.Collection;
@@ -180,6 +181,13 @@ public interface Config {
 
     /**
      * Max portion of free memory to use.
+     * @return portion of free memory to use as a number between 0 and 1
      */
     float getMaxFreeMemoryUsage();
+
+    /**
+     * Returns configuration for Sesame file parsers.
+     * @return configuration for Sesame file parsers
+     */
+    ParserConfig getParserConfig();
 }

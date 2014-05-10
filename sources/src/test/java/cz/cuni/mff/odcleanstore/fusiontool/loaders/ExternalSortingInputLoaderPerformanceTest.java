@@ -1,10 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.base.Stopwatch;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
@@ -68,7 +65,8 @@ public class ExternalSortingInputLoaderPerformanceTest {
         dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_PATH, inputFile.getAbsolutePath());
         dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_FORMAT, format.name());
         initStopwatch.stop();
-        Set<AllTriplesLoader> dataSources = Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig));
+        Set<AllTriplesLoader> dataSources = Collections.singleton(
+                (AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
 
         System.out.printf("Initialized with %,d triples in %s\n", tripleCount, initStopwatch);
         System.out.printf("Using GZIP compression: %s (block size %d)\n", ExternalSortingInputLoader.USE_GZIP ? "yes" : "no", ExternalSortingInputLoader.GZIP_BUFFER_SIZE);
@@ -77,9 +75,9 @@ public class ExternalSortingInputLoaderPerformanceTest {
         int actualTripleCount = 0;
         Stopwatch executionStopwatch;
         ExternalSortingInputLoader inputLoader = null;
+        executionStopwatch = Stopwatch.createStarted();
+        inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(), maxMemorySize, false);
         try {
-            executionStopwatch = Stopwatch.createStarted();
-            inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(), maxMemorySize, false);
             inputLoader.initialize(new URIMappingIterableImpl());
             while (inputLoader.hasNext()) {
                 actualTripleCount += inputLoader.nextQuads().size();
