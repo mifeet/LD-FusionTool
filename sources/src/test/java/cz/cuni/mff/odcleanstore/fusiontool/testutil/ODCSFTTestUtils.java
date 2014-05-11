@@ -1,6 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.testutil;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -150,5 +151,21 @@ public final class ODCSFTTestUtils {
                 createHttpUri(predicateUri),
                 createHttpUri(objectUri),
                 contextUri != null ? createHttpUri(contextUri) : null);
+    }
+
+    public static Statement setContext(Statement statement, Resource context) {
+        return VALUE_FACTORY.createStatement(
+                statement.getSubject(),
+                statement.getPredicate(),
+                statement.getObject(),
+                context);
+    }
+
+    public static Statement setSubject(Statement statement, Resource subject) {
+        return VALUE_FACTORY.createStatement(
+                subject,
+                statement.getPredicate(),
+                statement.getObject(),
+                statement.getContext());
     }
 }
