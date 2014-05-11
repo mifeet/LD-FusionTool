@@ -1,5 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Sets;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
@@ -10,13 +12,10 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.openrdf.model.Model;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
+import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParseException;
@@ -33,6 +32,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ODCSFusionToolExecutorRunnerIntegrationTest {
     public static final ValueFactoryImpl VALUE_FACTORY = ValueFactoryImpl.getInstance();
+
     @Rule
     public TemporaryFolder testDir = new TemporaryFolder();
     private File resourceDir;
@@ -42,7 +42,6 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         resourceDir = new File(getClass().getResource(".").toURI());
     }
 
-    @Ignore // TODO: fix
     @Test
     public void testRunWithTransitiveSeedResources() throws Exception {
         // Arrange
@@ -53,7 +52,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
                 config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
-                new File(resourceDir, "expectedOutput.trig"));
+                new File(resourceDir, "expectedOutput-seedTransitive.trig"));
     }
 
     @Test
@@ -66,10 +65,9 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
                 config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
-                new File(resourceDir, "expectedOutput.trig"));
+                new File(resourceDir, "expectedOutput-seedTransitive.trig"));
     }
 
-    @Ignore // TODO: fix
     @Test
     public void testRunWithLocalCopyProcessing() throws Exception {
         // Arrange
@@ -80,10 +78,9 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
                 config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
-                new File(resourceDir, "expectedOutput.trig"));
+                new File(resourceDir, "expectedOutput-localCopyProcessing.trig"));
     }
 
-    @Ignore // TODO: fix
     @Test
     public void testRunWithLocalCopyProcessingAndGzippedInput() throws Exception {
         // Arrange
@@ -94,7 +91,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
                 config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
-                new File(resourceDir, "expectedOutput.trig"));
+                new File(resourceDir, "expectedOutput-localCopyProcessing.trig"));
     }
 
     private void runTestWithConfig(ConfigImpl config, File expectedCanonicalUriFile, File expectedSameAsFile, File expectedOutputFile) throws ODCSFusionToolException, IOException, ConflictResolutionException, RDFParseException {
@@ -143,9 +140,44 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         Statement[] expectedOutput = parseStatements(expectedOutputFile).toArray(new Statement[0]);
         //assertThat(dataOutput, equalTo(expectedOutput));
         assertThat(dataOutput.length, equalTo(expectedOutput.length));
+        BiMap<BNode, BNode> bNodeMap = HashBiMap.create();
         for (int i = 0; i < dataOutput.length; i++) {
-            assertThat(dataOutput[i], equalTo(expectedOutput[i]));
-            assertThat(dataOutput[i].getContext(), equalTo(expectedOutput[i].getContext()));
+            Statement actualStatement = dataOutput[i];
+            Statement expectedStatement = tryMatchBNodes(expectedOutput[i], actualStatement, bNodeMap);
+
+            assertThat(actualStatement, equalTo(expectedStatement));
+            assertThat(actualStatement.getContext(), equalTo(expectedStatement.getContext()));
+        }
+    }
+
+    private Statement tryMatchBNodes(Statement expectedStatement, Statement actualStatement, BiMap<BNode, BNode> bNodeMap) {
+        if (expectedStatement.getSubject() instanceof BNode
+                || expectedStatement.getObject() instanceof BNode
+                || expectedStatement.getContext() instanceof BNode) {
+            return VALUE_FACTORY.createStatement(
+                    (Resource) tryMatchBNode(expectedStatement.getSubject(), actualStatement.getSubject(), bNodeMap),
+                    expectedStatement.getPredicate(),
+                    tryMatchBNode(expectedStatement.getObject(), actualStatement.getObject(), bNodeMap),
+                    (Resource) tryMatchBNode(expectedStatement.getContext(), actualStatement.getContext(), bNodeMap));
+        } else {
+            return expectedStatement;
+        }
+    }
+
+    private Value tryMatchBNode(Value expected, Value actual, BiMap<BNode, BNode> bNodeMap) {
+        if (!(expected instanceof BNode)) {
+            // map only BNodes
+            return expected;
+        } else if (bNodeMap.containsKey(expected)) {
+            // this BNode already has a mapping, use it consistently
+            return bNodeMap.get(expected);
+        } else if (actual instanceof BNode && !bNodeMap.inverse().containsKey(actual)) {
+            // actual value is also a bnode and there is no other expected node mapped to it
+            bNodeMap.put((BNode) expected, (BNode) actual);
+            return actual;
+        } else {
+            // cannot map to actual value
+            return expected;
         }
     }
 
