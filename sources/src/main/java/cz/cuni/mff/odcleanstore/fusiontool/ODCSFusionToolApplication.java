@@ -70,7 +70,7 @@ public final class ODCSFusionToolApplication {
     }
     
     private static String getUsage() {
-        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--only-conflicts] [--only-mapped] <xml config file>";
+        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--profile] [--only-conflicts] [--only-mapped] <xml config file>";
     }
 
     /**

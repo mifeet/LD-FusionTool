@@ -135,7 +135,7 @@ public final class ODCSFusionToolUtils {
     public static String formatProfilingTime(long timeInMs) {
         DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
         timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return String.format(Locale.ROOT, "%d:%s (%d ms)\n",
+        return String.format(Locale.ROOT, "%d:%s (%d ms)",
                 timeInMs / HOUR_MS,
                 timeFormat.format(new Date(timeInMs)),
                 timeInMs);
