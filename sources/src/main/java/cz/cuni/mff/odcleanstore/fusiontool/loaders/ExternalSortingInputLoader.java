@@ -164,7 +164,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public void close() throws ODCSFusionToolException {
-        LOG.debug("Deleting input loader temporary files");
+        LOG.info("Deleting input loader temporary files");
         if (quadIterator != null) {
             try {
                 quadIterator.close();
