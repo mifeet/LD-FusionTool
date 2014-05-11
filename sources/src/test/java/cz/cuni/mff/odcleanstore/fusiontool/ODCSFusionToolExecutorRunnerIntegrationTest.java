@@ -56,6 +56,19 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
     }
 
     @Test
+    public void testRunWithTransitiveSeedResourcesAndFileCache() throws Exception {
+        // Arrange
+        File configFile = new File(resourceDir, "config-seedTransitive-fileCache.xml");
+        ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
+
+        runTestWithConfig(
+                config,
+                new File(resourceDir, "canonical.txt"),
+                new File(resourceDir, "sameAs.ttl"),
+                new File(resourceDir, "expectedOutput-seedTransitive.trig"));
+    }
+
+    @Test
     public void testRunWithTransitiveSeedResourcesAndGzippedInput() throws Exception {
         // Arrange
         File configFile = new File(resourceDir, "config-seedTransitive-gz.xml");

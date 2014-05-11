@@ -24,7 +24,7 @@
     <DataProcessing>
         <Param name="canonicalUriOutputFile" value="output/canonical.txt" />
         <Param name="canonicalUriInputFile" value="canonical.txt" />
-        <Param name="enableFileCache" value="false" />
+        <Param name="enableFileCache" value="true" />
         <Param name="localCopyProcessing" value="false" />
         <SeedResourceRestriction var="s" transitive="true">
             ?s ?p ?o
