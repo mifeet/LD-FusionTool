@@ -143,7 +143,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         runTestWithConfig(config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
-                new File(resourceDir, "expectedOutput-localCopyProcessing-onlyConflicts.trig"));
+                new File(resourceDir, "expectedOutput-localCopyProcessing-onlyMapped.trig"));
     }
 
     private void runTestWithConfig(ConfigImpl config, File expectedCanonicalUriFile, File expectedSameAsFile, File expectedOutputFile) throws ODCSFusionToolException, IOException, ConflictResolutionException, RDFParseException {
