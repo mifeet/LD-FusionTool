@@ -3,15 +3,6 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix odcs: <http://opendata.cz/infrastructure/odcleanstore/> .
 
-<http://opendata.cz/infrastructure/odcleanstore/CR/results/1> {
-	<http://o1> <http://x1> <http://o2> .
-}
-
-<http://opendata.cz/infrastructure/odcleanstore/metadata/> {
-	<http://opendata.cz/infrastructure/odcleanstore/CR/results/1> odcs:quality "0.5"^^<http://www.w3.org/2001/XMLSchema#double> ;
-		odcs:sourceGraph <http://g1> .
-}
-
 <http://opendata.cz/infrastructure/odcleanstore/CR/results/2> {
 	<http://s1> <http://p1> <http://o1> .
 }

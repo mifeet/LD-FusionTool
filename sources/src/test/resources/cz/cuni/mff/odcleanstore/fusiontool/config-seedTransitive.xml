@@ -27,7 +27,7 @@
         <Param name="enableFileCache" value="false" />
         <Param name="localCopyProcessing" value="false" />
         <SeedResourceRestriction var="s" transitive="true">
-            ?s ?p ?o
+            ?s ?p ?o FILTER(?p != &lt;http://x1&gt;)
         </SeedResourceRestriction>
     </DataProcessing>
 

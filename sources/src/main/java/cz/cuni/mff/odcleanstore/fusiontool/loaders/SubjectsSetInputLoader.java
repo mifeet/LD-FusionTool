@@ -29,7 +29,7 @@ public class SubjectsSetInputLoader implements InputLoader {
     protected final LargeCollectionFactory largeCollectionFactory;
     protected final Collection<DataSource> dataSources;
     protected final UriCollection initialSubjects;
-    protected final SubjectsIterator subjectsIterator;
+    protected final CanonicalSubjectsIterator canonicalSubjectsIterator;
     protected final boolean outputMappedSubjectsOnly;
     protected UriCollection subjectsQueue = null;
     private ResourceQuadLoader resourceQuadLoader;
@@ -54,7 +54,7 @@ public class SubjectsSetInputLoader implements InputLoader {
         this.initialSubjects = subjects;
         this.dataSources = dataSources;
         this.largeCollectionFactory = largeCollectionFactory;
-        this.subjectsIterator = new SubjectsIterator();
+        this.canonicalSubjectsIterator = new CanonicalSubjectsIterator();
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
     }
 
@@ -72,7 +72,7 @@ public class SubjectsSetInputLoader implements InputLoader {
         if (subjectsQueue == null) {
             throw new IllegalStateException("Must be initialized with initialize() first");
         }
-        String canonicalURI = subjectsIterator.next();
+        String canonicalURI = canonicalSubjectsIterator.next();
         if (canonicalURI == null) {
             LOG.warn("No more subjects to load"); // shouldn't happen, this means that someone didn't respect hasNext()
             return Collections.emptySet();
@@ -90,7 +90,7 @@ public class SubjectsSetInputLoader implements InputLoader {
         if (subjectsQueue == null) {
             throw new IllegalStateException("Must be initialized with initialize() first");
         }
-        return subjectsIterator.hasNext();
+        return canonicalSubjectsIterator.hasNext();
     }
 
     @Override
@@ -181,7 +181,7 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     /** Iterator over canonical URIs to be resolved. */
-    protected class SubjectsIterator extends ThrowingAbstractIterator<String, ODCSFusionToolException> {
+    protected class CanonicalSubjectsIterator extends ThrowingAbstractIterator<String, ODCSFusionToolException> {
         @Override
         protected String computeNext() throws ODCSFusionToolException {
             while (subjectsQueue.hasNext()) {
@@ -196,7 +196,7 @@ public class SubjectsSetInputLoader implements InputLoader {
                 if (isResolvedCanonicalUri(canonicalURI)) {
                     continue; // avoid processing a URI multiple times
                 }
-                return nextSubject;
+                return canonicalURI;
             }
             return endOfData();
         }

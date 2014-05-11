@@ -54,6 +54,19 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
     }
 
     @Test
+    public void testRunWithNonTransitiveSeedResources() throws Exception {
+        // Arrange
+        File configFile = new File(resourceDir, "config-seedNonTransitive.xml");
+        ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
+
+        runTestWithConfig(
+                config,
+                new File(resourceDir, "canonical.txt"),
+                new File(resourceDir, "sameAs.ttl"),
+                new File(resourceDir, "expectedOutput-seedNonTransitive.trig"));
+    }
+
+    @Test
     public void testRunWithTransitiveSeedResourcesAndFileCache() throws Exception {
         // Arrange
         File configFile = new File(resourceDir, "config-seedTransitive-fileCache.xml");
@@ -151,14 +164,15 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         Statement[] actualOutput = normalizeActualOutput(actualModel);
         Statement[] expectedOutput = normalizeToMatchActualOutput(parseStatements(expectedOutputFile), actualOutput);
         //assertThat(dataOutput, equalTo(expectedOutput));
-        assertThat(actualOutput.length, equalTo(expectedOutput.length));
-        for (int i = 0; i < actualOutput.length; i++) {
+        int minCommonLength = Math.min(actualOutput.length, expectedOutput.length);
+        for (int i = 0; i < minCommonLength; i++) {
             Statement actualStatement = actualOutput[i];
             Statement expectedStatement = expectedOutput[i];
 
             assertThat(actualStatement, equalTo(expectedStatement));
             assertThat(actualStatement.getContext(), equalTo(expectedStatement.getContext()));
         }
+        assertThat(actualOutput.length, equalTo(expectedOutput.length));
     }
 
     /**
