@@ -52,7 +52,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     /**
      * Indicates whether to use gzip compression in temporary files.
      */
-    public static final boolean USE_GZIP = false;
+    public static final boolean USE_GZIP = true;
 
     public static final int GZIP_BUFFER_SIZE = 2048;
 
