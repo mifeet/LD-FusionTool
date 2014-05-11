@@ -11,6 +11,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
+import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,10 +23,7 @@ import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.Rio;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -149,18 +147,70 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         }
 
         // Assert - output
-        Statement[] dataOutput = parseStatements(outputFile).toArray(new Statement[0]);
-        Statement[] expectedOutput = parseStatements(expectedOutputFile).toArray(new Statement[0]);
+        Model actualModel = parseStatements(outputFile);
+        Statement[] actualOutput = normalizeActualOutput(actualModel);
+        Statement[] expectedOutput = normalizeToMatchActualOutput(parseStatements(expectedOutputFile), actualOutput);
         //assertThat(dataOutput, equalTo(expectedOutput));
-        assertThat(dataOutput.length, equalTo(expectedOutput.length));
-        BiMap<BNode, BNode> bNodeMap = HashBiMap.create();
-        for (int i = 0; i < dataOutput.length; i++) {
-            Statement actualStatement = dataOutput[i];
-            Statement expectedStatement = tryMatchBNodes(expectedOutput[i], actualStatement, bNodeMap);
+        assertThat(actualOutput.length, equalTo(expectedOutput.length));
+        for (int i = 0; i < actualOutput.length; i++) {
+            Statement actualStatement = actualOutput[i];
+            Statement expectedStatement = expectedOutput[i];
 
             assertThat(actualStatement, equalTo(expectedStatement));
             assertThat(actualStatement.getContext(), equalTo(expectedStatement.getContext()));
         }
+    }
+
+    /**
+     * Return SPOG-sorted statements.
+     */
+    private Statement[] normalizeActualOutput(Model model) {
+        TreeSet<Statement> statements = Sets.newTreeSet(new SpogComparator());
+        statements.addAll(model);
+        return statements.toArray(new Statement[statements.size()]);
+    }
+
+    /**
+     * Necessary to SPOG-sort statements, map blank nodes, which have different identifiers in different files,
+     * and named graphs, which depend on the order CR was executed in.
+     */
+    private Statement[] normalizeToMatchActualOutput(Model expectedOutput, Statement[] actualOutput) {
+        // Map named graphs
+        Statement[] expectedStatements = expectedOutput.toArray(new Statement[expectedOutput.size()]);
+        Resource metadataContext = getMetadataContext(actualOutput);
+        if (metadataContext != null) {
+            Map<Statement, Resource> actualStatementsToContext = new HashMap<Statement, Resource>();
+            for (Statement statement : actualOutput) {
+                actualStatementsToContext.put(setContext(statement, null), statement.getContext());
+            }
+            Map<Resource, Resource> contextsMapping = new HashMap<Resource, Resource>();
+            for (Statement statement : expectedStatements) {
+                Resource matchingActualContext = actualStatementsToContext.get(setContext(statement, null));
+                if (!metadataContext.equals(statement.getContext()) && matchingActualContext != null) {
+                    contextsMapping.put(statement.getContext(), matchingActualContext);
+                }
+            }
+            for (int i = 0; i < expectedStatements.length; i++) {
+                if (contextsMapping.containsKey(expectedStatements[i].getContext())) {
+                    expectedStatements[i] = setContext(expectedStatements[i], contextsMapping.get(expectedStatements[i].getContext()));
+                } else if (contextsMapping.containsKey(expectedStatements[i].getSubject())) {
+                    expectedStatements[i] = setSubject(expectedStatements[i], contextsMapping.get(expectedStatements[i].getSubject()));
+                }
+            }
+        }
+
+        // SPOG-sort
+        TreeSet<Statement> expectedStatementsTreeSet = Sets.newTreeSet(new SpogComparator());
+        expectedStatementsTreeSet.addAll(Arrays.asList(expectedStatements));
+        Statement[] result = expectedStatementsTreeSet.toArray(new Statement[expectedStatementsTreeSet.size()]);
+
+        // Map blank nodes
+        BiMap<BNode, BNode> bNodeMap = HashBiMap.create();
+        int minCommonLength = Math.min(expectedStatementsTreeSet.size(), actualOutput.length);
+        for (int i = 0; i < minCommonLength; i++) {
+            result[i] = tryMatchBNodes(result[i], actualOutput[i], bNodeMap);
+        }
+        return result;
     }
 
     private Statement tryMatchBNodes(Statement expectedStatement, Statement actualStatement, BiMap<BNode, BNode> bNodeMap) {
@@ -224,7 +274,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         return new File(testDir.getRoot(), path);
     }
 
-    private TreeSet<Statement> parseStatements(File file) throws IOException, RDFParseException {
+    private Model parseStatements(File file) throws IOException, RDFParseException {
         FileInputStream inputStream = new FileInputStream(file);
         RDFFormat rdfFormat = Rio.getParserFormatForFileName(file.getName());
         Model model = Rio.parse(
@@ -232,8 +282,31 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
                 file.toURI().toString(),
                 rdfFormat);
         inputStream.close();
-        TreeSet<Statement> result = Sets.newTreeSet(new SpogComparator());
-        result.addAll(model);
-        return result;
+        return model;
+    }
+
+    private Resource getMetadataContext(Statement[] actualOutput) {
+        for (Statement statement : actualOutput) {
+            if (ODCS.SOURCE_GRAPH.equals(statement.getPredicate())) {
+                return statement.getContext();
+            }
+        }
+        return null;
+    }
+
+    private Statement setContext(Statement statement, Resource context) {
+        return VALUE_FACTORY.createStatement(
+                statement.getSubject(),
+                statement.getPredicate(),
+                statement.getObject(),
+                context);
+    }
+
+    private Statement setSubject(Statement statement, Resource subject) {
+        return VALUE_FACTORY.createStatement(
+                subject,
+                statement.getPredicate(),
+                statement.getObject(),
+                statement.getContext());
     }
 }
