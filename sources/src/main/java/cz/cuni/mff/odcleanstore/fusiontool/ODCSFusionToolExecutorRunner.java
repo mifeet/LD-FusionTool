@@ -135,7 +135,8 @@ public class ODCSFusionToolExecutorRunner {
         long memoryLimit = calculateMemoryLimit();
         if (config.isLocalCopyProcessing()) {
             Collection<AllTriplesLoader> allTriplesLoaders = getAllTriplesLoaders();
-            return new ExternalSortingInputLoader(allTriplesLoaders, config.getTempDirectory(), memoryLimit, config.getOutputMappedSubjectsOnly());
+            return new ExternalSortingInputLoader(allTriplesLoaders, config.getTempDirectory(),
+                    config.getParserConfig(), memoryLimit, config.getOutputMappedSubjectsOnly());
         } else {
             Collection<DataSource> dataSources = getDataSources();
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());

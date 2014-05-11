@@ -3,6 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.io;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
 import org.openrdf.model.Statement;
+import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.nquads.NQuadsParser;
 
@@ -19,8 +20,8 @@ public class NQuadsParserIterator
 
     private Parser internalParser;
 
-    public NQuadsParserIterator(Reader inputReader) throws IOException {
-        this.internalParser = new Parser(inputReader);
+    public NQuadsParserIterator(Reader inputReader, ParserConfig parserConfig) throws IOException {
+        this.internalParser = new Parser(inputReader, parserConfig);
     }
 
     @Override
@@ -44,9 +45,10 @@ public class NQuadsParserIterator
         private int c;
         private Statement currentStatement = null;
 
-        public Parser(Reader inputReader) throws IOException {
+        public Parser(Reader inputReader, ParserConfig parserConfig) throws IOException {
             this.reader = inputReader;
             initialize();
+            this.setParserConfig(parserConfig);
         }
 
         public void initialize() throws IOException {

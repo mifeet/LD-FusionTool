@@ -119,8 +119,8 @@ public class ExternalSortingInputLoaderTest {
         ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
                 createFileAllTriplesLoader(testInput1),
                 testDir.getRoot(),
-                Long.MAX_VALUE,
-                false);
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
+                Long.MAX_VALUE, false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -149,7 +149,8 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
+                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -178,7 +179,8 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
+                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -201,7 +203,8 @@ public class ExternalSortingInputLoaderTest {
     public void resourceIsDescribedInSingleNextQuadsResult() throws Exception {
         // Act
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -228,7 +231,8 @@ public class ExternalSortingInputLoaderTest {
         // Act
         final long maxMemory = 1;
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), maxMemory, false);
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemory, false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -250,8 +254,8 @@ public class ExternalSortingInputLoaderTest {
         ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
                 createFileAllTriplesLoader(Collections.<Statement>emptySet()),
                 testDir.getRoot(),
-                Long.MAX_VALUE,
-                false);
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
+                Long.MAX_VALUE, false);
         try {
             inputLoader.initialize(uriMapping);
 
@@ -264,7 +268,8 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void clearsTemporaryFilesWhenClosed() throws Exception {
         // Act
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
         try {
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
@@ -294,7 +299,8 @@ public class ExternalSortingInputLoaderTest {
 
             Set<AllTriplesLoader> dataSources = Collections.singleton(
                     (AllTriplesLoader) new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
-            inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(), Long.MAX_VALUE, false);
+            inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(),
+                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
                 // call only once
@@ -315,7 +321,8 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void updateWithResolvedStatementsDoesNotThrowException() throws Exception {
         // Act
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(), Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -336,8 +343,8 @@ public class ExternalSortingInputLoaderTest {
         ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
                 createFileAllTriplesLoader(testInput1, testInput2),
                 testDir.getRoot(),
-                Long.MAX_VALUE,
-                false);
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
+                Long.MAX_VALUE, false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -379,7 +386,8 @@ public class ExternalSortingInputLoaderTest {
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(statements), testDir.getRoot(), Long.MAX_VALUE, true);
+            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(statements), testDir.getRoot(),
+                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, true);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());

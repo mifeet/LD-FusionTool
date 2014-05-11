@@ -12,6 +12,7 @@ import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFWriter;
 import org.openrdf.rio.Rio;
@@ -67,21 +68,24 @@ public class ExternalSortingInputLoader implements InputLoader {
     private final boolean outputMappedSubjectsOnly;
     private final File cacheDirectory;
     private final Long maxMemoryLimit;
+    private final ParserConfig parserConfig;
 
     private File tempSortedFile = null;
     private File tempInputFile = null;
     private NQuadsParserIterator quadIterator;
 
     /**
+     * @param dataSources initialized {@link AllTriplesLoader} loaders
+     * @param cacheDirectory directory for temporary files
+     * @param parserConfig RDF parser configuration
      * @param maxMemoryLimit maximum memory amount to use for large operations;
      *      if the limit is too high, it may cause OutOfMemory exceptions
-     * @param cacheDirectory directory for temporary files
-     * @param dataSources initialized {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.AllTriplesLoader} loaders
      * @param outputMappedSubjectsOnly see {@link cz.cuni.mff.odcleanstore.fusiontool.config.Config#getOutputMappedSubjectsOnly()}
      */
     public ExternalSortingInputLoader(
             Collection<AllTriplesLoader> dataSources,
             File cacheDirectory,
+            ParserConfig parserConfig,
             long maxMemoryLimit,
             boolean outputMappedSubjectsOnly) {
 
@@ -91,6 +95,7 @@ public class ExternalSortingInputLoader implements InputLoader {
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         this.maxMemoryLimit = maxMemoryLimit;
         this.cacheDirectory = cacheDirectory;
+        this.parserConfig = parserConfig;
     }
 
 
@@ -260,7 +265,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     private void initializeQuadIteratorFromTempSortedFile() throws ODCSFusionToolException {
         try {
-            quadIterator = new NQuadsParserIterator(createTempFileReader(tempSortedFile, false));
+            quadIterator = new NQuadsParserIterator(createTempFileReader(tempSortedFile, false), parserConfig);
         } catch (IOException e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_PARSE_TEMP_FILE,
                     "Error while initializing temporary file reader in input loader", e);

@@ -76,7 +76,8 @@ public class ExternalSortingInputLoaderPerformanceTest {
         Stopwatch executionStopwatch;
         ExternalSortingInputLoader inputLoader = null;
         executionStopwatch = Stopwatch.createStarted();
-        inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(), maxMemorySize, false);
+        inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(),
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemorySize, false);
         try {
             inputLoader.initialize(new URIMappingIterableImpl());
             while (inputLoader.hasNext()) {
