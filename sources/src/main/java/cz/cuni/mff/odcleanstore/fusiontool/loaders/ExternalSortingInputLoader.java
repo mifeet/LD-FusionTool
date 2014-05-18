@@ -19,9 +19,23 @@ import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -51,8 +65,10 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     /**
      * Indicates whether to use gzip compression in temporary files.
+     * even though the performanc is a little lower.
+     * Set to true to save spaces when deployed e.g. as a DPU running as part of ODCS/UnifiedViews framework.
      */
-    public static final boolean USE_GZIP = false;
+    public static final boolean USE_GZIP = true;
 
     public static final int GZIP_BUFFER_SIZE = 2048;
 
