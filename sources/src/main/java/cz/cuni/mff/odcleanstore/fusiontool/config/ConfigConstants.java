@@ -4,7 +4,14 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.vocabulary.*;
+import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.model.vocabulary.DC;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.RDF;
+import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.helpers.BasicParserSettings;
 import org.openrdf.rio.helpers.NTriplesParserSettings;
@@ -19,6 +26,7 @@ import java.util.Collection;
  * @author Jan Michelfeit
  */
 public final class ConfigConstants {
+
 
     /** Disable constructor for a utility class. */
     private ConfigConstants() {
@@ -121,5 +129,14 @@ public final class ConfigConstants {
         DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, false);
         DEFAULT_FILE_PARSER_CONFIG.addNonFatalError(NTriplesParserSettings.FAIL_ON_NTRIPLES_INVALID_LINES);
     }
+
+    // TODO: quick constants for vestnik fusion
+    private static final ValueFactory VF = ValueFactoryImpl.getInstance();
+    public static final Collection<URI> RESOURCE_DESCRIPTION_URIS = Arrays.asList(
+            VF.createURI("http://schema.org/address"),
+            VF.createURI("http://schema.org/contact")
+    );
+
+
 }
 

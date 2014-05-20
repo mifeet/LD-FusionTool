@@ -29,4 +29,6 @@ public interface ConfigConflictResolution {
      * @return set of preferred canonical URIs
      */
     Collection<String> getPreferredCanonicalURIs();
+
+    Collection<URI> getResourceDescriptionURIs();
 }
