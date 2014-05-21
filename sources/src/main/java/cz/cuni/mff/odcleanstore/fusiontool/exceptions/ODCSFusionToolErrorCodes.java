@@ -20,10 +20,10 @@ public final class ODCSFusionToolErrorCodes {
     public static final int INPUT_LOADER_LOADING = 34;
     public static final int INPUT_LOADER_PARSE_TEMP_FILE = 33;
     public static final int INPUT_LOADER_SORT = 32;
-    public static final int INPUT_LOADER_PARSE_FILE = 31;
+    public static final int RDF_FILE_LOADER_PARSE = 31;
     public static final int INPUT_LOADER_BUFFER_QUADS = 30;
     public static final int INPUT_LOADER_TMP_FILE_INIT = 29;
-    public static final int INPUT_LOADER_READ_FILE = 28;
+    public static final int RDF_FILE_LOADER_READ = 28;
     public static final int REPOSITORY_INIT_VIRTUOSO_JDBC = 27;
     //public static final int REPOSITORY_INIT_VIRTUOSO_SPARQL = 26;
     public static final int OUTPUT_PARAM = 25;
