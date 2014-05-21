@@ -72,7 +72,7 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
                 uriMapping.addLink(statement.getSubject().stringValue(), statement.getObject().stringValue());
                 loadedCount++;
 
-                if (loadedCount % 500000 == 0) {
+                if (loadedCount % 5000000 == 0) {
                     LOG.info("... loaded {} sameAs links from data source {}", loadedCount, paramReader.getLabel());
                 }
             }
