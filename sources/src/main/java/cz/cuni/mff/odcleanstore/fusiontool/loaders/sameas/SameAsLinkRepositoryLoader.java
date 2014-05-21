@@ -1,9 +1,10 @@
-package cz.cuni.mff.odcleanstore.fusiontool.loaders;
+package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
 import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Statement;
@@ -17,8 +18,8 @@ import org.slf4j.LoggerFactory;
  * Loads owl:sameAs links from named graphs to be processed.
  * TODO: apply limit/offset
  */
-public class SameAsLinkLoader extends RepositoryLoaderBase {
-    private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkLoader.class);
+public class SameAsLinkRepositoryLoader extends RepositoryLoaderBase implements SameAsLinkLoader {
+    private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkRepositoryLoader.class);
     
     /** RDF data source. */
     protected final ConstructSource constructSource;
@@ -27,7 +28,7 @@ public class SameAsLinkLoader extends RepositoryLoaderBase {
      * Creates a new instance.
      * @param constructSource an initialized construct source
      */
-    public SameAsLinkLoader(ConstructSource constructSource) {
+    public SameAsLinkRepositoryLoader(ConstructSource constructSource) {
         super(constructSource);
         this.constructSource = constructSource;
     }

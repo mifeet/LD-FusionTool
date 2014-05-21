@@ -5,6 +5,7 @@ import org.openrdf.model.URI;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Configuration related to conflict resolution.
@@ -30,5 +31,12 @@ public interface ConfigConflictResolution {
      */
     Collection<String> getPreferredCanonicalURIs();
 
+    /**
+     * Returns set of URIs that act as an owl:sameAs link or it's equivalent for the purposes of conflict resolution.
+     * @return set of 'same as' link property URIs
+     */
+    Set<URI> getSameAsLinkTypes();
+
+ 
     Collection<URI> getResourceDescriptionURIs();
 }
