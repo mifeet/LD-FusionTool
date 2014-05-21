@@ -17,10 +17,10 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class NTupleFileMergerTest {
+public class NTuplesFileMergerTest {
     private static final ValueFactory VF = ValueFactoryImpl.getInstance();
 
-    private NTupleFileMerger.NTupleMergeTransform transform = new NTupleFileMerger.NTupleMergeTransform() {
+    private NTuplesFileMerger.NTupleMergeTransform transform = new NTuplesFileMerger.NTupleMergeTransform() {
         @Override
         public Value[] transform(List<Value> leftValues, List<Value> rightValues) {
             ArrayList<Value> result = new ArrayList<Value>(leftValues);
@@ -50,7 +50,7 @@ public class NTupleFileMergerTest {
         InputStream rightInput = new ByteArrayInputStream(rightInputStr.getBytes());
 
         // Act
-        NTupleFileMerger merger = new NTupleFileMerger(transform, new ParserConfig());
+        NTuplesFileMerger merger = new NTuplesFileMerger(transform, new ParserConfig());
         merger.merge(new InputStreamReader(leftInput), new InputStreamReader(rightInput), new OutputStreamWriter(output));
 
         // Assert

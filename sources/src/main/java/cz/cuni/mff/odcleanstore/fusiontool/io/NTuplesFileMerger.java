@@ -13,12 +13,12 @@ import java.util.List;
 /**
  * TODO
  */
-public class NTupleFileMerger {
+public class NTuplesFileMerger {
+    private static final ValueComparator VALUE_COMPARATOR = new ValueComparator();
     private final NTupleMergeTransform transform;
     private final ParserConfig parserConfig;
-    private static final ValueComparator comparator = new ValueComparator();
 
-    public NTupleFileMerger(NTupleMergeTransform transform, ParserConfig parserConfig) {
+    public NTuplesFileMerger(NTupleMergeTransform transform, ParserConfig parserConfig) {
         this.transform = transform;
         this.parserConfig = parserConfig;
     }
@@ -90,7 +90,7 @@ public class NTupleFileMerger {
     }
 
     private int compare(List<Value> left, List<Value> right) {
-        return comparator.compare(left.get(0), right.get(0));
+        return VALUE_COMPARATOR.compare(left.get(0), right.get(0));
     }
 
     public static interface NTupleMergeTransform {
