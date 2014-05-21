@@ -14,6 +14,8 @@ public final class ODCSFusionToolErrorCodes {
     }
 
     // CHECKSTYLE:OFF
+
+    public static final int SAME_AS_LOAD = 38;
     public static final int MISSING_REQUIRED_PARAM = 37;
     public static final int ALL_TRIPLES_QUERY_QUADS = 36;
     public static final int INPUT_LOADER_HAS_NEXT = 35;

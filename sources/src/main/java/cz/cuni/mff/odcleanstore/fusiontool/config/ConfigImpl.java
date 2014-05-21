@@ -6,7 +6,13 @@ import org.openrdf.model.URI;
 import org.openrdf.rio.ParserConfig;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Container of configuration values.
@@ -340,6 +346,11 @@ public class ConfigImpl implements Config {
     @Override
     public Collection<String> getPreferredCanonicalURIs() {
         return ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS;
+    }
+
+    @Override
+    public Set<URI> getSameAsLinkTypes() {
+        return ConfigConstants.SAME_AS_LINK_TYPES;
     }
 
     @Override

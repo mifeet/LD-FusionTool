@@ -4,7 +4,14 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.vocabulary.*;
+import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.model.vocabulary.DC;
+import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.RDF;
+import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.helpers.BasicParserSettings;
 import org.openrdf.rio.helpers.NTriplesParserSettings;
@@ -12,13 +19,16 @@ import org.openrdf.rio.helpers.NTriplesParserSettings;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Global configuration constants.
  * Contains default values and values which cannot be currently set via the configuration file.
- * @author Jan Michelfeit
+ * TODO: utilize Spring?
  */
 public final class ConfigConstants {
+    private static final ValueFactory VF = ValueFactoryImpl.getInstance();
 
     /** Disable constructor for a utility class. */
     private ConfigConstants() {
@@ -107,6 +117,13 @@ public final class ConfigConstants {
      * Max portion of free memory to use.
      */
     static final float MAX_FREE_MEMORY_USAGE = 0.8f;
+
+    /**
+     * Set of 'same as' link property URIs for the purposes of conflict resolution.
+     */
+    static final Set<URI> SAME_AS_LINK_TYPES = new HashSet<URI>(Arrays.asList(
+           OWL.SAMEAS
+    ));
 
     /**
      * Default configuration for Sesame file parsers.
