@@ -16,7 +16,7 @@ public class MemoryProfiler {
     
     private long maxTotalMemory;
     private long maxUsedMemory;
-    private long minFreeMemory;
+    private long minFreeMemory = Long.MAX_VALUE;
 
     /** 
      * Returns a new instance with profiling enabled or disabled according to profilingOn parameter.
@@ -63,7 +63,7 @@ public class MemoryProfiler {
      * @return minimum measured free memory in bytes
      */
     public long getMinFreeMemory() {
-        return minFreeMemory;
+        return minFreeMemory == Long.MAX_VALUE ? 0 : minFreeMemory;
     }
 
     /**
