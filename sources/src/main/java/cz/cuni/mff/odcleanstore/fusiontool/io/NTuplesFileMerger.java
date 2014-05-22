@@ -1,6 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
 import org.openrdf.model.Value;
 import org.openrdf.rio.ParserConfig;
 
@@ -35,7 +36,7 @@ public class NTuplesFileMerger {
      * and sorted by first {@code Value} on each  line using {@link cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator}
      * @param outputWriter writer for merged result
      */
-    public void merge(Reader leftReader, Reader rightReader, Writer outputWriter) throws IOException {
+    public void merge(Reader leftReader, Reader rightReader, Writer outputWriter) throws IOException, NTupleMergeTransformException {
         NTuplesParser leftParser = new NTuplesParser(leftReader, parserConfig);
         NTuplesParser rightParser = new NTuplesParser(rightReader, parserConfig);
         NTuplesWriter output = new NTuplesWriter(outputWriter);
@@ -72,7 +73,7 @@ public class NTuplesFileMerger {
         return cmp == 0;
     }
 
-    private void mergeWithBuffer(List<Value> left, List<List<Value>> rightBuffer, NTuplesWriter output) throws IOException {
+    private void mergeWithBuffer(List<Value> left, List<List<Value>> rightBuffer, NTuplesWriter output) throws IOException, NTupleMergeTransformException {
         for (List<Value> right : rightBuffer) {
             output.writeTuple(transform.transform(left, right));
         }
@@ -93,7 +94,10 @@ public class NTuplesFileMerger {
         return VALUE_COMPARATOR.compare(left.get(0), right.get(0));
     }
 
+    /**
+     * TODO
+     */
     public static interface NTupleMergeTransform {
-        Value[] transform(List<Value> leftValues, List<Value> rightValues);
+        Value[] transform(List<Value> leftValues, List<Value> rightValues) throws NTupleMergeTransformException;
     }
 }
