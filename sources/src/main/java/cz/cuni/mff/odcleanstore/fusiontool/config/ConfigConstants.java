@@ -28,9 +28,6 @@ import java.util.Set;
  * TODO: utilize Spring?
  */
 public final class ConfigConstants {
-    private static final ValueFactory VF = ValueFactoryImpl.getInstance();
-
-
     /** Disable constructor for a utility class. */
     private ConfigConstants() {
     }
@@ -117,7 +114,7 @@ public final class ConfigConstants {
     /**
      * Max portion of free memory to use.
      */
-    static final float MAX_FREE_MEMORY_USAGE = 0.8f;
+    static final float MAX_FREE_MEMORY_USAGE = 0.85f;
 
     /**
      * Set of 'same as' link property URIs for the purposes of conflict resolution.
