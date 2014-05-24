@@ -15,7 +15,9 @@ public class MemoryProfiler {
     private static final long MB_BYTES = 1024 * 1024;
     
     private long maxTotalMemory;
-    
+    private long maxUsedMemory;
+    private long minFreeMemory = Long.MAX_VALUE;
+
     /** 
      * Returns a new instance with profiling enabled or disabled according to profilingOn parameter.
      * @param isProfilingOn whether memory profiling are enabled or disabled; if disabled, no measurements are performed
@@ -34,9 +36,20 @@ public class MemoryProfiler {
 
     /** Measures the current total consumed memory.  */
     public void capture() {
-        maxTotalMemory = Math.max(maxTotalMemory, Runtime.getRuntime().totalMemory());
+        Runtime runtime = Runtime.getRuntime();
+        maxTotalMemory = Math.max(maxTotalMemory, runtime.totalMemory());
+        maxUsedMemory = Math.max(maxUsedMemory, runtime.totalMemory() - runtime.freeMemory());
+        minFreeMemory = Math.min(minFreeMemory, runtime.freeMemory());
     }
-    
+
+    /**
+     * Returns the given size in Bytes as a human-readable string.
+     * @return formatted memory amount
+     */
+    public static String formatMemoryBytes(long bytes) {
+        return String.format(Locale.ROOT,  "%,.1f MB", bytes / (double) MB_BYTES);
+    }
+
     /**
      * Returns maximum measured total memory in bytes.
      * @return maximum measured total memory in bytes
@@ -44,15 +57,23 @@ public class MemoryProfiler {
     public long getMaxTotalMemory() {
         return maxTotalMemory;
     }
-    
+
     /**
-     * Returns maximum measured total memory as a human-readable string.
-     * @return formatted maximum total memory
+     * Returns minimum measured free memory in bytes.
+     * @return minimum measured free memory in bytes
      */
-    public String formatMaxTotalMemory() {
-        return String.format(Locale.ROOT,  "%,.1f MB", maxTotalMemory / (double) MB_BYTES);
+    public long getMinFreeMemory() {
+        return minFreeMemory == Long.MAX_VALUE ? 0 : minFreeMemory;
     }
-    
+
+    /**
+     * Returns maximum measured used memory in bytes.
+     * @return maximum measured used memory in bytes
+     */
+    public long getMaxUsedMemory() {
+        return maxUsedMemory;
+    }
+
     /**
      * Child class which doesn't perform any measurements for use when profiling is turned off.
      */

@@ -45,6 +45,10 @@ public class ParamReader {
                 "input");
     }
 
+    public String getLabel() {
+        return ioName;
+    }
+
     public String getRequiredStringValue(String paramName) throws ODCSFusionToolException {
         return getRequiredValue(paramName);
     }

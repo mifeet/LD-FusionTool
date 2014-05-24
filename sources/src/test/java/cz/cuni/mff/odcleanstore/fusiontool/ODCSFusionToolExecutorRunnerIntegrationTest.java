@@ -46,9 +46,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         // Arrange
         File configFile = new File(resourceDir, "config-seedTransitive.xml");
         ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
-
-        runTestWithConfig(
-                config,
+        runTestWithConfig(config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
                 new File(resourceDir, "expectedOutput-seedTransitive.trig"));
@@ -59,9 +57,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         // Arrange
         File configFile = new File(resourceDir, "config-seedNonTransitive.xml");
         ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
-
-        runTestWithConfig(
-                config,
+        runTestWithConfig(config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
                 new File(resourceDir, "expectedOutput-seedNonTransitive.trig"));
@@ -72,9 +68,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         // Arrange
         File configFile = new File(resourceDir, "config-seedTransitive-fileCache.xml");
         ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
-
-        runTestWithConfig(
-                config,
+        runTestWithConfig(config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
                 new File(resourceDir, "expectedOutput-seedTransitive.trig"));
@@ -85,9 +79,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         // Arrange
         File configFile = new File(resourceDir, "config-seedTransitive-gz.xml");
         ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
-
-        runTestWithConfig(
-                config,
+        runTestWithConfig(config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
                 new File(resourceDir, "expectedOutput-seedTransitive.trig"));
@@ -98,9 +90,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         // Arrange
         File configFile = new File(resourceDir, "config-localCopyProcessing.xml");
         ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
-
-        runTestWithConfig(
-                config,
+        runTestWithConfig(config,
                 new File(resourceDir, "canonical.txt"),
                 new File(resourceDir, "sameAs.ttl"),
                 new File(resourceDir, "expectedOutput-localCopyProcessing.trig"));
@@ -119,13 +109,28 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
                 new File(resourceDir, "expectedOutput-localCopyProcessing.trig"));
     }
 
-    private File convertToResourceFile(String path) {
-        File file = new File(path);
-        return new File(resourceDir, file.getName());
+    @Test
+    public void testRunWithLocalCopyProcessingAndOnlyConflicts() throws Exception {
+        // Arrange
+        File configFile = new File(resourceDir, "config-localCopyProcessing.xml");
+        ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
+        config.setOutputConflictsOnly(true);
+        runTestWithConfig(config,
+                new File(resourceDir, "canonical.txt"),
+                new File(resourceDir, "sameAs.ttl"),
+                new File(resourceDir, "expectedOutput-localCopyProcessing-onlyConflicts.trig"));
     }
 
-    private File convertToTempFile(String path) {
-        return new File(testDir.getRoot(), path);
+    @Test
+    public void testRunWithLocalCopyProcessingAndOnlyMapped() throws Exception {
+        // Arrange
+        File configFile = new File(resourceDir, "config-localCopyProcessing.xml");
+        ConfigImpl config = (ConfigImpl) ConfigReader.parseConfigXml(configFile);
+        config.setOutputMappedSubjectsOnly(true);
+        runTestWithConfig(config,
+                new File(resourceDir, "canonical.txt"),
+                new File(resourceDir, "sameAs.ttl"),
+                new File(resourceDir, "expectedOutput-localCopyProcessing-onlyMapped.trig"));
     }
 
     private void runTestWithConfig(ConfigImpl config, File expectedCanonicalUriFile, File expectedSameAsFile, File expectedOutputFile) throws ODCSFusionToolException, IOException, ConflictResolutionException, RDFParseException {
@@ -287,6 +292,15 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
             uriMapping.addLink(statement.getSubject().stringValue(), statement.getObject().stringValue());
         }
         return uriMapping;
+    }
+
+    private File convertToResourceFile(String path) {
+        File file = new File(path);
+        return new File(resourceDir, file.getName());
+    }
+
+    private File convertToTempFile(String path) {
+        return new File(testDir.getRoot(), path);
     }
 
     private Model parseStatements(File file) throws IOException, RDFParseException {

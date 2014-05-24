@@ -19,9 +19,23 @@ import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -51,9 +65,14 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     /**
      * Indicates whether to use gzip compression in temporary files.
+     * even though the performanc is a little lower.
+     * Set to true to save spaces when deployed e.g. as a DPU running as part of ODCS/UnifiedViews framework.
      */
     public static final boolean USE_GZIP = true;
 
+    /**
+     * Buffer size for gzip compression.
+     */
     public static final int GZIP_BUFFER_SIZE = 2048;
 
     /**
@@ -70,9 +89,9 @@ public class ExternalSortingInputLoader implements InputLoader {
     private final Long maxMemoryLimit;
     private final ParserConfig parserConfig;
 
-    private File tempSortedFile = null;
-    private File tempInputFile = null;
     private NQuadsParserIterator quadIterator;
+
+    private final Collection<File> temporaryFiles = new ArrayList<File>();
 
     /**
      * @param dataSources initialized {@link AllTriplesLoader} loaders
@@ -108,10 +127,10 @@ public class ExternalSortingInputLoader implements InputLoader {
         }
 
         try {
-            copyInputsToTempInputFile(uriMapping);
-            sortTempInputFileToTempSortedFile();
-            dropTempInputFile(); // no longer needed, remove asap
-            initializeQuadIteratorFromTempSortedFile();
+            File tempInputFile = copyInputsToTempFile(dataSources, uriMapping);
+            File tempSortedFile = sortFile(tempInputFile);
+            tempInputFile.delete();
+            quadIterator = createParserIteratorFromSortedFile(tempSortedFile);
         } catch (ODCSFusionToolException e) {
             closeOnException();
             throw e;
@@ -173,21 +192,25 @@ public class ExternalSortingInputLoader implements InputLoader {
                 // ignore
             }
         }
-        if (tempInputFile != null && tempInputFile.exists()) {
-            tempInputFile.delete();
-            tempInputFile = null;
+
+        // Delete temporary files
+        for (File temporaryFile : temporaryFiles) {
+            try {
+                if (temporaryFile.exists()) {
+                    temporaryFile.delete();
+                }
+            } catch (Exception e) {
+                LOG.error("Error deleting temporary file " + temporaryFile.getName(), e);
+            }
         }
-        if (tempSortedFile != null && tempSortedFile.exists()) {
-            tempSortedFile.delete();
-            tempSortedFile = null;
-        }
+        temporaryFiles.clear();
     }
 
     /** Read all inputs and write quads to a temporary file. */
-    private void copyInputsToTempInputFile(URIMappingIterable uriMapping) throws ODCSFusionToolException {
+    private File copyInputsToTempFile(Collection<AllTriplesLoader> inputs, URIMappingIterable uriMapping) throws ODCSFusionToolException {
         Writer tempOutputWriter = null;
         try {
-            tempInputFile = ODCSFusionToolUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
+            File tempInputFile = createTempFile();
             tempOutputWriter = createTempFileWriter(tempInputFile, USE_GZIP);
             RDFWriter tempRdfWriter = Rio.createWriter(TEMP_FILE_SERIALIZATION, tempOutputWriter);
             ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor(
@@ -199,7 +222,7 @@ public class ExternalSortingInputLoader implements InputLoader {
                     outputMappedSubjectsOnly);
 
             tempRdfWriter.startRDF();
-            for (AllTriplesLoader dataSource : dataSources) {
+            for (AllTriplesLoader dataSource : inputs) {
                 try {
                     inputLoaderPreprocessor.setDefaultContext(dataSource.getDefaultContext());
                     dataSource.loadAllTriples(inputLoaderPreprocessor);
@@ -209,6 +232,8 @@ public class ExternalSortingInputLoader implements InputLoader {
             }
             tempRdfWriter.endRDF();
             tempOutputWriter.close();
+
+            return tempInputFile;
         } catch (ODCSFusionToolException e) {
             throw e;
         } catch (Exception e) {
@@ -225,21 +250,20 @@ public class ExternalSortingInputLoader implements InputLoader {
         }
     }
 
-    private void sortTempInputFileToTempSortedFile() throws ODCSFusionToolException {
+    private File sortFile(File inputFile) throws ODCSFusionToolException {
+        // TODO: move to utility class
         // External sort the temporary file
+        LOG.info("Sorting temporary file (size on disk {} MB)",
+                String.format("%,.2f", inputFile.length() / (double) ODCSFusionToolUtils.MB_BYTES));
         try {
-            LOG.info("Sorting temporary data file (size on disk {} MB)",
-                    String.format("%,.2f", tempInputFile.length() / (double) ODCSFusionToolUtils.MB_BYTES));
             long startTime = System.currentTimeMillis();
-            tempSortedFile = ODCSFusionToolUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
-            // compare lines as string, which works fine for NQuads;
-            // the only requirement is that quads with the same subject and predicate are
-            // sorted as adjacent
-            Comparator<String> comparator = ExternalSort.defaultcomparator;
-            BufferedReader reader = createTempFileReader(tempInputFile, USE_GZIP);
+            File sortedFile = createTempFile();
+            Comparator<String> comparator = getSortComparator();
+
+            BufferedReader reader = createTempFileReader(inputFile, USE_GZIP);
             List<File> sortFiles = ExternalSort.sortInBatch(
                     reader,
-                    tempInputFile.length(),
+                    inputFile.length(),
                     comparator,
                     MAX_SORT_TMP_FILES,
                     maxMemoryLimit,
@@ -248,28 +272,32 @@ public class ExternalSortingInputLoader implements InputLoader {
                     true,
                     0,
                     USE_GZIP);
-            LOG.debug(" merging sorted data from {} blocks", sortFiles.size());
+            LOG.debug("... merging sorted data from {} blocks", sortFiles.size());
             ExternalSort.mergeSortedFiles(sortFiles,
-                    tempSortedFile,
+                    sortedFile,
                     comparator,
                     Charset.defaultCharset(),
                     true, // distinct
                     false,
                     USE_GZIP);
             LOG.debug("Sorting finished in {}", ODCSFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
+            return sortedFile;
         } catch (IOException e) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_SORT,
                     "Error while sorting quads in input loader", e);
         }
     }
 
-    private void initializeQuadIteratorFromTempSortedFile() throws ODCSFusionToolException {
-        try {
-            quadIterator = new NQuadsParserIterator(createTempFileReader(tempSortedFile, false), parserConfig);
-        } catch (IOException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_PARSE_TEMP_FILE,
-                    "Error while initializing temporary file reader in input loader", e);
-        }
+    private Comparator<String> getSortComparator() {
+        // compare lines as string, which works fine for NQuads/NTuples
+        // TODO: NTuples files only by the first component?
+        return ExternalSort.defaultcomparator;
+    }
+
+    private File createTempFile() throws IOException {
+        File tempFile = ODCSFusionToolUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
+        temporaryFiles.add(tempFile); // register it so that we don't forget to delete it
+        return tempFile;
     }
 
     private static BufferedReader createTempFileReader(File file, boolean useGzip) throws IOException {
@@ -293,14 +321,19 @@ public class ExternalSortingInputLoader implements InputLoader {
         return new BufferedWriter(new OutputStreamWriter(outputStream, CHARSET));
     }
 
-    private void dropTempInputFile() {
-        tempInputFile.delete();
-        tempInputFile = null;
+
+    private NQuadsParserIterator createParserIteratorFromSortedFile(File sortedFile) throws ODCSFusionToolException {
+        try {
+            return new NQuadsParserIterator(createTempFileReader(sortedFile, false), parserConfig);
+        } catch (IOException e) {
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_PARSE_TEMP_FILE,
+                    "Error while initializing temporary file reader in input loader", e);
+        }
     }
 
     private void closeOnException() {
         try {
-            close(); // clean up temporary files just in case the caller doesn't call close() on exception
+            close(); // clean up temporary files defensively in case the caller doesn't call close() on exception
         } catch (Exception e2) {
             // ignore
         }
