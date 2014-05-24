@@ -8,14 +8,16 @@ package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
  */
 public final class ODCSFusionToolErrorCodes {
 
-
     /** Disable constructor for a utility class. */
     private ODCSFusionToolErrorCodes() {
     }
 
-    // CHECKSTYLE:OFF
 
-    public static final int SAME_AS_LOAD = 38;
+    // CHECKSTYLE:OFF
+    public static final int INPUT_LOADER_MERGE = 41;
+    public static final int SAME_AS_LOAD = 40;
+    public static final int INVALID_TMP_FILE_FORMAT_TUPLE = 39;
+    public static final int INVALID_TMP_FILE_FORMAT = 38;
     public static final int MISSING_REQUIRED_PARAM = 37;
     public static final int ALL_TRIPLES_QUERY_QUADS = 36;
     public static final int INPUT_LOADER_HAS_NEXT = 35;
