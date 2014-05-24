@@ -533,7 +533,11 @@ public class ODCSFusionToolExecutorRunner {
                 writer.writeQuads(sameAsTripleIterator);
             }
 
-            LOG.info("Written owl:sameAs links");
+            int linkCounter = 0;
+            for (String ignoredURI : uriMapping) {
+                linkCounter++;
+            }
+            LOG.info("Written {} owl:sameAs links", linkCounter);
         } finally {
             for (CloseableRDFWriter writer : writers) {
                 writer.close();
