@@ -7,6 +7,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

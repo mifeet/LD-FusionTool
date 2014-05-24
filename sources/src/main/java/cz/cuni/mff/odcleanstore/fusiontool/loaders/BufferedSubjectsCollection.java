@@ -1,5 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;

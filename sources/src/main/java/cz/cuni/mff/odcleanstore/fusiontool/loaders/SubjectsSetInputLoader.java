@@ -7,6 +7,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import org.openrdf.model.Statement;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;

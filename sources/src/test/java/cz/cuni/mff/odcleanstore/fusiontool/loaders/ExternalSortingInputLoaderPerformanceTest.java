@@ -3,6 +3,8 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import com.google.common.base.Stopwatch;
 import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.junit.Ignore;

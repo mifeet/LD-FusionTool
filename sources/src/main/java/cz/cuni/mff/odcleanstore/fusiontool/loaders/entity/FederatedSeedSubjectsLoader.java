@@ -1,8 +1,10 @@
-package cz.cuni.mff.odcleanstore.fusiontool.loaders;
+package cz.cuni.mff.odcleanstore.fusiontool.loaders.entity;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.entity.SeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -11,7 +13,7 @@ import java.util.NoSuchElementException;
 
 /**
  * Seed subjects loader which provides access to seed subjects obtained from multiple data sources.
- * @see SeedSubjectsLoader
+ * @see cz.cuni.mff.odcleanstore.fusiontool.loaders.entity.SeedSubjectsLoader
  * @author Jan Michelfeit
  */
 public class FederatedSeedSubjectsLoader {

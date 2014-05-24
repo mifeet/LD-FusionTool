@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.loaders;
+package cz.cuni.mff.odcleanstore.fusiontool.loaders.data;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;

@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.loaders;
+package cz.cuni.mff.odcleanstore.fusiontool.loaders.entity;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
@@ -6,6 +6,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Value;

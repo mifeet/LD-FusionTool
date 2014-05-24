@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.loaders;
+package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import java.io.IOException;
 

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
