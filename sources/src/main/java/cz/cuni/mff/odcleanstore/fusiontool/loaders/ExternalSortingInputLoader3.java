@@ -1,13 +1,12 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import com.google.code.externalsorting.ExternalSort;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ExternalSorter;
 import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger;
 import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParser;
 import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter;
@@ -50,15 +49,8 @@ public class ExternalSortingInputLoader3 implements InputLoader {
     private static final Charset CHARSET = Charset.defaultCharset();
 
     /**
-     * Maximum number of temporary files to be created by external sort.
-     * The input size divided by number of temporary files gives the needed memory size.
-     * If the maximum number of files is too low, it may cause OutOfMemoryExceptions.
-     */
-    private static final int MAX_SORT_TMP_FILES = 2048;
-
-    /**
      * Indicates whether to use gzip compression in temporary files.
-     * even though the performanc is a little lower.
+     * even though the performance is a little worse.
      * Set to true to save spaces when deployed e.g. as a DPU running as part of ODCS/UnifiedViews framework.
      */
     public static final boolean USE_GZIP = true;
@@ -68,19 +60,12 @@ public class ExternalSortingInputLoader3 implements InputLoader {
      */
     private static final int GZIP_BUFFER_SIZE = 2048;
 
-    /**
-     * Comparator used for statement preprocessing.
-     * Comparing by subject (and predicate) would be enough but sorting by spog
-     * alleviates the string-based external sort.
-     */
-    private static final Comparator<Statement> ORDER_COMPARATOR = new SpogComparator();
-
-
     private final Collection<AllTriplesLoader> dataSources;
     private final boolean outputMappedSubjectsOnly;
     private final File cacheDirectory;
     private final Long maxMemoryLimit;
     private final ParserConfig parserConfig;
+    private final ExternalSorter externalSorter;
 
     private NTuplesParser dataFileIterator;
     private NTuplesParser mergedAttributeFileIterator;
@@ -108,6 +93,7 @@ public class ExternalSortingInputLoader3 implements InputLoader {
         this.maxMemoryLimit = maxMemoryLimit;
         this.cacheDirectory = cacheDirectory;
         this.parserConfig = parserConfig;
+        this.externalSorter = new ExternalSorter(getSortComparator(), cacheDirectory, USE_GZIP, maxMemoryLimit);
     }
 
     @Override
@@ -292,11 +278,11 @@ public class ExternalSortingInputLoader3 implements InputLoader {
     }
 
     private Statement createStatement(List<Value> tuple) throws ODCSFusionToolException {
-        int size = tuple.size();
-        if (tuple == null || size < 4) {
+        if (tuple == null || tuple.size() < 4) {
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT_TUPLE,
                     "Invalid format of temporary file, expected statement but found: " + tuple);
         }
+        int size = tuple.size();
         try {
             // Take the last four elements from the tuple
             return VF.createStatement(
@@ -349,28 +335,10 @@ public class ExternalSortingInputLoader3 implements InputLoader {
         try {
             long startTime = System.currentTimeMillis();
             File sortedFile = createTempFile();
-            Comparator<String> comparator = getSortComparator();
-
             BufferedReader reader = createTempFileReader(inputFile);
-            List<File> sortFiles = ExternalSort.sortInBatch(
-                    reader,
-                    inputFile.length(),
-                    comparator,
-                    MAX_SORT_TMP_FILES,
-                    maxMemoryLimit,
-                    CHARSET,
-                    cacheDirectory,
-                    true,
-                    0,
-                    USE_GZIP);
-            LOG.debug("... merging sorted data from {} blocks", sortFiles.size());
-            ExternalSort.mergeSortedFiles(sortFiles,
-                    sortedFile,
-                    comparator,
-                    Charset.defaultCharset(),
-                    true, // distinct
-                    false,
-                    USE_GZIP);
+            BufferedWriter writer = createTempFileWriter(sortedFile);
+
+            externalSorter.sort(reader, inputFile.length(), writer);
             LOG.debug("Sorting finished in {}", ODCSFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
             return sortedFile;
         } catch (IOException e) {
@@ -379,10 +347,15 @@ public class ExternalSortingInputLoader3 implements InputLoader {
         }
     }
 
-    private Comparator<String> getSortComparator() {
+    private static Comparator<String> getSortComparator() {
         // compare lines as string, which works fine for NQuads/NTuples
         // TODO: NTuples files only by the first component?
-        return ExternalSort.defaultcomparator;
+        return new Comparator<String>() {
+            @Override
+            public int compare(String r1, String r2) {
+                return r1.compareTo(r2);
+            }
+        };
     }
 
     private File createTempFile() throws IOException {
@@ -400,7 +373,7 @@ public class ExternalSortingInputLoader3 implements InputLoader {
         return new BufferedReader(new InputStreamReader(inputStream, CHARSET));
     }
 
-    private static Writer createTempFileWriter(File file) throws IOException {
+    private static BufferedWriter createTempFileWriter(File file) throws IOException {
         OutputStream outputStream = new FileOutputStream(file);
         if (USE_GZIP) {
             outputStream = new GZIPOutputStream(outputStream, GZIP_BUFFER_SIZE) {
