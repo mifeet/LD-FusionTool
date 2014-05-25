@@ -3,10 +3,11 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.urimapping;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
+import org.openrdf.model.URI;
+
 import java.util.Iterator;
 import java.util.Set;
-
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 
 /**
  * Extends {@link URIMappingImpl} from the Conflict Resolution component with ability
@@ -31,5 +32,14 @@ public class URIMappingIterableImpl extends URIMappingImpl implements URIMapping
     @Override
     public Iterator<String> iterator() {
         return getUriDFUParent().keySet().iterator();
+    }
+
+    /**
+     * Add an owl:sameAs mapping for the given two URIs.
+     * @param subjectUri subject of a triple with the owl:sameAs predicate
+     * @param objectUri object of a triple with the owl:sameAs predicate
+     */
+    public void addLink(URI subjectUri, URI objectUri) {
+        addLink(subjectUri.stringValue(), objectUri.stringValue());
     }
 }
