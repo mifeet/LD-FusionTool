@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * Merges records for primary data temporary file and attribute temporary file for
- * {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.ExternalSortingInputLoader3}.
+ * {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.ExternalSortingInputLoader}.
  * The expected format of files is:
  * <dl>
  *     <dt>primary data file</dt><dd>S P O G for input quads (S,P,O,G)</dd>

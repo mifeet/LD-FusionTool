@@ -17,10 +17,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
+import org.openrdf.model.*;
+import org.openrdf.model.impl.TreeModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
@@ -35,14 +33,15 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
-import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
-import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpUri;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.*;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 public class ExternalSortingInputLoaderTest {
-    private static final ValueFactoryImpl VALUE_FACTORY = ValueFactoryImpl.getInstance();
+    // TODO
+    private static final URI resourceDescriptionProperty = ConfigConstants.RESOURCE_DESCRIPTION_URIS.iterator().next();
+
+    private static final ValueFactoryImpl VF = ValueFactoryImpl.getInstance();
     public static final SpogComparator SPOG_COMPARATOR = new SpogComparator();
 
     @Rule
@@ -80,13 +79,36 @@ public class ExternalSortingInputLoaderTest {
             createHttpStatement("s4", "p1", "oa")
     );
 
+    /** Map of subject -> predicate -> set of statements in conflict cluster for {@link #testInput1} */
+    private Map<Resource, Map<URI, Set<Statement>>> conflictClustersMap1;
+
     private Collection<Statement> testInput2 = ImmutableList.of(
             createHttpStatement("s1", "p1", "o1", "g1"),
             createHttpStatement("x", "y", "z", "g1")
     );
 
+    // TODO: add corresponding integration test
+    private Collection<Statement> testInput3 = ImmutableList.of(
+            // Resource description with two dependent resources and one normal triple
+            createHttpStatement("s1", "p1", "o1"),
+            createStatement(createHttpUri("s1"), resourceDescriptionProperty, createHttpUri("dependent1")),
+            createStatement(createHttpUri("s1"), resourceDescriptionProperty, createHttpUri("dependent3")),
+
+            // Resource description sharing a dependent resource with s1
+            createStatement(createHttpUri("s3"), resourceDescriptionProperty, createHttpUri("dependent3")),
+
+            // the dependent resources
+            createHttpStatement("dependent1", "p2", "o2"),
+            createHttpStatement("dependent1", "p3", "o3"),
+            createHttpStatement("dependent3", "p4", "o4"),
+
+            // extra triples
+            createHttpStatement("s2", "p5", "o5"),
+            createHttpStatement("dependent2-not-really", "p6", "o7")
+    );
+
     /** Map of subject -> predicate -> set of statements in conflict cluster for {@link #testInput1} */
-    private Map<Resource, Map<URI, Set<Statement>>> conflictClustersMap1;
+    private Map<Resource, TreeSet<Statement>> conflictClusters3;
 
 
     @Before
@@ -108,26 +130,46 @@ public class ExternalSortingInputLoaderTest {
         uriMappingImpl.addLink(createHttpUri("gb").toString(), createHttpUri("gx").toString());
         this.uriMapping = uriMappingImpl;
 
-        // init map of conflict clusters
+        // init map of conflict clusters 1
         Collection<Statement> mappedTestInput1 = applyMapping(testInput1, uriMapping);
         conflictClustersMap1 = createConflictClusterMap(mappedTestInput1);
 
+        // init map of conflict cluster 3
+        Model model3 = new TreeModel(applyMapping(testInput3, uriMapping));
+        conflictClusters3 = new HashMap<Resource, TreeSet<Statement>>();
+        for (Statement statement : model3) {
+            if (!conflictClusters3.containsKey(statement.getSubject())) {
+                conflictClusters3.put(statement.getSubject(), new TreeSet<Statement>(SPOG_COMPARATOR));
+            }
+            conflictClusters3.get(statement.getSubject()).add(statement);
+        }
+        for (Statement statement : model3.filter(null, resourceDescriptionProperty, null)) {
+            conflictClusters3.get(statement.getSubject()).addAll(
+                    model3.filter((Resource) statement.getObject(), null, null)
+            );
+        }
     }
+
+
+    //reateHttpStatement("s1", "p1", "o1"),
+    //createStatement(createHttpUri("s1"), resourceDescriptionProperty, createHttpUri("dependent1")),
+    //createStatement(createHttpUri("s1"), resourceDescriptionProperty, createHttpUri("dependent2")),
+    //
+    //// Resource description sharing a dependent resource with s1
+    //createStatement(createHttpUri("s2"), resourceDescriptionProperty, createHttpUri("dependent2")),
+    //
+    //// the dependent resources
+    //createHttpStatement("dependent1", "p2", "o2"),
+    //createHttpStatement("dependent1", "p3", "o3"),
+    //createHttpStatement("dependent2", "p4", "o4"),
 
     @Test
     public void iteratesOverAllStatementsWithAppliedUriMapping() throws Exception {
         // Act
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
-                createFileAllTriplesLoader(testInput1),
-                testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
-                Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput1, false);
         try {
-            inputLoader.initialize(uriMapping);
-            while (inputLoader.hasNext()) {
-                result.addAll(inputLoader.nextQuads());
-            }
+            collectResult(inputLoader, result);
         } finally {
             inputLoader.close();
         }
@@ -151,8 +193,7 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
-                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
+            inputLoader = createExternalSortingInputLoader(testInput1, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -181,8 +222,7 @@ public class ExternalSortingInputLoaderTest {
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
-                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
+            inputLoader = createExternalSortingInputLoader(testInput1, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 statementBlocks.add(inputLoader.nextQuads());
@@ -205,8 +245,7 @@ public class ExternalSortingInputLoaderTest {
     public void resourceIsDescribedInSingleNextQuadsResult() throws Exception {
         // Act
         List<Collection<Statement>> statementBlocks = new ArrayList<Collection<Statement>>();
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput1, false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -229,35 +268,9 @@ public class ExternalSortingInputLoaderTest {
     }
 
     @Test
-    public void worksWithLowMemory() throws Exception {
-        // Act
-        final long maxMemory = 1;
-        SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemory, false);
-        try {
-            inputLoader.initialize(uriMapping);
-            while (inputLoader.hasNext()) {
-                result.addAll(inputLoader.nextQuads());
-            }
-        } finally {
-            inputLoader.close();
-        }
-
-        // Assert
-        SortedSet<Statement> expectedStatementsSet = new TreeSet<Statement>(SPOG_COMPARATOR);
-        expectedStatementsSet.addAll(applyMapping(testInput1, uriMapping));
-        assertThat(result.size(), equalTo(expectedStatementsSet.size()));
-    }
-
-    @Test
     public void worksOnEmptyStatements() throws Exception {
         // Act & assert
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
-                createFileAllTriplesLoader(Collections.<Statement>emptySet()),
-                testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
-                Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(Collections.<Statement>emptySet(), false);
         try {
             inputLoader.initialize(uriMapping);
 
@@ -270,8 +283,7 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void clearsTemporaryFilesWhenClosed() throws Exception {
         // Act
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput1, false);
         try {
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
@@ -323,8 +335,7 @@ public class ExternalSortingInputLoaderTest {
     @Test
     public void updateWithResolvedStatementsDoesNotThrowException() throws Exception {
         // Act
-        ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(testInput1), testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput1, false);
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
@@ -348,10 +359,7 @@ public class ExternalSortingInputLoaderTest {
                 ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
                 Long.MAX_VALUE, false);
         try {
-            inputLoader.initialize(uriMapping);
-            while (inputLoader.hasNext()) {
-                result.addAll(inputLoader.nextQuads());
-            }
+            collectResult(inputLoader, result);
         } finally {
             inputLoader.close();
         }
@@ -388,8 +396,7 @@ public class ExternalSortingInputLoaderTest {
         SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
         ExternalSortingInputLoader inputLoader = null;
         try {
-            inputLoader = new ExternalSortingInputLoader(createFileAllTriplesLoader(statements), testDir.getRoot(),
-                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, true);
+            inputLoader = createExternalSortingInputLoader(statements, true);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
                 result.addAll(inputLoader.nextQuads());
@@ -409,6 +416,72 @@ public class ExternalSortingInputLoaderTest {
         for (int i = 0; i < expectedStatements.length; i++) {
             assertThat(actualStatements[i], contextAwareStatementIsEqual(expectedStatements[i]));
         }
+    }
+
+    @Test
+    public void iteratesOverAllStatementsWithAppliedUriMappingWithDependentResources() throws Exception {
+        // Act
+        SortedSet<Statement> result = new TreeSet<Statement>(SPOG_COMPARATOR);
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput3, false);
+        try {
+            collectResult(inputLoader, result);
+        } finally {
+            inputLoader.close();
+        }
+
+        // Assert
+        SortedSet<Statement> expectedStatementsSet = new TreeSet<Statement>(SPOG_COMPARATOR);
+        expectedStatementsSet.addAll(applyMapping(testInput3, uriMapping));
+        assertThat(result.size(), equalTo(expectedStatementsSet.size()));
+
+        Statement[] expectedStatements = expectedStatementsSet.toArray(new Statement[0]);
+        Statement[] actualStatements = result.toArray(new Statement[0]);
+        for (int i = 0; i < expectedStatements.length; i++) {
+            // compare including named graphs
+            assertThat(actualStatements[i], contextAwareStatementIsEqual(expectedStatements[i]));
+        }
+    }
+
+    @Test
+    public void includesCorrectDependentResourcesInResourceDescriptions() throws Exception {
+        // Act
+        Map<Resource, TreeSet<Statement>> result = new HashMap<Resource, TreeSet<Statement>>();
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput3, false);
+        try {
+            inputLoader.initialize(uriMapping);
+            while (inputLoader.hasNext()) {
+                Collection<Statement> cluster = inputLoader.nextQuads();
+                TreeSet<Statement> statements = new TreeSet<Statement>(SPOG_COMPARATOR);
+                statements.addAll(cluster);
+
+                // TODO !! FRAGILE, relies on main resource being first before extended description
+                Resource resource = cluster.iterator().next().getSubject();
+                result.put(resource, statements);
+            }
+        } finally {
+            inputLoader.close();
+        }
+
+        // Assert
+        assertThat(result.size(), is(conflictClusters3.size()));
+        for (Map.Entry<Resource, TreeSet<Statement>> entry : conflictClusters3.entrySet()) {
+            Statement[] expectedStatements = entry.getValue().toArray(new Statement[0]);
+            Statement[] actualStatements = result.get(entry.getKey()).toArray(new Statement[0]);
+            String errorMessage = "Statements for resource " + entry.getKey() + " do not match";
+            assertThat(errorMessage, actualStatements.length, is(expectedStatements.length));
+            for (int i = 0; i < expectedStatements.length; i++) {
+                assertThat(errorMessage, actualStatements[i], contextAwareStatementIsEqual(expectedStatements[i]));
+            }
+        }
+    }
+
+    private ExternalSortingInputLoader createExternalSortingInputLoader(Collection<Statement> testInput, boolean outputMappedSubjectsOnly) throws IOException, RDFHandlerException {
+        return new ExternalSortingInputLoader(
+                createFileAllTriplesLoader(testInput),
+                testDir.getRoot(),
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
+                Long.MAX_VALUE,
+                outputMappedSubjectsOnly);
     }
 
     private Collection<AllTriplesLoader> createFileAllTriplesLoader(Collection<Statement>... sourceStatements) throws IOException, RDFHandlerException {
@@ -449,6 +522,13 @@ public class ExternalSortingInputLoaderTest {
         return inputFile;
     }
 
+    private void collectResult(ExternalSortingInputLoader inputLoader, Set<Statement> result) throws ODCSFusionToolException {
+        inputLoader.initialize(uriMapping);
+        while (inputLoader.hasNext()) {
+            result.addAll(inputLoader.nextQuads());
+        }
+    }
+
     private static Map<Resource, Map<URI, Set<Statement>>> createConflictClusterMap(Collection<Statement> statements) {
         Map<Resource, Map<URI, Set<Statement>>> result = new HashMap<Resource, Map<URI, Set<Statement>>>();
         for (Statement st : statements) {
@@ -472,7 +552,7 @@ public class ExternalSortingInputLoaderTest {
     private static Collection<Statement> applyMapping(Collection<Statement> statements, URIMapping uriMapping) {
         ImmutableList.Builder<Statement> result = ImmutableList.builder();
         for (Statement statement : statements) {
-            result.add(VALUE_FACTORY.createStatement(
+            result.add(VF.createStatement(
                     (Resource) mapNode(statement.getSubject(), uriMapping),
                     (URI) mapNode(statement.getPredicate(), uriMapping),
                     mapNode(statement.getObject(), uriMapping),
