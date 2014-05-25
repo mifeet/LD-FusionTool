@@ -1,6 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
@@ -72,7 +73,7 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
                 uriMapping.addLink(statement.getSubject().stringValue(), statement.getObject().stringValue());
                 loadedCount++;
 
-                if (loadedCount % 5000000 == 0) {
+                if (loadedCount % ConfigConstants.LOG_LOOP_SIZE == 0) {
                     LOG.info("... loaded {} sameAs links from data source {}", loadedCount, paramReader.getLabel());
                 }
             }

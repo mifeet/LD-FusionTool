@@ -2,6 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableSet;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.EmptyURIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;

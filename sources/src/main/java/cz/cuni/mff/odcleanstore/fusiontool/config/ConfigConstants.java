@@ -7,11 +7,7 @@ import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.model.vocabulary.DC;
-import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
+import org.openrdf.model.vocabulary.*;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.helpers.BasicParserSettings;
 import org.openrdf.rio.helpers.NTriplesParserSettings;
@@ -128,6 +124,11 @@ public final class ConfigConstants {
      */
     public static final ParserConfig DEFAULT_FILE_PARSER_CONFIG;
 
+    /**
+     * Number of loop iterations to be executed before the status is logged.
+     */
+    public static final int LOG_LOOP_SIZE = 5000000;
+
     static {
         DEFAULT_FILE_PARSER_CONFIG = new ParserConfig();
         DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES, false);
@@ -139,10 +140,9 @@ public final class ConfigConstants {
 
     // TODO: quick constants for vestnik fusion
     private static final ValueFactory VF = ValueFactoryImpl.getInstance();
-    public static final Collection<URI> RESOURCE_DESCRIPTION_URIS = Arrays.asList(
+    public static final Set<URI> RESOURCE_DESCRIPTION_URIS = new HashSet<URI>(Arrays.asList(
             VF.createURI("http://schema.org/address"),
-            VF.createURI("http://schema.org/contact")
-    );
+            VF.createURI("http://schema.org/contact")));
 
 
 }

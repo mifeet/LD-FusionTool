@@ -4,42 +4,31 @@ import com.google.code.externalsorting.ExternalSort;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger;
 import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParser;
 import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.AtributeIndexFileNTuplesWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileAndAttributeIndexFileMerger;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileNTuplesWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor3;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.util.FederatedRDFHandler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.ParserConfig;
+import org.openrdf.rio.RDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -93,82 +82,16 @@ public class ExternalSortingInputLoader3 implements InputLoader {
     private final Long maxMemoryLimit;
     private final ParserConfig parserConfig;
 
-    private NTuplesParser inputFileIterator;
-    private NTuplesParser attributeFileIterator;
+    private NTuplesParser dataFileIterator;
+    private NTuplesParser mergedAttributeFileIterator;
     private final Collection<File> temporaryFiles = new ArrayList<File>();
-
-    /**
-     * Reads all input quads and outputs them to temporary files.
-     * Data are written to temporary files in the following format:
-     * <ul>
-     *     <li> S P O G for input quads (S,P,O,G) to {@code tempInputFile}</li>
-     *     <li> O S for input quads (S,P,O,G) such that P is a resource description URI to {@code tempAttributeFile}</li>
-     * </ul>
-     */
-    private void copyInputsToTempFiles(Collection<AllTriplesLoader> dataSources, URIMappingIterable uriMapping, File tempInputFile, File tempAttributeFile)
-            throws ODCSFusionToolException {
-        NTuplesWriter tempInputWriter = null;
-        NTuplesWriter tempAttributeWriter = null;
-        try {
-            tempInputWriter = new NTuplesWriter(createTempFileWriter(tempInputFile));
-            tempAttributeWriter = new NTuplesWriter(createTempFileWriter(tempAttributeFile));
-
-            //ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor(
-            //        uriMapping,
-            //        tempRdfWriter,
-            //        maxMemoryLimit,
-            //        VF,
-            //        ORDER_COMPARATOR,
-            //        outputMappedSubjectsOnly);
-            //
-            //for (AllTriplesLoader dataSource : dataSources) {
-            //    try {
-            //        inputLoaderPreprocessor.setDefaultContext(dataSource.getDefaultContext());
-            //        dataSource.loadAllTriples(inputLoaderPreprocessor);
-            //
-            //        // TODO: Presort in memory
-            //    } finally {
-            //        dataSource.close();
-            //    }
-            //}
-        } catch (Exception e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT,
-                    "Error while writing quads to temporary file in input loader", e);
-        } finally {
-            tryCloseWriter(tempInputWriter);
-            tryCloseWriter(tempAttributeWriter);
-        }
-    }
-
-    private Statement createStatement(List<Value> tuple) throws ODCSFusionToolException {
-        int size = tuple.size();
-        if (tuple == null || size < 4) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT_TUPLE,
-                    "Invalid format of temporary file, expected statement but found: " + tuple);
-        }
-        try {
-            // Take the last four elements from the tuple
-            return VF.createStatement(
-                    (Resource) tuple.get(size - 4),
-                    (URI) tuple.get(size - 3),
-                    tuple.get(size - 2),
-                    (Resource) tuple.get(size - 1));
-        } catch (ClassCastException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT,
-                    "Invalid format of temporary file, expected statement but found: " + tuple);
-        }
-    }
-
-    /*
-    // CHECKED ----------------------------
-    */
 
     /**
      * @param dataSources initialized {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader} loaders
      * @param cacheDirectory directory for temporary files
      * @param parserConfig RDF parser configuration
      * @param maxMemoryLimit maximum memory amount to use for large operations;
-     *      if the limit is too high, it may cause OutOfMemory exceptions
+     * if the limit is too high, it may cause OutOfMemory exceptions
      * @param outputMappedSubjectsOnly see {@link cz.cuni.mff.odcleanstore.fusiontool.config.Config#getOutputMappedSubjectsOnly()}
      */
     public ExternalSortingInputLoader3(
@@ -197,26 +120,26 @@ public class ExternalSortingInputLoader3 implements InputLoader {
 
         try {
             // Will contain S P O G for input quads (S,P,O,G)
-            File tempInputFile = createTempFile();
+            File dataFile = createTempFile();
             // Will contain O S for input quads (S,P,O,G) such that P is a resource description URI
-            File tempAttributeFile = createTempFile();
+            File attributeIndexFile = createTempFile();
 
-            copyInputsToTempFiles(dataSources, uriMapping, tempInputFile, tempAttributeFile);
+            copyInputsToTempFiles(dataSources, uriMapping, dataFile, attributeIndexFile);
 
-            File sortedTempInputFile = sortAndDeleteFile(tempInputFile);
-            File sortedTempAttributeFile = sortAndDeleteFile(tempAttributeFile);
+            File sortedDataFile = sortAndDeleteFile(dataFile);
+            File sortedAttributeIndexFile = sortAndDeleteFile(attributeIndexFile);
 
             // Will contain E S P O G for input quads (E,P',S,G') (S,P,O,G) such that P' is a resource description URI
             File mergedAttributeFile = createTempFile();
-            NTuplesFileMerger fileMerger = new NTuplesFileMerger(new InputFileAndAttributeFileMerger(), parserConfig);
+            NTuplesFileMerger fileMerger = new NTuplesFileMerger(new DataFileAndAttributeIndexFileMerger(), parserConfig);
             fileMerger.merge(
-                    createTempFileReader(sortedTempInputFile),
-                    createTempFileReader(sortedTempAttributeFile),
+                    createTempFileReader(sortedDataFile),
+                    createTempFileReader(sortedAttributeIndexFile),
                     createTempFileWriter(mergedAttributeFile));
-            sortedTempAttributeFile.delete();
+            sortedAttributeIndexFile.delete();
 
-            inputFileIterator = createParserIteratorFromSortedFile(sortedTempInputFile);
-            attributeFileIterator = createParserIteratorFromSortedFile(mergedAttributeFile);
+            dataFileIterator = createParserIteratorFromSortedFile(sortedDataFile);
+            mergedAttributeFileIterator = createParserIteratorFromSortedFile(mergedAttributeFile);
 
             LOG.info("Input loader initialization finished");
         } catch (ODCSFusionToolException e) {
@@ -231,14 +154,13 @@ public class ExternalSortingInputLoader3 implements InputLoader {
         }
     }
 
-
     @Override
     public boolean hasNext() throws ODCSFusionToolException {
-        if (inputFileIterator == null) {
+        if (dataFileIterator == null) {
             throw new IllegalStateException();
         }
         try {
-            return inputFileIterator.hasNext();
+            return dataFileIterator.hasNext();
         } catch (Exception e) {
             closeOnException();
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_LOADING,
@@ -248,38 +170,38 @@ public class ExternalSortingInputLoader3 implements InputLoader {
 
     @Override
     public Collection<Statement> nextQuads() throws ODCSFusionToolException {
-        if (inputFileIterator == null || attributeFileIterator == null) {
+        if (dataFileIterator == null || mergedAttributeFileIterator == null) {
             throw new IllegalStateException();
         }
         try {
-            if (!inputFileIterator.hasNext()) {
+            if (!dataFileIterator.hasNext()) {
                 return Collections.emptySet();
             }
             ArrayList<Statement> result = new ArrayList<Statement>();
 
-            // Read next record from inputFileIterator which represents the primary file
+            // Read next record from dataFileIterator which represents the primary file
             // - the subject will determine the next cluster
-            Statement firstStatement = createStatement(inputFileIterator.next());
+            Statement firstStatement = createStatement(dataFileIterator.next());
             Resource firstSubject = firstStatement.getSubject();
 
-            // Add quads for the cluster from primary input file
+            // Add quads for the cluster from primary data file
             result.add(firstStatement);
-            while (hasMatchingRecord(inputFileIterator, firstSubject)) {
-                result.add(createStatement(inputFileIterator.next()));
+            while (hasMatchingRecord(dataFileIterator, firstSubject)) {
+                result.add(createStatement(dataFileIterator.next()));
             }
 
             // Add additional quads from other files
             int extendedDescriptionCount = 0;
-            boolean foundMatch = skipLessThan(attributeFileIterator, firstSubject);
+            boolean foundMatch = skipLessThan(mergedAttributeFileIterator, firstSubject);
             if (foundMatch) {
-                while (hasMatchingRecord(attributeFileIterator, firstSubject)) {
-                    result.add(createStatement(attributeFileIterator.next()));
+                while (hasMatchingRecord(mergedAttributeFileIterator, firstSubject)) {
+                    result.add(createStatement(mergedAttributeFileIterator.next()));
                     extendedDescriptionCount++;
                 }
             }
 
             LOG.debug("Loaded {} quads for resource <{}> (including {} triples in extended description)",
-                    new Object[] {result.size(), firstSubject, extendedDescriptionCount});
+                    new Object[]{result.size(), firstSubject, extendedDescriptionCount});
             return result;
         } catch (Exception e) {
             closeOnException();
@@ -287,6 +209,7 @@ public class ExternalSortingInputLoader3 implements InputLoader {
                     "Error when reading temporary file in input loader", e);
         }
     }
+
 
     @Override
     public void updateWithResolvedStatements(Collection<ResolvedStatement> resolvedStatements) {
@@ -296,18 +219,18 @@ public class ExternalSortingInputLoader3 implements InputLoader {
     @Override
     public void close() throws ODCSFusionToolException {
         LOG.info("Deleting input loader temporary files");
-        if (inputFileIterator != null) {
+        if (dataFileIterator != null) {
             try {
-                inputFileIterator.close();
-                inputFileIterator = null;
+                dataFileIterator.close();
+                dataFileIterator = null;
             } catch (IOException e) {
                 // ignore
             }
         }
-        if (attributeFileIterator != null) {
+        if (mergedAttributeFileIterator != null) {
             try {
-                attributeFileIterator.close();
-                attributeFileIterator = null;
+                mergedAttributeFileIterator.close();
+                mergedAttributeFileIterator = null;
             } catch (IOException e) {
                 // ignore
             }
@@ -324,6 +247,68 @@ public class ExternalSortingInputLoader3 implements InputLoader {
             }
         }
         temporaryFiles.clear();
+    }
+
+    /**
+     * Reads all input quads and outputs them to temporary files.
+     * Data are written to temporary files in the following format:
+     * <ul>
+     * <li> S P O G for input quads (S,P,O,G) to {@code dataFile}</li>
+     * <li> O S for input quads (S,P,O,G) such that P is a resource description URI to {@code attributeIndexFile}</li>
+     * </ul>
+     */
+    private void copyInputsToTempFiles(Collection<AllTriplesLoader> dataSources, URIMappingIterable uriMapping, File dataFile, File attributeIndexFile)
+            throws ODCSFusionToolException {
+        NTuplesWriter dataFileWriter = null;
+        NTuplesWriter attributeIndexFileWriter = null;
+        try {
+            dataFileWriter = new NTuplesWriter(createTempFileWriter(dataFile));
+            attributeIndexFileWriter = new NTuplesWriter(createTempFileWriter(attributeIndexFile));
+            RDFHandler tempFilesWriteHandler = new FederatedRDFHandler(
+                    new DataFileNTuplesWriter(dataFileWriter),
+                    new AtributeIndexFileNTuplesWriter(attributeIndexFileWriter, ConfigConstants.RESOURCE_DESCRIPTION_URIS));
+
+            ExternalSortingInputLoaderPreprocessor3 inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor3(
+                    tempFilesWriteHandler, uriMapping, VF, outputMappedSubjectsOnly);
+
+            tempFilesWriteHandler.startRDF();
+            for (AllTriplesLoader dataSource : dataSources) {
+                try {
+                    inputLoaderPreprocessor.setDefaultContext(dataSource.getDefaultContext());
+                    dataSource.loadAllTriples(inputLoaderPreprocessor);
+                    // TODO: Presort in memory (presort NTuples wrapper) & do not write to disc if small enough?
+                } finally {
+                    dataSource.close();
+                }
+            }
+            tempFilesWriteHandler.endRDF();
+        } catch (Exception e) {
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT,
+                    "Error while writing quads to temporary file in input loader", e);
+        } finally {
+            tryCloseWriter(dataFileWriter);
+            tryCloseWriter(attributeIndexFileWriter);
+        }
+    }
+
+    private Statement createStatement(List<Value> tuple) throws ODCSFusionToolException {
+        int size = tuple.size();
+        if (tuple == null || size < 4) {
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT_TUPLE,
+                    "Invalid format of temporary file, expected statement but found: " + tuple);
+        }
+        try {
+            // Take the last four elements from the tuple
+            return VF.createStatement(
+                    (Resource) tuple.get(size - 4),
+                    (URI) tuple.get(size - 3),
+                    tuple.get(size - 2),
+                    (Resource) tuple.get(size - 1));
+        } catch (ClassCastException e) {
+            String message = "Invalid format of temporary file, expected statement but found: "
+                    + tuple.subList(tuple.size() - 4, tuple.size());
+            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT, message);
+        }
     }
 
     // TODO: move to NTuplesParser utils

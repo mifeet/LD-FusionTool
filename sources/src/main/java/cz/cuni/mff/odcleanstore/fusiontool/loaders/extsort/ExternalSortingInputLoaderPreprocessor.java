@@ -1,15 +1,11 @@
-package cz.cuni.mff.odcleanstore.fusiontool.loaders;
+package cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.GrowingStatementArray;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.StatementSizeEstimator;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.helpers.RDFHandlerBase;
@@ -25,8 +21,8 @@ import java.util.Comparator;
  * underlying {@code outputWriter}.
  * The sorting is in place in order to create sorted runs and facilitate external sort afterwards.
  */
-public class ExternalSortingInputLoaderPreprocessor3 extends RDFHandlerBase implements RDFHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(ExternalSortingInputLoaderPreprocessor3.class);
+public class ExternalSortingInputLoaderPreprocessor extends RDFHandlerBase implements RDFHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(ExternalSortingInputLoaderPreprocessor.class);
     public static final int INITIAL_CAPACITY = 1000;
 
     private final URIMapping uriMapping;
@@ -40,7 +36,7 @@ public class ExternalSortingInputLoaderPreprocessor3 extends RDFHandlerBase impl
     GrowingStatementArray buffer;
     private long bufferedSize;
 
-    public ExternalSortingInputLoaderPreprocessor3(
+    public ExternalSortingInputLoaderPreprocessor(
             URIMappingIterable uriMapping,
             RDFHandler outputWriter,
             long memoryLimit,
@@ -132,9 +128,9 @@ public class ExternalSortingInputLoaderPreprocessor3 extends RDFHandlerBase impl
     }
 
     /**
-     * If mapping contains an URI to map for the passed {@link org.openrdf.model.URI} returns a {@link org.openrdf.model.URI} with the mapped URI, otherwise returns
+     * If mapping contains an URI to map for the passed {@link URI} returns a {@link URI} with the mapped URI, otherwise returns
      * <code>value</code>.
-     * @param value a {@link org.openrdf.model.Value} to apply mapping to
+     * @param value a {@link Value} to apply mapping to
      * @param uriMapping an URI mapping to apply
      * @return node with applied URI mapping
      */
