@@ -43,9 +43,9 @@ public class NTuplesFileMerger {
         List<List<Value>> rightBuffer = new ArrayList<List<Value>>();
         try {
             while (leftParser.hasNext() && rightParser.hasNext()) {
-                boolean wasEqual = skipLessThan(leftParser, rightParser.peek());
+                boolean wasEqual = NTuplesParserUtils.skipLessThan(leftParser, rightParser.peek().get(0), VALUE_COMPARATOR);
                 if (!wasEqual && leftParser.hasNext()) {
-                    wasEqual = skipLessThan(rightParser, leftParser.peek());
+                    wasEqual = NTuplesParserUtils.skipLessThan(rightParser, leftParser.peek().get(0), VALUE_COMPARATOR);
                 }
 
                 if (wasEqual) {
@@ -62,15 +62,6 @@ public class NTuplesFileMerger {
             leftParser.close();
             rightParser.close();
         }
-    }
-
-    private boolean skipLessThan(NTuplesParser parser, List<Value> compared) throws IOException {
-        int cmp = -1;
-        while (parser.hasNext()
-                && (cmp = compare(parser.peek(), compared)) < 0) {
-            parser.next();
-        }
-        return cmp == 0;
     }
 
     private void mergeWithBuffer(List<Value> left, List<List<Value>> rightBuffer, NTuplesWriter output) throws IOException, NTupleMergeTransformException {

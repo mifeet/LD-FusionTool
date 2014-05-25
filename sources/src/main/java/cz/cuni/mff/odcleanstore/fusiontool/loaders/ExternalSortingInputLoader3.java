@@ -6,10 +6,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.ExternalSorter;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParser;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.io.*;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.AtributeIndexFileNTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileAndAttributeIndexFileMerger;
@@ -172,15 +169,15 @@ public class ExternalSortingInputLoader3 implements InputLoader {
 
             // Add quads for the cluster from primary data file
             result.add(firstStatement);
-            while (hasMatchingRecord(dataFileIterator, firstSubject)) {
+            while (NTuplesParserUtils.hasMatchingRecord(dataFileIterator, firstSubject)) {
                 result.add(createStatement(dataFileIterator.next()));
             }
 
             // Add additional quads from other files
             int extendedDescriptionCount = 0;
-            boolean foundMatch = skipLessThan(mergedAttributeFileIterator, firstSubject);
+            boolean foundMatch = NTuplesParserUtils.skipLessThan(mergedAttributeFileIterator, firstSubject, VALUE_COMPARATOR);
             if (foundMatch) {
-                while (hasMatchingRecord(mergedAttributeFileIterator, firstSubject)) {
+                while (NTuplesParserUtils.hasMatchingRecord(mergedAttributeFileIterator, firstSubject)) {
                     result.add(createStatement(mergedAttributeFileIterator.next()));
                     extendedDescriptionCount++;
                 }
@@ -297,30 +294,6 @@ public class ExternalSortingInputLoader3 implements InputLoader {
         }
     }
 
-    // TODO: move to NTuplesParser utils
-    private boolean hasMatchingRecord(NTuplesParser parser, Value comparedValue) throws IOException {
-        return parser.hasNext() && !parser.peek().isEmpty() && parser.peek().get(0).equals(comparedValue);
-    }
-
-    /**
-     * Skips all records in the parser that have the first component of the tuple less than compared value.
-     * After execution of this method, {@code parser} will point to the first record with first component greater
-     * or equal to {@code comparedValue} or beyond the end of file if there are no more records
-     * @param parser parser to move forward
-     * @param comparedValue compared value
-     * @return true if the value returned by {@code parser.next()} will be equal to {@code comparedValue}, false otherwise
-     * @throws IOException I/O error
-     */
-    private boolean skipLessThan(NTuplesParser parser, Value comparedValue) throws IOException {
-        // TODO: move to NTuplesParser utils
-        int cmp = -1;
-        while (parser.hasNext() && !parser.peek().isEmpty()
-                && (cmp = VALUE_COMPARATOR.compare(parser.peek().get(0), comparedValue)) < 0) {
-            parser.next();
-        }
-        return cmp == 0;
-    }
-
     private File sortAndDeleteFile(File inputFile) throws ODCSFusionToolException {
         File sortedFile = sortFile(inputFile);
         inputFile.delete();
@@ -328,10 +301,8 @@ public class ExternalSortingInputLoader3 implements InputLoader {
     }
 
     private File sortFile(File inputFile) throws ODCSFusionToolException {
-        // TODO: move to utility class
         // External sort the temporary file
-        LOG.info("Sorting temporary file (size on disk {} MB)",
-                String.format("%,.2f", inputFile.length() / (double) ODCSFusionToolUtils.MB_BYTES));
+        LOG.info("Sorting temporary file");
         try {
             long startTime = System.currentTimeMillis();
             File sortedFile = createTempFile();
