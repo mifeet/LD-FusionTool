@@ -9,6 +9,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
@@ -16,28 +17,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.openrdf.model.BNode;
-import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
+import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.Rio;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -190,7 +177,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         // Assert - output
         Model actualModel = parseStatements(outputFile);
         Statement[] actualOutput = normalizeActualOutput(actualModel);
-        Statement[] expectedOutput = normalizeToMatchActualOutput(parseStatements(expectedOutputFile), actualOutput);
+        Statement[] expectedOutput = normalizeExpectedOutput(parseStatements(expectedOutputFile), actualOutput);
         //assertThat(dataOutput, equalTo(expectedOutput));
         int minCommonLength = Math.min(actualOutput.length, expectedOutput.length);
         for (int i = 0; i < minCommonLength; i++) {
@@ -216,27 +203,27 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
      * Necessary to SPOG-sort statements, map blank nodes, which have different identifiers in different files,
      * and named graphs, which depend on the order CR was executed in.
      */
-    private Statement[] normalizeToMatchActualOutput(Model expectedOutput, Statement[] actualOutput) {
+    private Statement[] normalizeExpectedOutput(Model expectedOutput, Statement[] actualOutput) {
         // Map named graphs
         Statement[] expectedStatements = expectedOutput.toArray(new Statement[expectedOutput.size()]);
         Resource metadataContext = getMetadataContext(actualOutput);
         if (metadataContext != null) {
             Map<Statement, Resource> actualStatementsToContext = new HashMap<Statement, Resource>();
             for (Statement statement : actualOutput) {
-                actualStatementsToContext.put(setContext(statement, null), statement.getContext());
+                actualStatementsToContext.put(ODCSFTTestUtils.setContext(statement, null), statement.getContext());
             }
             Map<Resource, Resource> contextsMapping = new HashMap<Resource, Resource>();
             for (Statement statement : expectedStatements) {
-                Resource matchingActualContext = actualStatementsToContext.get(setContext(statement, null));
+                Resource matchingActualContext = actualStatementsToContext.get(ODCSFTTestUtils.setContext(statement, null));
                 if (!metadataContext.equals(statement.getContext()) && matchingActualContext != null) {
                     contextsMapping.put(statement.getContext(), matchingActualContext);
                 }
             }
             for (int i = 0; i < expectedStatements.length; i++) {
                 if (contextsMapping.containsKey(expectedStatements[i].getContext())) {
-                    expectedStatements[i] = setContext(expectedStatements[i], contextsMapping.get(expectedStatements[i].getContext()));
+                    expectedStatements[i] = ODCSFTTestUtils.setContext(expectedStatements[i], contextsMapping.get(expectedStatements[i].getContext()));
                 } else if (contextsMapping.containsKey(expectedStatements[i].getSubject())) {
-                    expectedStatements[i] = setSubject(expectedStatements[i], contextsMapping.get(expectedStatements[i].getSubject()));
+                    expectedStatements[i] = ODCSFTTestUtils.setSubject(expectedStatements[i], contextsMapping.get(expectedStatements[i].getSubject()));
                 }
             }
         }
@@ -319,10 +306,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
     private Model parseStatements(File file) throws IOException, RDFParseException {
         FileInputStream inputStream = new FileInputStream(file);
         RDFFormat rdfFormat = Rio.getParserFormatForFileName(file.getName());
-        Model model = Rio.parse(
-                inputStream,
-                file.toURI().toString(),
-                rdfFormat);
+        Model model = Rio.parse(inputStream, file.toURI().toString(), rdfFormat);
         inputStream.close();
         return model;
     }
@@ -334,21 +318,5 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
             }
         }
         return null;
-    }
-
-    private Statement setContext(Statement statement, Resource context) {
-        return VALUE_FACTORY.createStatement(
-                statement.getSubject(),
-                statement.getPredicate(),
-                statement.getObject(),
-                context);
-    }
-
-    private Statement setSubject(Statement statement, Resource subject) {
-        return VALUE_FACTORY.createStatement(
-                subject,
-                statement.getPredicate(),
-                statement.getObject(),
-                statement.getContext());
     }
 }
