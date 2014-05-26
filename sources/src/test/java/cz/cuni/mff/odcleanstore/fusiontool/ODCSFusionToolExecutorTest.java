@@ -25,9 +25,8 @@ public class ODCSFusionToolExecutorTest {
         // Arrange
         ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor();
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
-                (Collection<Statement>) ImmutableList.<Statement>of(),
-
-                ImmutableList.of(
+                //(Collection<Statement>) ImmutableList.<Statement>of(),
+                (Collection<Statement>) ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
                         createHttpStatement("s1", "p1", "o1", "g2")),
 

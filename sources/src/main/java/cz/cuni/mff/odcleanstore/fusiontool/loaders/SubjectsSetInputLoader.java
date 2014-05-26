@@ -8,7 +8,10 @@ import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -26,6 +29,8 @@ import java.util.Set;
  */
 public class SubjectsSetInputLoader implements InputLoader {
     private static final Logger LOG = LoggerFactory.getLogger(SubjectsSetInputLoader.class);
+
+    private static ValueFactory VF = ValueFactoryImpl.getInstance();
 
     protected final LargeCollectionFactory largeCollectionFactory;
     protected final Collection<DataSource> dataSources;
@@ -69,21 +74,21 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     @Override
-    public Collection<Statement> nextQuads() throws ODCSFusionToolException {
+    public ResourceDescription nextQuads() throws ODCSFusionToolException {
         if (subjectsQueue == null) {
             throw new IllegalStateException("Must be initialized with initialize() first");
         }
         String canonicalURI = canonicalSubjectsIterator.next();
         if (canonicalURI == null) {
-            LOG.warn("No more subjects to load"); // shouldn't happen, this means that someone didn't respect hasNext()
-            return Collections.emptySet();
+            throw new NoSuchElementException();
         }
         addResolvedCanonicalUri(canonicalURI);
 
-        Collection<Statement> quads = new ArrayList<Statement>();
+        ArrayList<Statement> quads = new ArrayList<Statement>();
         resourceQuadLoader.loadQuadsForURI(canonicalURI, quads);
         LOG.info("Loaded {} quads for URI <{}>", quads.size(), canonicalURI);
-        return quads;
+        Resource resource = quads.isEmpty() ? VF.createURI(canonicalURI) : quads.get(0).getSubject();
+        return new ResourceDescriptionImpl(resource, quads);
     }
 
     @Override

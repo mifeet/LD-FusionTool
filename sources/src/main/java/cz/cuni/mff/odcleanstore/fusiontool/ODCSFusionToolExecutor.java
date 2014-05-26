@@ -72,7 +72,7 @@ public class ODCSFusionToolExecutor {
 
             // Load quads for the given subject
             timeProfiler.startCounter(EnumFusionCounters.QUAD_LOADING);
-            Collection<Statement> quads = inputLoader.nextQuads();
+            Collection<Statement> quads = inputLoader.nextQuads().getDescribingStatements();
             inputTriples += quads.size();
             timeProfiler.stopAddCounter(EnumFusionCounters.QUAD_LOADING);
 

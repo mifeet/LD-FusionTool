@@ -83,7 +83,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
         try {
             inputLoader.initialize(new URIMappingIterableImpl());
             while (inputLoader.hasNext()) {
-                actualTripleCount += inputLoader.nextQuads().size();
+                actualTripleCount += inputLoader.nextQuads().getDescribingStatements().size();
             }
             executionStopwatch.stop();
         } finally {

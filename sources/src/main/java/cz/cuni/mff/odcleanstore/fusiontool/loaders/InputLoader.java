@@ -4,7 +4,6 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
-import org.openrdf.model.Statement;
 
 import java.util.Collection;
 
@@ -33,7 +32,7 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
      * @return next batch of quads
      * @throws ODCSFusionToolException error
      */
-    Collection<Statement> nextQuads() throws ODCSFusionToolException;
+    ResourceDescription nextQuads() throws ODCSFusionToolException;
 
     /**
      * Indicates if there are more quads available.

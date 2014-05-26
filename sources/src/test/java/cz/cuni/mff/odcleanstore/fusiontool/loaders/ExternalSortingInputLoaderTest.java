@@ -196,7 +196,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader = createExternalSortingInputLoader(testInput1, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                statementBlocks.add(inputLoader.nextQuads());
+                statementBlocks.add(inputLoader.nextQuads().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -225,7 +225,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader = createExternalSortingInputLoader(testInput1, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                statementBlocks.add(inputLoader.nextQuads());
+                statementBlocks.add(inputLoader.nextQuads().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -249,7 +249,7 @@ public class ExternalSortingInputLoaderTest {
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                statementBlocks.add(inputLoader.nextQuads());
+                statementBlocks.add(inputLoader.nextQuads().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -339,7 +339,7 @@ public class ExternalSortingInputLoaderTest {
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                Collection<Statement> statements = inputLoader.nextQuads();
+                Collection<Statement> statements = inputLoader.nextQuads().getDescribingStatements();
                 Statement firstStatement = statements.iterator().next();
                 ResolvedStatement resolvedStatement = new ResolvedStatementImpl(firstStatement, 0.5, Collections.singleton(firstStatement.getContext()));
                 inputLoader.updateWithResolvedStatements(Collections.singleton(resolvedStatement));
@@ -399,7 +399,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader = createExternalSortingInputLoader(statements, true);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                result.addAll(inputLoader.nextQuads());
+                result.addAll(inputLoader.nextQuads().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -450,7 +450,7 @@ public class ExternalSortingInputLoaderTest {
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                Collection<Statement> cluster = inputLoader.nextQuads();
+                Collection<Statement> cluster = inputLoader.nextQuads().getDescribingStatements();
                 TreeSet<Statement> statements = new TreeSet<Statement>(SPOG_COMPARATOR);
                 statements.addAll(cluster);
 
@@ -525,7 +525,7 @@ public class ExternalSortingInputLoaderTest {
     private void collectResult(ExternalSortingInputLoader inputLoader, Set<Statement> result) throws ODCSFusionToolException {
         inputLoader.initialize(uriMapping);
         while (inputLoader.hasNext()) {
-            result.addAll(inputLoader.nextQuads());
+            result.addAll(inputLoader.nextQuads().getDescribingStatements());
         }
     }
 

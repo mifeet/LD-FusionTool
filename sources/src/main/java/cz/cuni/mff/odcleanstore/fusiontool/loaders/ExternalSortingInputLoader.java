@@ -152,15 +152,15 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     @Override
-    public Collection<Statement> nextQuads() throws ODCSFusionToolException {
+    public ResourceDescription nextQuads() throws ODCSFusionToolException {
         if (dataFileIterator == null || mergedAttributeFileIterator == null) {
             throw new IllegalStateException();
         }
         try {
             if (!dataFileIterator.hasNext()) {
-                return Collections.emptySet();
+                throw new NoSuchElementException();
             }
-            ArrayList<Statement> result = new ArrayList<Statement>();
+            ArrayList<Statement> describingStatements = new ArrayList<Statement>();
 
             // Read next record from dataFileIterator which represents the primary file
             // - the subject will determine the next cluster
@@ -168,9 +168,9 @@ public class ExternalSortingInputLoader implements InputLoader {
             Resource firstSubject = firstStatement.getSubject();
 
             // Add quads for the cluster from primary data file
-            result.add(firstStatement);
+            describingStatements.add(firstStatement);
             while (NTuplesParserUtils.hasMatchingRecord(dataFileIterator, firstSubject)) {
-                result.add(createStatement(dataFileIterator.next()));
+                describingStatements.add(createStatement(dataFileIterator.next()));
             }
 
             // Add additional quads from other files
@@ -178,14 +178,15 @@ public class ExternalSortingInputLoader implements InputLoader {
             boolean foundMatch = NTuplesParserUtils.skipLessThan(mergedAttributeFileIterator, firstSubject, VALUE_COMPARATOR);
             if (foundMatch) {
                 while (NTuplesParserUtils.hasMatchingRecord(mergedAttributeFileIterator, firstSubject)) {
-                    result.add(createStatement(mergedAttributeFileIterator.next()));
+                    describingStatements.add(createStatement(mergedAttributeFileIterator.next()));
                     extendedDescriptionCount++;
                 }
             }
 
             LOG.debug("Loaded {} quads for resource <{}> (including {} triples in extended description)",
-                    new Object[]{result.size(), firstSubject, extendedDescriptionCount});
-            return result;
+                    new Object[]{describingStatements.size(), firstSubject, extendedDescriptionCount});
+
+            return new ResourceDescriptionImpl(firstSubject, describingStatements);
         } catch (Exception e) {
             closeOnException();
             throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_HAS_NEXT,
