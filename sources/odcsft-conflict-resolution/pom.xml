@@ -22,6 +22,11 @@
 			<artifactId>odcs-core</artifactId>
 			<version>${odcs-version}</version>
 		</dependency>
+        <dependency>
+            <groupId>cz.cuni.mff.odcleanstore</groupId>
+            <artifactId>odcs-conflictresolution</artifactId>
+            <version>${odcs-version}</version>
+        </dependency>
 		<!-- Dependencies for from Sesame -->
 		<dependency>
 			<groupId>org.openrdf.sesame</groupId>
