@@ -23,11 +23,6 @@
 			<version>${odcs-version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.6.4</version>
-		</dependency>
-		<dependency>
 			<groupId>com.openlinksw</groupId>
             <artifactId>virtuoso-sesame</artifactId>
             <version>7.0.1</version>
