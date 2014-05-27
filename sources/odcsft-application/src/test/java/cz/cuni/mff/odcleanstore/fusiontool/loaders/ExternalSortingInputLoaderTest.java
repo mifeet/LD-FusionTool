@@ -7,6 +7,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.*;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
@@ -450,13 +451,11 @@ public class ExternalSortingInputLoaderTest {
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                Collection<Statement> cluster = inputLoader.nextQuads().getDescribingStatements();
+                ResourceDescription resourceDescription = inputLoader.nextQuads();
+                Collection<Statement> cluster = resourceDescription.getDescribingStatements();
                 TreeSet<Statement> statements = new TreeSet<Statement>(SPOG_COMPARATOR);
                 statements.addAll(cluster);
-
-                // TODO !! FRAGILE, relies on main resource being first before extended description
-                Resource resource = cluster.iterator().next().getSubject();
-                result.put(resource, statements);
+                result.put(resourceDescription.getResource(), statements);
             }
         } finally {
             inputLoader.close();

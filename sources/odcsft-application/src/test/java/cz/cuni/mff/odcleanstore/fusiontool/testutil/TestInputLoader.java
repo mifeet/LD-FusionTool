@@ -1,10 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.testutil;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.ResourceDescription;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.ResourceDescriptionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import org.openrdf.model.Statement;
 

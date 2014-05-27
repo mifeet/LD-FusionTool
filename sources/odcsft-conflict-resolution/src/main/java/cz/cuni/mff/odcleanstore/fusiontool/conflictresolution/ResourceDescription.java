@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.loaders;
+package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution;
 
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
