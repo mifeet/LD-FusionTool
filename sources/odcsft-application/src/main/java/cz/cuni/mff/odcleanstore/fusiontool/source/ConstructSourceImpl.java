@@ -41,7 +41,7 @@ public final class ConstructSourceImpl extends SourceImpl implements ConstructSo
      * @param prefixes namespace prefixes for use in queries (specially in restriction patterns)
      * @param repositoryFactory repository factory
      * @return RDF data source
-     * @throws ODCSFusionToolException invalid configuration
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException invalid configuration
      */
     public static ConstructSource fromConfig(ConstructSourceConfig config, Map<String, String> prefixes,
             RepositoryFactory repositoryFactory) throws ODCSFusionToolException {

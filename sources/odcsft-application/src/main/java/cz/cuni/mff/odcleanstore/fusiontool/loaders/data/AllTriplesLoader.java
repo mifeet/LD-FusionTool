@@ -14,7 +14,7 @@ public interface AllTriplesLoader extends Closeable<ODCSFusionToolException> {
      * Methods startRDF() and endRDF() should be called on the handler at the beginning and end, respectively,
      * and loaded quads should be passed by the handleStatement() method.
      * @param rdfHandler handler for loaded statements
-     * @throws ODCSFusionToolException
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException
      */
     void loadAllTriples(RDFHandler rdfHandler) throws ODCSFusionToolException;
 

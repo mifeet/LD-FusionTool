@@ -1,12 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
 
-import cz.cuni.mff.odcleanstore.core.ODCleanStoreException;
-
 /**
  * A general ODCS-FusionTool exception.
  * @author Jan Michelfeit
  */
-public class ODCSFusionToolException extends ODCleanStoreException {
+public class ODCSFusionToolApplicationException extends ODCSFusionToolException {
     private static final long serialVersionUID = 3420323334894817996L;
 
     private final Integer errorCode;
@@ -16,7 +14,7 @@ public class ODCSFusionToolException extends ODCleanStoreException {
      * @param errorCode code of the error
      * @param cause the cause
      */
-    public ODCSFusionToolException(Integer errorCode, Throwable cause) {
+    public ODCSFusionToolApplicationException(Integer errorCode, Throwable cause) {
         super(cause);
         this.errorCode = errorCode;
     }
@@ -27,7 +25,7 @@ public class ODCSFusionToolException extends ODCleanStoreException {
      * @param message the detail message
      * @param cause the cause
      */
-    public ODCSFusionToolException(Integer errorCode, String message, Throwable cause) {
+    public ODCSFusionToolApplicationException(Integer errorCode, String message, Throwable cause) {
         super(message, cause);
         this.errorCode = errorCode;
     }
@@ -37,7 +35,7 @@ public class ODCSFusionToolException extends ODCleanStoreException {
      * @param errorCode code of the error
      * @param message the detail message
      */
-    public ODCSFusionToolException(Integer errorCode, String message) {
+    public ODCSFusionToolApplicationException(Integer errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
     }
@@ -50,9 +48,9 @@ public class ODCSFusionToolException extends ODCleanStoreException {
     public Integer getErrorCode() {
         return errorCode;
     }
-    
+
     @Override
     public String getMessage() {
-        return "(" + getErrorCode() + ") " + super.getMessage(); 
+        return "(" + getErrorCode() + ") " + super.getMessage();
     }
 }

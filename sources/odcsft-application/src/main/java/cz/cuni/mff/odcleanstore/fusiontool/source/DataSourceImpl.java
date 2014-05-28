@@ -42,7 +42,7 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
      * @param prefixes namespace prefixes for use in queries (specially in restriction patterns)
      * @param repositoryFactory repository factory
      * @return RDF data source
-     * @throws ODCSFusionToolException invalid configuration
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException invalid configuration
      */
     public static DataSource fromConfig(DataSourceConfig config, Map<String, String> prefixes,
             RepositoryFactory repositoryFactory) throws ODCSFusionToolException {

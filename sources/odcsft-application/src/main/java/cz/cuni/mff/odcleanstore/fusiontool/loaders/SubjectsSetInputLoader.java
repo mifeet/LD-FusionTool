@@ -158,7 +158,7 @@ public class SubjectsSetInputLoader implements InputLoader {
      * Create a queue of subjects to be processed.
      * @param initialSubjects initial subjects to be processed
      * @return return queue of subjects to be processed
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     protected UriCollection createSubjectsQueue(UriCollection initialSubjects) throws ODCSFusionToolException {
         return initialSubjects;

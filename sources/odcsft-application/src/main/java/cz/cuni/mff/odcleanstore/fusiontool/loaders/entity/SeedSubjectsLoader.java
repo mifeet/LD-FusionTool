@@ -3,12 +3,13 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders.entity;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
-import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
@@ -84,7 +85,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      *      or null to iterate all subjects
      * @return collection of subjects of relevant triples
-     * @throws ODCSFusionToolException query error or when seed resource restriction variable and named graph
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException query error or when seed resource restriction variable and named graph
      *      restriction variable are the same
      */
     public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
@@ -98,7 +99,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 : EMPTY_SEED_RESTRICTION;
 
         if (graphRestriction.getVar().equals(seedRestriction.getVar())) {
-            throw new ODCSFusionToolException(
+            throw new ODCSFusionToolApplicationException(
                     ODCSFusionToolErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
                     "Source named graph restriction and seed resource restrictions need to use different"
                             + " variables in SPARQL patterns, both using ?" + seedRestriction.getVar());
@@ -128,7 +129,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
          * @param query query that retrieves subjects from the database; the query must return
          *        the subjects as the first variable in the results
          * @param dataSource RDF data source
-         * @throws ODCSFusionToolException error
+         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
          */
         protected UriCollectionImpl(String query, DataSource dataSource) throws ODCSFusionToolException {
             try {
@@ -158,7 +159,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 return null;
             } catch (OpenRDFException e) {
                 close();
-                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.TRIPLE_SUBJECT_ITERATION,
+                throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.TRIPLE_SUBJECT_ITERATION,
                         "Database error while iterating over triple subjects.", e);
             }
         }
@@ -175,7 +176,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
         /**
          * Returns an element from the collection and removes it from the collection.
          * @return the removed element
-         * @throws ODCSFusionToolException error
+         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
          */
         @Override
         public String next() throws ODCSFusionToolException {

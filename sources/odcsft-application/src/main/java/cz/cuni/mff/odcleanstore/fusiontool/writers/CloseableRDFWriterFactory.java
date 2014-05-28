@@ -5,12 +5,14 @@ package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -25,7 +27,14 @@ import org.openrdf.rio.trig.TriGWriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 /**
  * Factory class for {@link CloseableRDFWriter} instances.
@@ -42,7 +51,7 @@ public class CloseableRDFWriterFactory {
      * @param output output configuration
      * @return RDF writer
      * @throws IOException I/O error
-     * @throws ODCSFusionToolException invalid output configuration
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException invalid output configuration
      */
     public CloseableRDFWriter createRDFWriter(Output output) throws IOException, ODCSFusionToolException {
         URI metadataContext = output.getMetadataContext();
@@ -51,7 +60,7 @@ public class CloseableRDFWriterFactory {
             metadataContext = null; // data and metadata context are exclude each other
         }
         String name = output.toString();
-        ParamReader paramReader = new ParamReader(output);
+        OutputParamReader paramReader = new OutputParamReader(output);
 
         switch (output.getType()) {
             case VIRTUOSO:
@@ -61,7 +70,7 @@ public class CloseableRDFWriterFactory {
             case FILE:
                 return createFileOutput(paramReader, dataContext, metadataContext, name);
             default:
-                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.OUTPUT_UNSUPPORTED, "Output of type "
+                throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.OUTPUT_UNSUPPORTED, "Output of type "
                         + output.getType() + " is not supported");
         }
     }
@@ -76,9 +85,9 @@ public class CloseableRDFWriterFactory {
      * @param name output name
      * @return RDF writer
      * @throws IOException I/O error
-     * @throws ODCSFusionToolException invalid output configuration
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException invalid output configuration
      */
-    private CloseableRDFWriter createFileOutput(ParamReader paramReader, URI dataContext, URI metadataContext, String name)
+    private CloseableRDFWriter createFileOutput(OutputParamReader paramReader, URI dataContext, URI metadataContext, String name)
             throws IOException, ODCSFusionToolException {
 
         String pathString = paramReader.getRequiredStringValue(ConfigParameters.OUTPUT_PATH);
@@ -88,11 +97,11 @@ public class CloseableRDFWriterFactory {
         Long splitByMB = paramReader.getLongValue(ConfigParameters.OUTPUT_SPLIT_BY_MB);
         if (splitByMB != null && splitByMB <= 0) {
             final String errorMessage = "Value of splitByMB for output " + name + " is not a positive number";
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.OUTPUT_PARAM, errorMessage);
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.OUTPUT_PARAM, errorMessage);
 
         }
 
-        ODCSFusionToolUtils.ensureParentsExists(fileLocation);
+        ODCSFusionToolApplicationUtils.ensureParentsExists(fileLocation);
         if (splitByMB == null) {
             return createFileRDFWriter(format, new FileOutputStream(fileLocation), dataContext, metadataContext);
         } else {
@@ -164,7 +173,8 @@ public class CloseableRDFWriterFactory {
         return new SplittingRDFWriter(format, outputFile, splitByBytes, this, dataContext, metadataContext);
     }
 
-    private CloseableRDFWriter createVirtuosoOutput(ParamReader paramReader, URI dataContext, URI metadataContext, String name) throws IOException, ODCSFusionToolException {
+    private CloseableRDFWriter createVirtuosoOutput(OutputParamReader paramReader, URI dataContext, URI metadataContext, String name)
+            throws IOException, ODCSFusionToolException {
         String host = paramReader.getRequiredStringValue(ConfigParameters.OUTPUT_HOST);
         String port = paramReader.getRequiredStringValue(ConfigParameters.OUTPUT_PORT);
         String username = paramReader.getStringValue(ConfigParameters.OUTPUT_USERNAME);
@@ -178,7 +188,8 @@ public class CloseableRDFWriterFactory {
         }
     }
 
-    private CloseableRDFWriter createSparqlOutput(ParamReader paramReader, URI dataContext, URI metadataContext, String name) throws IOException, ODCSFusionToolException {
+    private CloseableRDFWriter createSparqlOutput(OutputParamReader paramReader, URI dataContext, URI metadataContext, String name)
+            throws IOException, ODCSFusionToolException {
         String endpointURL = paramReader.getRequiredStringValue(ConfigParameters.OUTPUT_ENDPOINT_URL);
         String username = paramReader.getStringValue(ConfigParameters.OUTPUT_USERNAME);
         String password = paramReader.getStringValue(ConfigParameters.OUTPUT_PASSWORD);
@@ -190,7 +201,7 @@ public class CloseableRDFWriterFactory {
             try {
                 repository.initialize();
             } catch (RepositoryException e) {
-                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_SPARQL, "Error when initializing repository for " + name, e);
+                throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_SPARQL, "Error when initializing repository for " + name, e);
             }
 
             RepositoryConnection connection = repository.getConnection();

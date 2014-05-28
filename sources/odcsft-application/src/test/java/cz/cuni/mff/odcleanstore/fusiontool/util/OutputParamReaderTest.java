@@ -9,7 +9,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-public class ParamReaderTest {
+public class OutputParamReaderTest {
     @Test
     public void returnsStringValueWhenStringParamPresent() throws Exception {
         // Arrange
@@ -18,7 +18,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         String result = paramReader.getStringValue("key1");
 
         // Assert
@@ -32,7 +32,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         paramReader.getRequiredStringValue("key1");
     }
 
@@ -43,7 +43,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key1", "");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         paramReader.getRequiredStringValue("key1");
     }
 
@@ -54,7 +54,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         String result = paramReader.getStringValue("key1");
 
         // Assert
@@ -69,7 +69,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         String result = paramReader.getStringValue("key1", "default");
 
         // Assert
@@ -83,7 +83,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         String result = paramReader.getStringValue("key1", "default");
 
         // Assert
@@ -98,7 +98,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Integer result = paramReader.getIntValue("key1");
 
         // Assert
@@ -112,7 +112,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         paramReader.getRequiredIntValue("key1");
     }
 
@@ -124,7 +124,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         paramReader.getRequiredIntValue("key1");
     }
 
@@ -135,7 +135,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Integer result = paramReader.getIntValue("key1");
 
         // Assert
@@ -150,7 +150,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Integer result = paramReader.getIntValue("key1");
 
         // Assert
@@ -165,7 +165,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Integer result = paramReader.getIntValue("key1", 1000);
 
         // Assert
@@ -180,7 +180,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Integer result = paramReader.getIntValue("key1", 1000);
 
         // Assert
@@ -195,7 +195,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Long result = paramReader.getLongValue("key1");
 
         // Assert
@@ -209,7 +209,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         paramReader.getRequiredLongValue("key1");
     }
 
@@ -221,7 +221,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         paramReader.getRequiredLongValue("key1");
     }
 
@@ -232,7 +232,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Long result = paramReader.getLongValue("key1");
 
         // Assert
@@ -247,7 +247,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Long result = paramReader.getLongValue("key1");
 
         // Assert
@@ -262,7 +262,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Long result = paramReader.getLongValue("key1", 1000l);
 
         // Assert
@@ -277,7 +277,7 @@ public class ParamReaderTest {
         dataSourceConfig.getParams().put("key2", "value2");
 
         // Act
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         Long result = paramReader.getLongValue("key1", 1000l);
 
         // Assert

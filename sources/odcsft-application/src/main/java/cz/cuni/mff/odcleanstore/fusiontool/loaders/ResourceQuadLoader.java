@@ -15,7 +15,7 @@ public interface ResourceQuadLoader extends Closeable<ODCSFusionToolException> {
      * Adds quads having the given uri or one of its owl:sameAs alternatives as their subject to quadCollection.
      * @param uri searched subject URI
      * @param quadCollection collection to which the result will be added
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      * @see cz.cuni.mff.odcleanstore.fusiontool.source.DataSource#getNamedGraphRestriction()
      */
     void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException;

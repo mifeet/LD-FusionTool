@@ -10,7 +10,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
@@ -65,7 +65,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
 
     private final DataSource dataSource;
     private final int maxSparqlResultsSize;
-    private final ParamReader paramReader;
+    private final OutputParamReader paramReader;
 
     /**
      * Creates a new instance.
@@ -74,7 +74,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     public AllTriplesRepositoryLoader(DataSource dataSource) {
         super(dataSource);
         this.dataSource = dataSource;
-        paramReader = new ParamReader(dataSource);
+        paramReader = new OutputParamReader(dataSource);
         this.maxSparqlResultsSize = paramReader.getIntValue(
                 ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS,
                 ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS);

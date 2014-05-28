@@ -78,7 +78,7 @@ public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
      * Creates a collection to hold subject URIs queued to be processed.
      * @param seedSubjects initial URIs to fill in the collection
      * @return collection of URIs
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     private UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects) throws ODCSFusionToolException {
         Set<String> buffer = largeCollectionFactory.createSet();

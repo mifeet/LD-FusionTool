@@ -24,16 +24,15 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.ExternalSortingInputLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.SubjectsSetInputLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.TransitiveSubjectsSetInputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.ExternalSortingInputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.entity.FederatedSeedSubjectsLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.metadata.MetadataLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.SubjectsSetInputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.TransitiveSubjectsSetInputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas.SameAsLinkFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas.SameAsLinkRepositoryLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
@@ -48,8 +47,10 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.GenericConverter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.FederatedRDFWriter;
@@ -118,7 +119,7 @@ public class ODCSFusionToolExecutorRunner {
 
     /**
      * Performs the actual ODCS-FusionTool task according to the given configuration.
-     * @throws ODCSFusionToolException general fusion error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException general fusion error
      * @throws IOException I/O error when writing results
      * @throws ConflictResolutionException conflict resolution error
      */
@@ -192,7 +193,7 @@ public class ODCSFusionToolExecutorRunner {
     /**
      * Returns an initialized collection of input triple loaders.
      * @return collection of input triple loaders
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     protected Collection<AllTriplesLoader> getAllTriplesLoaders() throws ODCSFusionToolException {
         List<AllTriplesLoader> loaders = new ArrayList<AllTriplesLoader>(config.getDataSources().size());
@@ -218,7 +219,7 @@ public class ODCSFusionToolExecutorRunner {
     /**
      * Initializes data sources from configuration.
      * @return initialized data sources
-     * @throws ODCSFusionToolException I/O error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException I/O error
      */
     protected Collection<DataSource> getDataSources() throws ODCSFusionToolException {
         List<DataSource> dataSources = new ArrayList<DataSource>(config.getDataSources().size());
@@ -245,7 +246,7 @@ public class ODCSFusionToolExecutorRunner {
      * Initializes construct sources from configuration.
      * @param constructSourceConfigs configuration for data sources
      * @return initialized construct sources
-     * @throws ODCSFusionToolException I/O error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException I/O error
      */
     protected Collection<ConstructSource> getConstructSources(List<ConstructSourceConfig> constructSourceConfigs)
             throws ODCSFusionToolException {
@@ -274,7 +275,7 @@ public class ODCSFusionToolExecutorRunner {
      * Returns metadata for conflict resolution.
      * @param metadataSources initialized metadata sources
      * @return metadata for conflict resolution
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     protected Model getMetadata(Collection<ConstructSource> metadataSources) throws ODCSFusionToolException {
         Model metadata = new TreeModel();
@@ -288,7 +289,7 @@ public class ODCSFusionToolExecutorRunner {
     /**
      * Reads and resolves sameAs links and returns the result canonical URI mapping.
      * @return canonical URI mapping
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      * @throws IOException I/O error
      */
     protected URIMappingIterable getUriMapping() throws ODCSFusionToolException, IOException {
@@ -329,7 +330,7 @@ public class ODCSFusionToolExecutorRunner {
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      *      or null to iterate all subjects
      * @return collection of seed subject URIs
-     * @throws ODCSFusionToolException query error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException query error
      */
     protected UriCollection getSeedSubjects(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
             throws ODCSFusionToolException {
@@ -355,7 +356,7 @@ public class ODCSFusionToolExecutorRunner {
      * Creates and initializes output writer (which can be composed of multiple writers if multiple outputs are defined).
      * @return output writer
      * @throws IOException I/O error
-     * @throws ODCSFusionToolException configuration error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException configuration error
      */
     protected CloseableRDFWriter createRDFWriter() throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new ArrayList<CloseableRDFWriter>(config.getOutputs().size());
@@ -463,7 +464,7 @@ public class ODCSFusionToolExecutorRunner {
                 canonicalUris.add(uriMapping.getCanonicalURI(mappedUri));
             }
 
-            ODCSFusionToolUtils.ensureParentsExists(outputFile);
+            ODCSFusionToolApplicationUtils.ensureParentsExists(outputFile);
             CountingOutputStream outputStream = new CountingOutputStream(new FileOutputStream(outputFile));
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"));
             try {
@@ -490,7 +491,7 @@ public class ODCSFusionToolExecutorRunner {
      * @param nsPrefixes map of namespace prefixes
      * @param valueFactory a value factory
      * @throws IOException I/O error
-     * @throws ODCSFusionToolException error when creating output
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error when creating output
      */
     protected void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs,
             Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException, ODCSFusionToolException {

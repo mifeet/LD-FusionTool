@@ -3,10 +3,12 @@ package cz.cuni.mff.odcleanstore.fusiontool.io;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.Repository;
@@ -43,11 +45,11 @@ public final class RepositoryFactory {
      * The returned repository is initialized and the caller is responsible for calling {@link Repository#shutDown()}.
      * @param dataSourceConfig data source configuration
      * @return initialized repository
-     * @throws ODCSFusionToolException error creating repository
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error creating repository
      */
     public Repository createRepository(SourceConfig dataSourceConfig) throws ODCSFusionToolException {
         String name = dataSourceConfig.toString();
-        ParamReader paramReader = new ParamReader(dataSourceConfig);
+        OutputParamReader paramReader = new OutputParamReader(dataSourceConfig);
         switch (dataSourceConfig.getType()) {
             case VIRTUOSO:
                 return createVirtuosoRepository(name, paramReader);
@@ -56,12 +58,12 @@ public final class RepositoryFactory {
             case FILE:
                 return createFileRepository(name, paramReader);
             default:
-                throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
+                throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_UNSUPPORTED, "Repository of type "
                         + dataSourceConfig.getType() + " is not supported");
         }
     }
 
-    private Repository createFileRepository(String dataSourceName, ParamReader paramReader)
+    private Repository createFileRepository(String dataSourceName, OutputParamReader paramReader)
             throws ODCSFusionToolException {
         Repository repository = new SailRepository(createSail());
         try {
@@ -79,9 +81,9 @@ public final class RepositoryFactory {
                     baseURI = file.toURI().toString();
                 }
 
-                RDFFormat sesameFormat = ODCSFusionToolUtils.getSesameSerializationFormat(format, file.getName());
+                RDFFormat sesameFormat = ODCSFusionToolApplicationUtils.getSesameSerializationFormat(format, file.getName());
                 if (sesameFormat == null) {
-                    throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
+                    throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                             "Unknown serialization format " + format + " for data source " + dataSourceName);
                 }
 
@@ -99,7 +101,7 @@ public final class RepositoryFactory {
             } catch (RepositoryException e2) {
                 // ignore
             }
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_FILE,
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_FILE,
                     "Cannot load data to repository for source " + dataSourceName, e);
         }
         LOG.debug("Initialized file repository {}", dataSourceName);
@@ -110,18 +112,18 @@ public final class RepositoryFactory {
         return new MemoryStore(); // TODO file-backed store if file caching is enabled?
     }
 
-    private Repository createVirtuosoRepository(String name, ParamReader paramReader) throws ODCSFusionToolException {
+    private Repository createVirtuosoRepository(String name, OutputParamReader paramReader) throws ODCSFusionToolException {
         String host = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_HOST);
         String port = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PORT);
         String username = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME);
         String password = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
 
-        String connectionString = ODCSFusionToolUtils.getVirtuosoConnectionString(host, port);
+        String connectionString = ODCSFusionToolApplicationUtils.getVirtuosoConnectionString(host, port);
         Repository repository = new VirtuosoRepository(connectionString, username, password);
         try {
             repository.initialize();
         } catch (RepositoryException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_VIRTUOSO,
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_VIRTUOSO,
                     "Error when initializing repository for " + name, e);
         }
 
@@ -129,7 +131,7 @@ public final class RepositoryFactory {
         return repository;
     }
 
-    private Repository createSparqlRepository(String dataSourceName, ParamReader paramReader)
+    private Repository createSparqlRepository(String dataSourceName, OutputParamReader paramReader)
             throws ODCSFusionToolException {
 
         String endpointUrl = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT);
@@ -139,7 +141,7 @@ public final class RepositoryFactory {
         try {
             repository.initialize();
         } catch (RepositoryException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_SPARQL,
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_SPARQL,
                     "Error when initializing repository for " + dataSourceName, e);
         }
         LOG.debug("Initialized SPARQL repository {}", dataSourceName);

@@ -4,10 +4,11 @@ import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.util.RDFLoader;
@@ -35,13 +36,13 @@ public class RdfFileLoader {
 
     private final SourceConfig dataSourceConfig;
     private final ParserConfig parserConfig;
-    private final ParamReader paramReader;
+    private final OutputParamReader paramReader;
 
     public RdfFileLoader(SourceConfig sourceConfig, ParserConfig parserConfig) {
         checkNotNull(sourceConfig);
         checkNotNull(parserConfig);
         this.dataSourceConfig = sourceConfig;
-        this.paramReader = new ParamReader(sourceConfig);
+        this.paramReader = new OutputParamReader(sourceConfig);
         if (sourceConfig.getType() != EnumDataSourceType.FILE) {
             throw new IllegalArgumentException("The given data source must be of type FILE, " + sourceConfig.getType() + " given");
         }
@@ -54,9 +55,9 @@ public class RdfFileLoader {
         try {
             loadFile(label, rdfHandler);
         } catch (IOException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.RDF_FILE_LOADER_READ, "I/O Error while reading input file " + displayPath, e);
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.RDF_FILE_LOADER_READ, "I/O Error while reading input file " + displayPath, e);
         } catch (RDFParseException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.RDF_FILE_LOADER_PARSE, "Error parsing input file " + displayPath, e);
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.RDF_FILE_LOADER_PARSE, "Error parsing input file " + displayPath, e);
         }
     }
 
@@ -70,9 +71,9 @@ public class RdfFileLoader {
             baseURI = file.toURI().toString();
         }
         String format = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
-        RDFFormat sesameFormat = ODCSFusionToolUtils.getSesameSerializationFormat(format, file.getName());
+        RDFFormat sesameFormat = ODCSFusionToolApplicationUtils.getSesameSerializationFormat(format, file.getName());
         if (sesameFormat == null) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Unknown serialization format " + format + " for input file " + label);
         }
 

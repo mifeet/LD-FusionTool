@@ -3,14 +3,14 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
-
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
 
 /**
  * Helper factory class for collections which may not fit into memory and need to be backed by a file.
@@ -33,7 +33,7 @@ public class MapdbCollectionFactory implements LargeCollectionFactory {
      * @throws IOException error creating temporary file
      */
     public MapdbCollectionFactory(File workingDirectory) throws IOException {
-        this.dbFile = ODCSFusionToolUtils.createTempFile(workingDirectory, TEMP_FILE_PREFIX);
+        this.dbFile = ODCSFusionToolApplicationUtils.createTempFile(workingDirectory, TEMP_FILE_PREFIX);
     }
 
     @Override

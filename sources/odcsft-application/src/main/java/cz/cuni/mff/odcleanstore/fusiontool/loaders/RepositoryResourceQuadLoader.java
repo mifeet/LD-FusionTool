@@ -2,6 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
@@ -102,7 +103,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
      * be loaded.
      * @param uri searched subject URI
      * @param quadCollection collection to which the result will be added
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      * @see DataSource#getNamedGraphRestriction()
      */
     @Override
@@ -212,7 +213,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
         try {
             closeConnection();
         } catch (RepositoryException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
         }
     }
 }

@@ -4,7 +4,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
  * A general ODCS-FusionTool exception.
  * @author Jan Michelfeit
  */
-public class ODCSFusionToolQueryException extends ODCSFusionToolException {
+public class ODCSFusionToolQueryException extends ODCSFusionToolApplicationException {
     private static final long serialVersionUID = 3420323334894817996L;
 
     private final String query;

@@ -37,7 +37,7 @@ public class MetadataLoader extends RepositoryLoaderBase {
      * Loads relevant metadata and adds them to the given metadata collection.
      *
      * @param metadata named graph metadata where loaded metadata are added
-     * @throws ODCSFusionToolException repository error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException repository error
      */
     public void loadNamedGraphsMetadata(Model metadata) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();

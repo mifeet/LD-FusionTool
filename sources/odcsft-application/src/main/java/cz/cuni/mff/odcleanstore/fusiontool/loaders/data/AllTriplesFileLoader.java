@@ -3,11 +3,12 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders.data;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RdfFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -26,23 +27,23 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
     private static final Logger LOG = LoggerFactory.getLogger(AllTriplesFileLoader.class);
     private static final ValueFactory VF = ValueFactoryImpl.getInstance();
 
-    private final ParamReader paramReader;
+    private final OutputParamReader paramReader;
     private final RdfFileLoader fileLoader;
 
     public AllTriplesFileLoader(DataSourceConfig dataSourceConfig, ParserConfig parserConfig) {
         ODCSFusionToolUtils.checkNotNull(dataSourceConfig);
         ODCSFusionToolUtils.checkNotNull(parserConfig);
         this.fileLoader = new RdfFileLoader(dataSourceConfig, parserConfig);
-        this.paramReader = new ParamReader(dataSourceConfig);
+        this.paramReader = new OutputParamReader(dataSourceConfig);
     }
 
     @Override
     public void loadAllTriples(RDFHandler rdfHandler) throws ODCSFusionToolException {
-        LOG.info("Parsing all quads from data source {}", paramReader.getLabel());
+        LOG.info("Parsing all quads from {}", paramReader.getLabel());
         try {
             this.fileLoader.read(rdfHandler);
         } catch (RDFHandlerException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS, "Error processing quads from input " + paramReader.getLabel(), e);
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS, "Error processing quads from " + paramReader.getLabel(), e);
         }
     }
 

@@ -37,7 +37,7 @@ public class SameAsLinkRepositoryLoader extends RepositoryLoaderBase implements 
      * Loads owl:sameAs links from relevant named graphs and adds them to the given canonical URI mapping.
      * @param uriMapping URI mapping where loaded links will be added
      * @return number of loaded owl:sameAs links
-     * @throws ODCSFusionToolException repository error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException repository error
      */
     public long loadSameAsMappings(URIMappingImpl uriMapping) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();

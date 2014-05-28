@@ -34,7 +34,7 @@ public class FederatedResourceQuadLoader implements ResourceQuadLoader {
      * Returns quads having the given uri or one of its owl:sameAs alternatives as their subject.
      * @param uri searched subject URI
      * @return quads having the given uri or one of its owl:sameAs alternatives as their subject.
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      * @see #getQuadsForURI(String)
      */
     public Collection<Statement> getQuadsForURI(String uri) throws ODCSFusionToolException {

@@ -2,7 +2,6 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders.entity;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.entity.SeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 
@@ -48,7 +47,7 @@ public class FederatedSeedSubjectsLoader {
         /**
          * Returns an element from the collection and moves the iterator by one.
          * @return the current element
-         * @throws ODCSFusionToolException error
+         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolExceptionException error
          */
         @Override
         public String next() throws ODCSFusionToolException {
@@ -118,7 +117,7 @@ public class FederatedSeedSubjectsLoader {
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      *      or null to iterate all subjects
      * @return collection of subjects of relevant triples
-     * @throws ODCSFusionToolException query error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException query error
      */
     public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
         return new FederatedUriCollection(dataSources, seedResourceRestriction);

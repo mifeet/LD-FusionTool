@@ -3,10 +3,11 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RdfFileLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ParamReader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.rio.ParserConfig;
@@ -27,7 +28,7 @@ import static cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils.check
  */
 public class SameAsLinkFileLoader implements SameAsLinkLoader {
     private static final Logger LOG = LoggerFactory.getLogger(SameAsLinkFileLoader.class);
-    private final ParamReader paramReader;
+    private final OutputParamReader paramReader;
     private final RdfFileLoader fileLoader;
     private final Set<URI> sameAsLinkTypes;
 
@@ -36,22 +37,22 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
         checkNotNull(parserConfig);
         checkNotNull(sameAsLinkTypes);
         this.fileLoader = new RdfFileLoader(sourceConfig, parserConfig);
-        this.paramReader = new ParamReader(sourceConfig);
+        this.paramReader = new OutputParamReader(sourceConfig);
         this.sameAsLinkTypes = sameAsLinkTypes;
     }
 
     @Override
     public long loadSameAsMappings(URIMappingImpl uriMapping) throws ODCSFusionToolException {
-        LOG.info("Parsing sameAs links from data source {}", paramReader.getLabel());
+        LOG.info("Parsing sameAs links from {}", paramReader.getLabel());
         try {
             long startTime = System.currentTimeMillis();
             SameAsLinkHandler linkHandler = new SameAsLinkHandler(uriMapping);
             fileLoader.read(linkHandler);
-            LOG.debug(String.format("Loaded & resolved %,d sameAs links from source %s in %,d ms",
+            LOG.debug(String.format("Loaded & resolved %,d sameAs links from %s in %,d ms",
                     linkHandler.getLoadedCount(), paramReader.getLabel(), System.currentTimeMillis() - startTime));
             return linkHandler.getLoadedCount();
         } catch (RDFHandlerException e) {
-            throw new ODCSFusionToolException(ODCSFusionToolErrorCodes.SAME_AS_LOAD, "Error processing sameAs links from input " + paramReader.getLabel(), e);
+            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.SAME_AS_LOAD, "Error processing sameAs links from " + paramReader.getLabel(), e);
         }
     }
 
@@ -74,7 +75,7 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
                 loadedCount++;
 
                 if (loadedCount % ConfigConstants.LOG_LOOP_SIZE == 0) {
-                    LOG.info("... loaded {} sameAs links from data source {}", loadedCount, paramReader.getLabel());
+                    LOG.info("... loaded {} sameAs links from {}", loadedCount, paramReader.getLabel());
                 }
             }
         }

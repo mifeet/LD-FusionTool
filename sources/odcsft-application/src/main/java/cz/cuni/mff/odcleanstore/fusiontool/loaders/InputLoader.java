@@ -19,7 +19,7 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
      * Perform any initialization. This operation can be expensive.
      * More demanding initialization should be done here instead of in the constructor.
      * @param uriMapping canonical URI mapping
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException;
 
@@ -31,14 +31,14 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
      * Returning an empty collection is a valid output, it doesn't indicate end of data as long as
      * {@link #hasNext()} returns true, though.
      * @return next batch of quads
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     ResourceDescription nextQuads() throws ODCSFusionToolException;
 
     /**
      * Indicates if there are more quads available.
      * @return true if there are more quads available
-     * @throws ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     boolean hasNext() throws ODCSFusionToolException;
 
