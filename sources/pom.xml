@@ -22,7 +22,8 @@
 	<modules>
 		<module>odcsft-conflict-resolution</module>
 		<module>odcsft-application</module>
-	</modules>
+        <module>odcsft-util</module>
+    </modules>
 	
 	<url>https://github.com/mifeet/ODCS-FusionTool.git</url>
 	<developers>
@@ -76,6 +77,12 @@
 			<version>1.6.4</version>
 		</dependency>
 	</dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+
+        </dependencies>
+    </dependencyManagement>
 	
 	<build>
 		<plugins>

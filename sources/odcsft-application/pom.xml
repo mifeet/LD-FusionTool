@@ -17,16 +17,21 @@
 	</parent>
 
 	<dependencies>
-		<dependency>
-			<groupId>cz.cuni.mff.odcleanstore</groupId>
-			<artifactId>odcs-conflictresolution</artifactId>
-			<version>${odcs-version}</version>
-		</dependency>
+        <dependency>
+            <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
+            <artifactId>odcsft-util</artifactId>
+            <version>1.1-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
             <artifactId>odcsft-conflict-resolution</artifactId>
             <version>1.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+			<groupId>cz.cuni.mff.odcleanstore</groupId>
+			<artifactId>odcs-conflictresolution</artifactId>
+			<version>${odcs-version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.openlinksw</groupId>
             <artifactId>virtuoso-sesame</artifactId>

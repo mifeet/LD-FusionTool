@@ -5,10 +5,9 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>odcsft-conflict-resolution</artifactId>
-	<name>ODCS-FusionTool Conflict Resolution</name>
+	<artifactId>odcsft-util</artifactId>
+	<name>ODCS-FusionTool Utilities</name>
 	<version>1.1-SNAPSHOT</version>
-	<description>ODCS-FustionTool conflict resolver implementation.</description>
 		
 	<parent>
 		<groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
@@ -17,37 +16,28 @@
 	</parent>
 
 	<dependencies>
-        <dependency>
-            <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
-            <artifactId>odcsft-util</artifactId>
-            <version>1.1-SNAPSHOT</version>
-        </dependency>
 		<dependency>
 			<groupId>cz.cuni.mff.odcleanstore</groupId>
 			<artifactId>odcs-core</artifactId>
 			<version>${odcs-version}</version>
 		</dependency>
-        <dependency>
-            <groupId>cz.cuni.mff.odcleanstore</groupId>
-            <artifactId>odcs-conflictresolution</artifactId>
-            <version>${odcs-version}</version>
-        </dependency>
-		<!-- Dependencies for from Sesame -->
+
+		<!-- Sesame dependencies -->
 		<dependency>
 			<groupId>org.openrdf.sesame</groupId>
 			<artifactId>sesame-model</artifactId>
 			<version>${sesame-version}</version>
 		</dependency>
-		<dependency>
-			<groupId>org.openrdf.sesame</groupId>
-			<artifactId>sesame-repository-sail</artifactId>
-			<version>${sesame-version}</version>
-		</dependency>
+        <!--<dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-repository-sail</artifactId>
+            <version>${sesame-version}</version>
+        </dependency>
         <dependency>
-			<groupId>org.openrdf.sesame</groupId>
-			<artifactId>sesame-sail-memory</artifactId>
-			<version>${sesame-version}</version>
-		</dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-sail-memory</artifactId>
+            <version>${sesame-version}</version>
+        </dependency>-->
 
         <!-- Test dependencies -->
         <dependency>
@@ -91,9 +81,6 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.9</version>
-				<!--<configuration>
-					<overview>${basedir}/javadoc-overview.html</overview>
-				</configuration>-->
 			</plugin>
 		</plugins>
 	</build>

@@ -4,23 +4,22 @@
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src/test/resource" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src/main/resource" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="ODCSFusionTool Utils [odcsft-util]" />
     <orderEntry type="module" module-name="odcs-core" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-model:2.7.11" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-util:2.7.11" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.6.1" level="project" />
-    <orderEntry type="module" module-name="odcs-conflictresolution" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.6.4" level="project" />
     <orderEntry type="library" name="Maven: log4j:log4j:1.2.16" level="project" />
+    <orderEntry type="module" module-name="odcs-conflictresolution" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-repository-sail:2.7.11" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-repository-api:2.7.11" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-query:2.7.11" level="project" />
