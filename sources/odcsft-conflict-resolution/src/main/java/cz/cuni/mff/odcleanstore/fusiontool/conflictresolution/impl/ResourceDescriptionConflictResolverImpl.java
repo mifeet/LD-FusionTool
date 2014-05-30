@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
 import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
@@ -92,15 +93,24 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
         // Apply owl:sameAs mappings, remove duplicities, sort into clusters of conflicting quads
         ConflictClustersCollection conflictClusters = new ConflictClustersCollection(inputStatements, uriMapping, resolvedStatementFactory.getValueFactory());
-        CRContextImpl context = new CRContextImpl(conflictClusters.asModel(), metadataModel, resolvedStatementFactory);
 
         // Resolve conflicts:
         Collection<ResolvedStatement> result = createResultCollection(inputStatements.length);
-
-        // TODO
+        CRContextImpl context = new CRContextImpl(conflictClusters.asModel(), metadataModel, resolvedStatementFactory);
+        resolveResource(resourceDescription.getResource(), context, result);
 
         logFinished(startTime, result);
-        return null;
+        return result;
+    }
+
+    /**
+     * Resolve conflicts in statements contained in {@code context} for the given {@code resource}.
+     * @param resource resource to be resolved
+     * @param context context information for conflict resolution
+     * @param result collection where the resolved result is added to
+     */
+    private void resolveResource(Resource resource, CRContext context, Collection<ResolvedStatement> result) {
+
     }
 
     private Collection<ResolvedStatement> createResultCollection(int inputSize) {
