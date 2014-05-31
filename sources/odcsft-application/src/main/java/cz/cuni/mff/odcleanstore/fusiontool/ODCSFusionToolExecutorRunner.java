@@ -9,21 +9,9 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
-import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
-import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.io.*;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.ExternalSortingInputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.SubjectsSetInputLoader;
@@ -42,15 +30,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ConflictingClusterConflictClusterFilter;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
-import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
-import cz.cuni.mff.odcleanstore.fusiontool.util.GenericConverter;
-import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
-import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
+import cz.cuni.mff.odcleanstore.fusiontool.util.*;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.FederatedRDFWriter;
@@ -66,22 +46,8 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 /**
  * Loads and prepares all inputs for data fusion executor, executes data fusion and outputs additional metadata
@@ -517,20 +483,9 @@ public class ODCSFusionToolExecutorRunner {
                 return;
             }
 
-            GenericConverter<String, Statement> uriToTripleConverter = new GenericConverter<String, Statement>() {
-                @Override
-                public Statement convert(String uri) {
-                    String canonicalUri = uriMapping.getCanonicalURI(uri);
-                    return valueFactory.createStatement(
-                            valueFactory.createURI(uri),
-                            org.openrdf.model.vocabulary.OWL.SAMEAS,
-                            valueFactory.createURI(canonicalUri));
-                }
-            };
-
             for (CloseableRDFWriter writer : writers) {
-                Iterator<String> uriIterator = uriMapping.iterator();
-                Iterator<Statement> sameAsTripleIterator = ConvertingIterator.decorate(uriIterator, uriToTripleConverter);
+                final Iterator<String> uriIterator = uriMapping.iterator();
+                Iterator<Statement> sameAsTripleIterator = new UriToSameAsIterator(uriIterator, uriMapping, valueFactory);
                 writer.writeQuads(sameAsTripleIterator);
             }
 
