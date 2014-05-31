@@ -32,6 +32,11 @@
             <artifactId>odcs-conflictresolution</artifactId>
             <version>${odcs-version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>17.0</version>
+        </dependency>
 		<!-- Dependencies for from Sesame -->
 		<dependency>
 			<groupId>org.openrdf.sesame</groupId>
@@ -66,12 +71,6 @@
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>17.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
