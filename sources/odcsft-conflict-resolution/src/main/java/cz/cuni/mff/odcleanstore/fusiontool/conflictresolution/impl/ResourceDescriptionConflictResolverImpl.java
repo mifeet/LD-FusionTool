@@ -1,10 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import cz.cuni.mff.odcleanstore.conflictresolution.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
+import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
@@ -15,6 +13,9 @@ import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -74,30 +75,94 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
                 : new ResolvedStatementFactoryImpl(DEFAULT_RESOLVED_GRAPHS_URI_PREFIX);
     }
 
+    /**
+     * Apply conflict resolution process to the given resource description and return result
+     * @param resourceDescription container of quads that make up the description of the respective statement
+     *      (i.e. quads that are relevant for the conflict resolution process)
+     * @return collection of quads derived from the input with resolved
+     *         conflicts, (F-)quality estimate and provenance information.
+     * @throws ConflictResolutionException error during the conflict resolution process
+     * @see ResolvedStatement
+     */
     @Override
     public Collection<ResolvedStatement> resolveConflicts(ResourceDescription resourceDescription) throws ConflictResolutionException {
         long startTime = logStarted(resourceDescription.getDescribingStatements().size());
-        final Resource resolvedResource = resourceDescription.getResource();
 
         ConflictResolutionPolicy effectiveResolutionPolicy = getEffectiveResolutionPolicy();
+        ConflictClustersMap conflictClustersMap = ConflictClustersMap.fromCollection(resourceDescription.getDescribingStatements(), uriMapping);
         Collection<ResolvedStatement> result = createResultCollection(resourceDescription.getDescribingStatements().size());
+        AlternativeURINavigator dependentProperties = new AlternativeURINavigator(getDependentPropertyMapping(effectiveResolutionPolicy));
 
-        Map<Resource, Model> resourceModels = prepareResourceModels(resourceDescription.getDescribingStatements());
-
-        //resolveResource(resourceDescription.getResource(), context, result);
+        resolveResource(resourceDescription.getResource(), conflictClustersMap, dependentProperties, effectiveResolutionPolicy, result);
 
         logFinished(startTime, result);
         return result;
     }
 
     /**
-     * Resolve conflicts in statements contained in {@code context} for the given {@code resource}.
+     * Resolve conflicts in statements contained in {@code conflictClustersMap} for the given {@code resource}.
      * @param resource resource to be resolved
-     * @param context context information for conflict resolution
+     * @param conflictClustersMap conflictClustersMap statements grouped by canonical subject and predicate
+     * @param dependentPropertyMapping property dependencies
+     * @param effectiveResolutionPolicy conflict resolution policy to be used
      * @param result collection where the resolved result is added to
      */
-    private void resolveResource(Resource resource, CRContext context, Collection<ResolvedStatement> result) {
+    private void resolveResource(
+            Resource resource,
+            ConflictClustersMap conflictClustersMap,
+            AlternativeURINavigator dependentPropertyMapping,
+            ConflictResolutionPolicy effectiveResolutionPolicy,
+            Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
+        Iterator<URI> predicateIt = conflictClustersMap.listPredicates(resource);
+        Set<URI> resolvedPredicates = new HashSet<>();
+        while (predicateIt.hasNext()) {
+            URI predicate = predicateIt.next();
+            if (resolvedPredicates.contains(predicate)) {
+                continue;
+            }
+
+            if (dependentPropertyMapping.hasAlternativeUris(predicate)) {
+                List<URI> dependentProperties = dependentPropertyMapping.listAlternativeUris(predicate);
+                resolveResourceDependentProperties(
+                        resource,
+                        dependentProperties,
+                        conflictClustersMap.getResourceStatementsMap(resource),
+                        effectiveResolutionPolicy,
+                        result);
+                resolvedPredicates.addAll(dependentProperties);
+            } else {
+                resolveResourceProperty(
+                        resource,
+                        predicate,
+                        conflictClustersMap.getConflictClusterStatements(resource, predicate),
+                        effectiveResolutionPolicy,
+                        result);
+                resolvedPredicates.add(predicate);
+            }
+        }
+    }
+
+    private void resolveResourceDependentProperties(
+            Resource subject,
+            List<URI> dependentProperties,
+            Map<URI, List<Statement>> statementsByPredicate,
+            ConflictResolutionPolicy effectiveResolutionPolicy,
+            Collection<ResolvedStatement> result) {
+        throw new UnsupportedOperationException();
+    }
+
+    private void resolveResourceProperty(
+            Resource subject,
+            URI predicate,
+            List<Statement> conflictClusterStatements,
+            ConflictResolutionPolicy effectiveResolutionPolicy,
+            Collection<ResolvedStatement> result) throws ConflictResolutionException {
+
+        StatementMappingIterator mappedStatementIterator = new StatementMappingIterator(
+                conflictClusterStatements.iterator(), uriMapping, VF, true, true, true);
+        Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappedStatementIterator);
+        result.addAll(resolveConflictCluster(subject, predicate, conflictClusterModel, effectiveResolutionPolicy, conflictClusterModel));
     }
 
     private Collection<ResolvedStatement> resolveConflictCluster(
@@ -118,7 +183,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         }
 
         // Prepare resolution functions & context
-        ResolutionFunction resolutionFunction = resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
+        ResolutionFunction resolutionFunction = getResolutionFunction(resolutionStrategy);
         CRContext context = new CRContextImpl(conflictingStatements, metadataModel, resolutionStrategy, resolvedStatementFactory);
 
         // Resolve conflicts & append to result
@@ -149,36 +214,25 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return result;
     }
 
-    private Map<Resource, Model> prepareResourceModels(Collection<Statement> describingStatements) {
-        // TODO: something more efficient?
-        Multimap<Resource, Statement> statementsByCanonicalSubjectMultimap = Multimaps.newListMultimap(
-                new HashMap<Resource, Collection<Statement>>(),
-                new Supplier<List<Statement>>() {
-                    @Override
-                    public List<Statement> get() {
-                        return new ArrayList<Statement>();
-                    }
-                }
-        );
-
-        // Iterator that will map predicates and objects to their canonical equivalent, but leave subjects unchanged
-        Iterator<Statement> it = new PredicateObjectMappingIterator(describingStatements.iterator(), uriMapping, VF);
-        while (it.hasNext()) {
-            Statement mappedStatement = it.next();
-            statementsByCanonicalSubjectMultimap.put(uriMapping.mapResource(mappedStatement.getSubject()), mappedStatement);
+    private URIMappingIterable getDependentPropertyMapping(ConflictResolutionPolicy effectiveResolutionPolicy) {
+        URIMappingIterableImpl dependentPropertyMapping = new URIMappingIterableImpl();
+        for (URI uri : effectiveResolutionPolicy.getPropertyResolutionStrategies().keySet()) {
+            ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(uri);
+            if (resolutionStrategy.getDependsOn() != null) {
+                dependentPropertyMapping.addLink(
+                        (URI) uriMapping.mapResource(uri),
+                        (URI) uriMapping.mapResource(resolutionStrategy.getDependsOn()));
+            }
         }
-
-        Map<Resource, Collection<Statement>> statementsByCanonicalSubject = statementsByCanonicalSubjectMultimap.asMap();
-        Map<Resource, Model> result = new HashMap<Resource, Model>(statementsByCanonicalSubject.size());
-        for (Resource canonicalSubject : statementsByCanonicalSubject.keySet()) {
-            Model model = SORTED_LIST_MODEL_FACTORY.fromUnorderedList(statementsByCanonicalSubject.get(canonicalSubject));
-            result.put(canonicalSubject, model);
-        }
-        return result;
+        return dependentPropertyMapping;
     }
 
-    private Collection<ResolvedStatement> createResultCollection(int inputSize) {
-        return new ArrayList<ResolvedStatement>(inputSize / 2);
+    protected ResolutionFunction getResolutionFunction(ResolutionStrategy resolutionStrategy) throws ResolutionFunctionNotRegisteredException {
+        return resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
+    }
+
+    protected Collection<ResolvedStatement> createResultCollection(int inputSize) {
+        return new ArrayList<>(inputSize / 2);
     }
 
     private long logStarted(int inputStatementCount) {

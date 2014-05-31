@@ -8,15 +8,21 @@ import org.openrdf.model.ValueFactory;
 
 import java.util.Iterator;
 
-public class PredicateObjectMappingIterator extends ConvertingIterator<Statement, Statement> {
+public class StatementMappingIterator extends ConvertingIterator<Statement, Statement> {
     private final StatementMapper statementMapper;
 
-    public PredicateObjectMappingIterator(Iterator<Statement> iterator, URIMapping uriMapping, ValueFactory valueFactory) {
+    public StatementMappingIterator(Iterator<Statement> iterator,
+            URIMapping uriMapping,
+            ValueFactory valueFactory,
+            boolean mapSubjects,
+            boolean mapPredicates,
+            boolean mapObjects) {
+
         super(iterator);
         statementMapper = new StatementMapper(uriMapping, valueFactory);
-        statementMapper.setMapSubjects(false);
-        statementMapper.setMapPredicates(true);
-        statementMapper.setMapObjects(true);
+        statementMapper.setMapSubjects(mapSubjects);
+        statementMapper.setMapPredicates(mapPredicates);
+        statementMapper.setMapObjects(mapObjects);
     }
 
     @Override

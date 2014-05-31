@@ -2,6 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.SortedListModel;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.CRUtils;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.GrowingStatementArray;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
@@ -14,11 +15,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SortedListModelFactory {
     private static final Comparator<Statement> SPOG_COMPARATOR = new SpogComparator();
 
-    public Model fromUnorderedList(Collection<Statement> statementsByCanonicalSubject) {
-        Statement[] statementArray = statementsByCanonicalSubject.toArray(new Statement[statementsByCanonicalSubject.size()]);
-        Arrays.sort(statementArray, SPOG_COMPARATOR);
-        int newSize = makeUnique(statementArray);
-        List<Statement> sortedStatementList = new ArrayList<Statement>(statementArray, newSize);
+    public Model fromUnorderedList(Collection<Statement> statements) {
+        Statement[] statementArray = statements.toArray(new Statement[statements.size()]);
+        return fromArray(statementArray, statementArray.length);
+    }
+
+    public Model fromUnorderedIterator(Iterator<Statement> statements) {
+        GrowingStatementArray growingArray = new GrowingStatementArray();
+        while (statements.hasNext()) {
+            growingArray.add(statements.next());
+        }
+        growingArray.getArray();
+        return fromArray(growingArray.getArray(), growingArray.size());
+    }
+
+    private Model fromArray(Statement[] statementArray, int statementCount) {
+        Arrays.sort(statementArray, 0, statementCount, SPOG_COMPARATOR);
+        int newStatementCount = makeUnique(statementArray, statementCount);
+        List<Statement> sortedStatementList = new ArrayList<>(statementArray, newStatementCount);
         return new SortedListModel(sortedStatementList);
     }
 
@@ -27,13 +41,13 @@ public class SortedListModelFactory {
      * Expects the quads to be spog-sorted in advance.
      * @return number of unique quads left in the array
      */
-    private static int makeUnique(Statement[] statements) {
-        if (statements.length == 0) {
+    private static int makeUnique(Statement[] statements, int originalSize) {
+        if (originalSize == 0) {
             return 0;
         }
 
         int lastIdx = 0;
-        for (int currIdx = 1; currIdx < statements.length; currIdx++) { // intentionally start from 1
+        for (int currIdx = 1; currIdx < originalSize; currIdx++) { // intentionally start from 1
             Statement previous = statements[lastIdx];
             Statement current = statements[currIdx];
             if (!CRUtils.statementsEqual(current, previous)) {
@@ -43,13 +57,13 @@ public class SortedListModelFactory {
         }
 
         // Update size - we may use less of the underlying array now
-        int size = lastIdx + 1;
+        int newSize = lastIdx + 1;
 
-        for (int i = size; i < statements.length; i++) {
+        for (int i = newSize; i < originalSize; i++) {
             statements[i] = null; // release for GC
         }
 
-        return size;
+        return newSize;
     }
 
     private static class ArrayList<E> extends AbstractList<E> implements RandomAccess, java.io.Serializable{

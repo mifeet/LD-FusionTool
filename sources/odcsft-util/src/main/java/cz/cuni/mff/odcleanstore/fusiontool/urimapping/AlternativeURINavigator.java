@@ -1,7 +1,13 @@
 /**
- * 
+ *
  */
 package cz.cuni.mff.odcleanstore.fusiontool.urimapping;
+
+import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
+import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.util.iterators.Iterators;
 
 import java.util.*;
 
@@ -9,7 +15,6 @@ import java.util.*;
  * Class for listing of alternative URIs based on a given mapping of URIs to canonical URIs.
  * When {@link #listAlternativeUris(String)} is called for the first time, the map of alternative
  * URIs is build in O(N log N) time and O(N) space where N is number of mapped URIs.
- * 
  * @author Jan Michelfeit
  */
 public class AlternativeURINavigator {
@@ -17,20 +22,21 @@ public class AlternativeURINavigator {
 
     private final URIMappingIterable uriMapping;
     private Map<String, List<String>> alternativeURIMap;
-    
+
     /**
      * @param uriMapping mapping of URIs to their canonical equivalent
      */
     public AlternativeURINavigator(URIMappingIterable uriMapping) {
         this.uriMapping = uriMapping;
     }
-    
+
     /**
      * Returns iterator over all URIs that map to the same canonical URIs.
      * First call of this method may have O(N log N) complexity (N is number of mapped URIs).
      * @param uri URI
      * @return iterator over alternative URIs
      */
+    @Deprecated
     public List<String> listAlternativeUris(String uri) {
         String canonicalURI = uriMapping.getCanonicalURI(uri);
         List<String> alternativeURIs = getAlternativeUriMap().get(canonicalURI);
@@ -42,17 +48,46 @@ public class AlternativeURINavigator {
     }
 
     /**
+     * Returns iterator over all URIs that map to the same canonical URIs.
+     * First call of this method may have O(N log N) complexity (N is number of mapped URIs).
+     * @param uri URI
+     * @return iterator over alternative URIs
+     */
+    public List<URI> listAlternativeUris(URI uri) {
+        String canonicalURI = uriMapping.getCanonicalURI(uri.stringValue());
+        final List<String> alternativeURIs = getAlternativeUriMap().get(canonicalURI);
+        if (alternativeURIs == null) {
+            return Collections.singletonList(uri);
+        } else {
+            List<URI> result = new ArrayList<URI>(alternativeURIs.size());
+            Iterators.addAll(new StringURIConvertingIterator(alternativeURIs), result);
+            return result;
+        }
+    }
+
+    /**
      * Indicates whether there exist other distinct URIs that map to the same canonical URIs as {@code uri}.
      * First call of this method may have O(N log N) complexity (N is number of mapped URIs).
      * @param uri URI
      * @return iterator over alternative URIs
      */
+    @Deprecated
     public boolean hasAlternativeUris(String uri) {
         String canonicalURI = uriMapping.getCanonicalURI(uri);
         List<String> alternativeURIs = getAlternativeUriMap().get(canonicalURI);
         return alternativeURIs != null && alternativeURIs.size() > 1;
     }
-    
+
+    /**
+     * Indicates whether there exist other distinct URIs that map to the same canonical URIs as {@code uri}.
+     * First call of this method may have O(N log N) complexity (N is number of mapped URIs).
+     * @param uri URI
+     * @return iterator over alternative URIs
+     */
+    public boolean hasAlternativeUris(URI uri) {
+        return hasAlternativeUris(uri.toString());
+    }
+
     private Map<String, List<String>> getAlternativeUriMap() {
         if (alternativeURIMap == null) {
             alternativeURIMap = findAlternativeUris();
@@ -75,5 +110,18 @@ public class AlternativeURINavigator {
         }
 
         return alternativeURIMap;
+    }
+
+    private static class StringURIConvertingIterator extends ConvertingIterator<String, URI> {
+        private static final ValueFactory VF = ValueFactoryImpl.getInstance();
+
+        public StringURIConvertingIterator(List<String> alternativeURIs) {
+            super(alternativeURIs.iterator());
+        }
+
+        @Override
+        public URI convert(String uri) {
+            return VF.createURI(uri);
+        }
     }
 }
