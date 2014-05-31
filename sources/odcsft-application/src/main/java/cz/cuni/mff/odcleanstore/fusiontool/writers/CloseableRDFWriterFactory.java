@@ -11,7 +11,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.repository.RepositoryConnection;
@@ -94,7 +93,7 @@ public class CloseableRDFWriterFactory {
 
         }
 
-        ODCSFusionToolApplicationUtils.ensureParentsExists(fileLocation);
+        ODCSFusionToolAppUtils.ensureParentsExists(fileLocation);
         if (splitByMB == null) {
             return createFileRDFWriter(format, new FileOutputStream(fileLocation), dataContext, metadataContext);
         } else {

@@ -430,7 +430,7 @@ public class ODCSFusionToolExecutorRunner {
                 canonicalUris.add(uriMapping.getCanonicalURI(mappedUri));
             }
 
-            ODCSFusionToolApplicationUtils.ensureParentsExists(outputFile);
+            ODCSFusionToolAppUtils.ensureParentsExists(outputFile);
             CountingOutputStream outputStream = new CountingOutputStream(new FileOutputStream(outputFile));
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"));
             try {

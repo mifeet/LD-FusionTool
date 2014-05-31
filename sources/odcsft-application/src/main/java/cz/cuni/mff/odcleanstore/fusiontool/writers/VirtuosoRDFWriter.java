@@ -8,13 +8,8 @@ import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
-import org.openrdf.model.BNode;
-import org.openrdf.model.Literal;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import org.openrdf.model.*;
 import org.openrdf.query.parser.sparql.SPARQLUtil;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
@@ -76,7 +71,7 @@ public class VirtuosoRDFWriter extends RDFHandlerBase implements RDFHandler, Clo
         }
         Connection connection;
         try {
-            String connectionString = ODCSFusionToolApplicationUtils.getVirtuosoConnectionString(host, port);
+            String connectionString = ODCSFusionToolAppUtils.getVirtuosoConnectionString(host, port);
             connection = DriverManager.getConnection(connectionString, username, password);
 
             // disable log by default in order to prevent log size problems; transactions don't work much with SPARQL anyway

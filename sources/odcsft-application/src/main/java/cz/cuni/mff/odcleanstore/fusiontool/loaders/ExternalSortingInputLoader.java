@@ -19,7 +19,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputL
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.FederatedRDFHandler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.ParserConfig;
@@ -336,7 +335,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     private File createTempFile() throws IOException {
-        File tempFile = ODCSFusionToolApplicationUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
+        File tempFile = ODCSFusionToolAppUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
         temporaryFiles.add(tempFile); // register it so that we don't forget to delete it
         return tempFile;
     }

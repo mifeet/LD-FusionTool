@@ -7,7 +7,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -81,7 +81,7 @@ public final class RepositoryFactory {
                     baseURI = file.toURI().toString();
                 }
 
-                RDFFormat sesameFormat = ODCSFusionToolApplicationUtils.getSesameSerializationFormat(format, file.getName());
+                RDFFormat sesameFormat = ODCSFusionToolAppUtils.getSesameSerializationFormat(format, file.getName());
                 if (sesameFormat == null) {
                     throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                             "Unknown serialization format " + format + " for data source " + dataSourceName);
@@ -118,7 +118,7 @@ public final class RepositoryFactory {
         String username = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_USERNAME);
         String password = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_VIRTUOSO_PASSWORD);
 
-        String connectionString = ODCSFusionToolApplicationUtils.getVirtuosoConnectionString(host, port);
+        String connectionString = ODCSFusionToolAppUtils.getVirtuosoConnectionString(host, port);
         Repository repository = new VirtuosoRepository(connectionString, username, password);
         try {
             repository.initialize();

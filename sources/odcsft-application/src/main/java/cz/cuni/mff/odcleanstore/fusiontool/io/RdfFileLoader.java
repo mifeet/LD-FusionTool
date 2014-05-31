@@ -8,7 +8,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -66,7 +66,7 @@ public class RdfFileLoader {
             baseURI = file.toURI().toString();
         }
         String format = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_FORMAT);
-        RDFFormat sesameFormat = ODCSFusionToolApplicationUtils.getSesameSerializationFormat(format, file.getName());
+        RDFFormat sesameFormat = ODCSFusionToolAppUtils.getSesameSerializationFormat(format, file.getName());
         if (sesameFormat == null) {
             throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_CONFIG,
                     "Unknown serialization format " + format + " for input file " + label);
