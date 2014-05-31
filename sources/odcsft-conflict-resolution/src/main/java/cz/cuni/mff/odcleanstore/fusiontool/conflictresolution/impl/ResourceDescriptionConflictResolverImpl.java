@@ -1,20 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
+import cz.cuni.mff.odcleanstore.conflictresolution.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictClustersCollection;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.EmptyURIMapping;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementFactoryImpl;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.CRUtils;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
 import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
@@ -28,10 +16,7 @@ import org.openrdf.model.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * TODO
@@ -96,8 +81,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
         // Resolve conflicts:
         Collection<ResolvedStatement> result = createResultCollection(inputStatements.length);
-        CRContextImpl context = new CRContextImpl(conflictClusters.asModel(), metadataModel, resolvedStatementFactory);
-        resolveResource(resourceDescription.getResource(), context, result);
+        //resolveResource(resourceDescription.getResource(), context, result);
 
         logFinished(startTime, result);
         return result;
@@ -139,6 +123,32 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         result.setDefaultResolutionStrategy(effectiveDefaultStrategy);
         result.setPropertyResolutionStrategy(effectivePropertyStrategies);
         return result;
+    }
+
+    // TODO: move to a separate class?
+    private Collection<ResolvedStatement> resolveConflictCluster(
+            Resource subject,
+            URI predicate,
+            Model conflictClusterModel,
+            ConflictResolutionPolicy effectiveResolutionPolicy,
+            Collection<Statement> conflictingStatements) throws ConflictResolutionException {
+
+        if (conflictClusterModel.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Get resolution strategy
+        ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(predicate);
+        if (resolutionStrategy == null) {
+            resolutionStrategy = effectiveResolutionPolicy.getDefaultResolutionStrategy();
+        }
+
+        // Prepare resolution functions & context
+        ResolutionFunction resolutionFunction = resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
+        CRContext context = new CRContextImpl(conflictingStatements, metadataModel, resolutionStrategy, resolvedStatementFactory);
+
+        // Resolve conflicts & append to result
+        return resolutionFunction.resolve(conflictClusterModel, context);
     }
 
     private long logStarted(Statement[] inputStatements) {
