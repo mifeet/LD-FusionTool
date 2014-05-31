@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import cz.cuni.mff.odcleanstore.fusiontool.io.externalsort.ExternalSort;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +42,7 @@ public class ExternalSorter {
 
     public void sort(BufferedReader inputReader, long inputSize, BufferedWriter outputWriter) throws IOException {
         LOG.debug("Sorting file of size {} MB",
-                String.format("%,.2f", inputSize / (double) ODCSFusionToolUtils.MB_BYTES));
+                String.format("%,.2f", inputSize / (double) ODCSFusionToolAppUtils.MB_BYTES));
         List<File> sortFiles = ExternalSort.sortInBatch(
                 inputReader,
                 inputSize,

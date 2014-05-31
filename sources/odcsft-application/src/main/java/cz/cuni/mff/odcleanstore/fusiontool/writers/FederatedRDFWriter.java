@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
+import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import org.openrdf.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ public class FederatedRDFWriter implements CloseableRDFWriter {
     private final CloseableRDFWriter[] rdfWriters;
 
     public FederatedRDFWriter(List<CloseableRDFWriter> rdfWriters) {
-        ODCSFusionToolUtils.checkNotNull(rdfWriters);
+        Preconditions.checkNotNull(rdfWriters);
         this.rdfWriters = rdfWriters.toArray(new CloseableRDFWriter[rdfWriters.size()]);
     }
 

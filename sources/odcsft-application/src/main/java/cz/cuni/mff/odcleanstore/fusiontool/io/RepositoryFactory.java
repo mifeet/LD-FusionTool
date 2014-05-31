@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
+import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
@@ -7,7 +8,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationE
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -36,7 +36,7 @@ public final class RepositoryFactory {
     private final ParserConfig parserConfig;
 
     public RepositoryFactory(ParserConfig parserConfig) {
-        ODCSFusionToolUtils.checkNotNull(parserConfig);
+        Preconditions.checkNotNull(parserConfig);
         this.parserConfig = parserConfig;
     }
 

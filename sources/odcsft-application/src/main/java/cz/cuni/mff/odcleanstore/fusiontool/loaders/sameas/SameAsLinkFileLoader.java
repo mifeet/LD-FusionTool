@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 
+import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
@@ -18,8 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-import static cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils.checkNotNull;
-
 /**
  * Loader of sameAs links from a file source.
  * Ignores construct pattern but loads all links of type matching
@@ -33,9 +32,9 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
     private final Set<URI> sameAsLinkTypes;
 
     public SameAsLinkFileLoader(SourceConfig sourceConfig, ParserConfig parserConfig, Set<URI> sameAsLinkTypes) {
-        checkNotNull(sourceConfig);
-        checkNotNull(parserConfig);
-        checkNotNull(sameAsLinkTypes);
+        Preconditions.checkNotNull(sourceConfig);
+        Preconditions.checkNotNull(parserConfig);
+        Preconditions.checkNotNull(sameAsLinkTypes);
         this.fileLoader = new RdfFileLoader(sourceConfig, parserConfig);
         this.paramReader = new OutputParamReader(sourceConfig);
         this.sameAsLinkTypes = sameAsLinkTypes;

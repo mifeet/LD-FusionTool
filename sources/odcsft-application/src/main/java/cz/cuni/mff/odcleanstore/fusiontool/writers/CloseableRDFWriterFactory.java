@@ -10,8 +10,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.repository.RepositoryConnection;
@@ -27,14 +27,7 @@ import org.openrdf.rio.trig.TriGWriterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 
 /**
  * Factory class for {@link CloseableRDFWriter} instances.
@@ -169,7 +162,7 @@ public class CloseableRDFWriterFactory {
             long splitByMB, URI dataContext, URI metadataContext)
             throws IOException {
 
-        long splitByBytes = splitByMB * ODCSFusionToolUtils.MB_BYTES;
+        long splitByBytes = splitByMB * ODCSFusionToolAppUtils.MB_BYTES;
         return new SplittingRDFWriter(format, outputFile, splitByBytes, this, dataContext, metadataContext);
     }
 

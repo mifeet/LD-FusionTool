@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
+import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
@@ -9,11 +10,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformExcept
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.ExternalSorter;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParser;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParserUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.io.*;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.AtributeIndexFileNTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileAndAttributeIndexFileMerger;
@@ -21,35 +18,18 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileNTuplesWriter
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.FederatedRDFHandler;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolApplicationUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -108,8 +88,8 @@ public class ExternalSortingInputLoader implements InputLoader {
             long maxMemoryLimit,
             boolean outputMappedSubjectsOnly) {
 
-        ODCSFusionToolUtils.checkNotNull(dataSources);
-        ODCSFusionToolUtils.checkNotNull(cacheDirectory);
+        Preconditions.checkNotNull(dataSources);
+        Preconditions.checkNotNull(cacheDirectory);
         this.dataSources = dataSources;
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         this.maxMemoryLimit = maxMemoryLimit;
@@ -120,10 +100,10 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException {
-        ODCSFusionToolUtils.checkNotNull(uriMapping);
+        Preconditions.checkNotNull(uriMapping);
         LOG.info("Initializing input loader");
         if (maxMemoryLimit < Long.MAX_VALUE) {
-            LOG.info("  maximum memory limit is {} MB", String.format("%,.2f", maxMemoryLimit / (double) ODCSFusionToolUtils.MB_BYTES));
+            LOG.info("  maximum memory limit is {} MB", String.format("%,.2f", maxMemoryLimit / (double) ODCSFusionToolAppUtils.MB_BYTES));
         }
 
         try {
@@ -336,7 +316,7 @@ public class ExternalSortingInputLoader implements InputLoader {
             BufferedWriter writer = createTempFileWriter(sortedFile);
 
             externalSorter.sort(reader, inputFile.length(), writer);
-            LOG.debug("Sorting finished in {}", ODCSFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
+            LOG.debug("Sorting finished in {}", ODCSFusionToolAppUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
             return sortedFile;
         } catch (IOException e) {
             throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_SORT,

@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
+import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
@@ -12,18 +13,12 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.util.RDFLoader;
-import org.openrdf.rio.ParserConfig;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-
-import static cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils.checkNotNull;
 
 /**
  * Utility class that parses an RDF file specified by input configuration and passes the data
@@ -39,8 +34,8 @@ public class RdfFileLoader {
     private final OutputParamReader paramReader;
 
     public RdfFileLoader(SourceConfig sourceConfig, ParserConfig parserConfig) {
-        checkNotNull(sourceConfig);
-        checkNotNull(parserConfig);
+        Preconditions.checkNotNull(sourceConfig);
+        Preconditions.checkNotNull(parserConfig);
         this.dataSourceConfig = sourceConfig;
         this.paramReader = new OutputParamReader(sourceConfig);
         if (sourceConfig.getType() != EnumDataSourceType.FILE) {

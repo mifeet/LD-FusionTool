@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.data;
 
+import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
@@ -7,7 +8,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationE
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RdfFileLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -31,8 +31,8 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
     private final RdfFileLoader fileLoader;
 
     public AllTriplesFileLoader(DataSourceConfig dataSourceConfig, ParserConfig parserConfig) {
-        ODCSFusionToolUtils.checkNotNull(dataSourceConfig);
-        ODCSFusionToolUtils.checkNotNull(parserConfig);
+        Preconditions.checkNotNull(dataSourceConfig);
+        Preconditions.checkNotNull(parserConfig);
         this.fileLoader = new RdfFileLoader(dataSourceConfig, parserConfig);
         this.paramReader = new OutputParamReader(dataSourceConfig);
     }

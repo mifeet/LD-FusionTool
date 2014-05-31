@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import com.google.common.base.Preconditions;
 import org.openrdf.model.*;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -27,8 +27,8 @@ public class DefaultContextRDFInserter extends RDFHandlerBase {
      * @param defaultContext default context for statements with null context
      */
     public DefaultContextRDFInserter(RepositoryConnection connection, URI defaultContext) {
-        ODCSFusionToolUtils.checkNotNull(defaultContext);
-        ODCSFusionToolUtils.checkNotNull(connection);
+        Preconditions.checkNotNull(defaultContext);
+        Preconditions.checkNotNull(connection);
         this.connection = connection;
         this.defaultContext = defaultContext;
         namespaceMap = new HashMap<String, String>();

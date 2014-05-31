@@ -442,7 +442,7 @@ public class ODCSFusionToolExecutorRunner {
             }
             LOG.info(String.format("Written %,d canonical URIs (total size %s)",
                     canonicalUris.size(),
-                    ODCSFusionToolUtils.humanReadableSize(outputStream.getByteCount())));
+                    ODCSFusionToolAppUtils.humanReadableSize(outputStream.getByteCount())));
         } else {
             LOG.error("Cannot write canonical URIs to '{}'", outputFile.getPath());
             // Intentionally do not throw an exception

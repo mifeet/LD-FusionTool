@@ -13,8 +13,8 @@ import java.util.TimeZone;
 /**
  * Various utility methods.
  */
-public final class ODCSFusionToolUtils {
-    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolUtils.class);
+public final class ODCSFusionToolAppUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolAppUtils.class);
 
     private static final long HOUR_MS = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
 
@@ -47,17 +47,6 @@ public final class ODCSFusionToolUtils {
     }
 
     /**
-     * Throw an exception if the given object is null.
-     * @param object object to test
-     * @throws NullPointerException if {@code object} is null
-     */
-    public static <T> void checkNotNull(T object) {
-        if (object == null) {
-            throw new NullPointerException();
-        }
-    }
-
-    /**
      * Formats time in milliseconds.
      * @param timeInMs time in milliseconds
      * @return formatted string
@@ -72,6 +61,6 @@ public final class ODCSFusionToolUtils {
     }
 
     /** Disable constructor for a utility class. */
-    private ODCSFusionToolUtils() {
+    private ODCSFusionToolAppUtils() {
     }
 }

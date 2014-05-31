@@ -6,7 +6,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
     @Ignore
     @Test
     public void performanceTest() throws Exception {
-        final long maxMemorySize = 2400 * ODCSFusionToolUtils.MB_BYTES;
+        final long maxMemorySize = 2400 * ODCSFusionToolAppUtils.MB_BYTES;
         final int tripleCount = 1000000;
 
         // Arrange
@@ -61,7 +61,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
 
         rdfWriter.endRDF();
         outputStream.close();
-        double inputFileSizeMB = inputFile.length() / (double) ODCSFusionToolUtils.MB_BYTES;
+        double inputFileSizeMB = inputFile.length() / (double) ODCSFusionToolAppUtils.MB_BYTES;
 
         DataSourceConfig dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.FILE, "test-perf-file.nq");
         dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_PATH, inputFile.getAbsolutePath());

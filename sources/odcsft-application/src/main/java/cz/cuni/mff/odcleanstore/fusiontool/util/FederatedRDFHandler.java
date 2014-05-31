@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
+import com.google.common.base.Preconditions;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
@@ -12,7 +13,7 @@ public class FederatedRDFHandler implements RDFHandler {
     private final RDFHandler[] rdfHandlers;
 
     public FederatedRDFHandler(RDFHandler... rdfHandlers) {
-        ODCSFusionToolUtils.checkNotNull(rdfHandlers);
+        Preconditions.checkNotNull(rdfHandlers);
         this.rdfHandlers = rdfHandlers;
     }
 
