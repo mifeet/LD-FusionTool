@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.testutil;
+package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import com.google.common.base.Objects;
 
@@ -27,5 +27,10 @@ public class Pair<F, S> {
 
     public static <T1, T2> Pair<T1, T2> create(T1 first, T2 second) {
         return new Pair<T1, T2>(first, second);
+    }
+
+    @Override
+    public String toString() {
+        return "Pair[" + first + ", " + second + "]";
     }
 }

@@ -37,6 +37,7 @@
             <artifactId>guava</artifactId>
             <version>17.0</version>
         </dependency>
+
 		<!-- Dependencies for from Sesame -->
 		<dependency>
 			<groupId>org.openrdf.sesame</groupId>

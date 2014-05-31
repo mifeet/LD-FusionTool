@@ -93,28 +93,29 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         Collection<ResolvedStatement> result = createResultCollection(resourceDescription.getDescribingStatements().size());
         AlternativeURINavigator dependentProperties = new AlternativeURINavigator(getDependentPropertyMapping(effectiveResolutionPolicy));
 
-        resolveResource(resourceDescription.getResource(), conflictClustersMap, dependentProperties, effectiveResolutionPolicy, result);
+        Resource canonicalResource = uriMapping.mapResource(resourceDescription.getResource());
+        resolveResource(canonicalResource, conflictClustersMap, dependentProperties, effectiveResolutionPolicy, result);
 
         logFinished(startTime, result);
         return result;
     }
 
     /**
-     * Resolve conflicts in statements contained in {@code conflictClustersMap} for the given {@code resource}.
-     * @param resource resource to be resolved
+     * Resolve conflicts in statements contained in {@code conflictClustersMap} for the given {@code canonicalResource}.
+     * @param canonicalResource canonical version of resource to be resolved
      * @param conflictClustersMap conflictClustersMap statements grouped by canonical subject and predicate
      * @param dependentPropertyMapping property dependencies
      * @param effectiveResolutionPolicy conflict resolution policy to be used
      * @param result collection where the resolved result is added to
      */
     private void resolveResource(
-            Resource resource,
+            Resource canonicalResource,
             ConflictClustersMap conflictClustersMap,
             AlternativeURINavigator dependentPropertyMapping,
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
-        Iterator<URI> predicateIt = conflictClustersMap.listPredicates(resource);
+        Iterator<URI> predicateIt = conflictClustersMap.listPredicates(canonicalResource);
         Set<URI> resolvedPredicates = new HashSet<>();
         while (predicateIt.hasNext()) {
             URI predicate = predicateIt.next();
@@ -125,17 +126,17 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             if (dependentPropertyMapping.hasAlternativeUris(predicate)) {
                 List<URI> dependentProperties = dependentPropertyMapping.listAlternativeUris(predicate);
                 resolveResourceDependentProperties(
-                        resource,
+                        canonicalResource,
                         dependentProperties,
-                        conflictClustersMap.getResourceStatementsMap(resource),
+                        conflictClustersMap.getResourceStatementsMap(canonicalResource),
                         effectiveResolutionPolicy,
                         result);
                 resolvedPredicates.addAll(dependentProperties);
             } else {
                 resolveResourceProperty(
-                        resource,
+                        canonicalResource,
                         predicate,
-                        conflictClustersMap.getConflictClusterStatements(resource, predicate),
+                        conflictClustersMap.getConflictClusterStatements(canonicalResource, predicate),
                         effectiveResolutionPolicy,
                         result);
                 resolvedPredicates.add(predicate);
