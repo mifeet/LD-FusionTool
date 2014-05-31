@@ -1,8 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.urimapping;
 
-import java.util.Iterator;
-
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
+
+import java.util.Iterator;
 
 /**
  * Extends {@link URIMapping} with ability to iterate over all URIs for which a mapping is explicitly defined. 

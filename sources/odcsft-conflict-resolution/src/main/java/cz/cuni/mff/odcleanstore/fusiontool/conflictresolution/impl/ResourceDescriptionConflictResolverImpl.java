@@ -82,10 +82,70 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         ConflictResolutionPolicy effectiveResolutionPolicy = getEffectiveResolutionPolicy();
         Collection<ResolvedStatement> result = createResultCollection(resourceDescription.getDescribingStatements().size());
 
-        prepareResourceModels(resourceDescription.getDescribingStatements());
+        Map<Resource, Model> resourceModels = prepareResourceModels(resourceDescription.getDescribingStatements());
+
         //resolveResource(resourceDescription.getResource(), context, result);
 
         logFinished(startTime, result);
+        return result;
+    }
+
+    /**
+     * Resolve conflicts in statements contained in {@code context} for the given {@code resource}.
+     * @param resource resource to be resolved
+     * @param context context information for conflict resolution
+     * @param result collection where the resolved result is added to
+     */
+    private void resolveResource(Resource resource, CRContext context, Collection<ResolvedStatement> result) {
+
+    }
+
+    private Collection<ResolvedStatement> resolveConflictCluster(
+            Resource subject,
+            URI predicate,
+            Model conflictClusterModel,
+            ConflictResolutionPolicy effectiveResolutionPolicy,
+            Collection<Statement> conflictingStatements) throws ConflictResolutionException {
+
+        if (conflictClusterModel.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Get resolution strategy
+        ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(predicate);
+        if (resolutionStrategy == null) {
+            resolutionStrategy = effectiveResolutionPolicy.getDefaultResolutionStrategy();
+        }
+
+        // Prepare resolution functions & context
+        ResolutionFunction resolutionFunction = resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
+        CRContext context = new CRContextImpl(conflictingStatements, metadataModel, resolutionStrategy, resolvedStatementFactory);
+
+        // Resolve conflicts & append to result
+        return resolutionFunction.resolve(conflictClusterModel, context);
+    }
+
+    private ConflictResolutionPolicy getEffectiveResolutionPolicy() {
+        ResolutionStrategy effectiveDefaultStrategy = DEFAULT_RESOLUTION_STRATEGY;
+        Map<URI, ResolutionStrategy> effectivePropertyStrategies = new HashMap<URI, ResolutionStrategy>();
+
+        if (conflictResolutionPolicy != null && conflictResolutionPolicy.getDefaultResolutionStrategy() != null) {
+            effectiveDefaultStrategy = CRUtils.fillResolutionStrategyDefaults(
+                    conflictResolutionPolicy.getDefaultResolutionStrategy(),
+                    DEFAULT_RESOLUTION_STRATEGY);
+        }
+
+        if (conflictResolutionPolicy != null && conflictResolutionPolicy.getPropertyResolutionStrategies() != null) {
+            for (Map.Entry<URI, ResolutionStrategy> entry : conflictResolutionPolicy.getPropertyResolutionStrategies().entrySet()) {
+                URI mappedURI = (URI) uriMapping.mapResource(entry.getKey());
+                ResolutionStrategy strategy = CRUtils.fillResolutionStrategyDefaults(entry.getValue(), effectiveDefaultStrategy);
+                effectivePropertyStrategies.put(mappedURI, strategy);
+            }
+        }
+
+        ConflictResolutionPolicyImpl result = new ConflictResolutionPolicyImpl();
+        result.setDefaultResolutionStrategy(effectiveDefaultStrategy);
+        result.setPropertyResolutionStrategy(effectivePropertyStrategies);
         return result;
     }
 
@@ -117,68 +177,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return result;
     }
 
-    /**
-     * Resolve conflicts in statements contained in {@code context} for the given {@code resource}.
-     * @param resource resource to be resolved
-     * @param context context information for conflict resolution
-     * @param result collection where the resolved result is added to
-     */
-    private void resolveResource(Resource resource, CRContext context, Collection<ResolvedStatement> result) {
-
-    }
-
     private Collection<ResolvedStatement> createResultCollection(int inputSize) {
         return new ArrayList<ResolvedStatement>(inputSize / 2);
-    }
-
-    private ConflictResolutionPolicy getEffectiveResolutionPolicy() {
-        ResolutionStrategy effectiveDefaultStrategy = DEFAULT_RESOLUTION_STRATEGY;
-        Map<URI, ResolutionStrategy> effectivePropertyStrategies = new HashMap<URI, ResolutionStrategy>();
-
-        if (conflictResolutionPolicy != null && conflictResolutionPolicy.getDefaultResolutionStrategy() != null) {
-            effectiveDefaultStrategy = CRUtils.fillResolutionStrategyDefaults(
-                    conflictResolutionPolicy.getDefaultResolutionStrategy(),
-                    DEFAULT_RESOLUTION_STRATEGY);
-        }
-
-        if (conflictResolutionPolicy != null && conflictResolutionPolicy.getPropertyResolutionStrategies() != null) {
-            for (Map.Entry<URI, ResolutionStrategy> entry : conflictResolutionPolicy.getPropertyResolutionStrategies().entrySet()) {
-                URI mappedURI = (URI) uriMapping.mapResource(entry.getKey());
-                ResolutionStrategy strategy = CRUtils.fillResolutionStrategyDefaults(entry.getValue(), effectiveDefaultStrategy);
-                effectivePropertyStrategies.put(mappedURI, strategy);
-            }
-        }
-
-        ConflictResolutionPolicyImpl result = new ConflictResolutionPolicyImpl();
-        result.setDefaultResolutionStrategy(effectiveDefaultStrategy);
-        result.setPropertyResolutionStrategy(effectivePropertyStrategies);
-        return result;
-    }
-
-    // TODO: move to a separate class?
-    private Collection<ResolvedStatement> resolveConflictCluster(
-            Resource subject,
-            URI predicate,
-            Model conflictClusterModel,
-            ConflictResolutionPolicy effectiveResolutionPolicy,
-            Collection<Statement> conflictingStatements) throws ConflictResolutionException {
-
-        if (conflictClusterModel.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // Get resolution strategy
-        ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(predicate);
-        if (resolutionStrategy == null) {
-            resolutionStrategy = effectiveResolutionPolicy.getDefaultResolutionStrategy();
-        }
-
-        // Prepare resolution functions & context
-        ResolutionFunction resolutionFunction = resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
-        CRContext context = new CRContextImpl(conflictingStatements, metadataModel, resolutionStrategy, resolvedStatementFactory);
-
-        // Resolve conflicts & append to result
-        return resolutionFunction.resolve(conflictClusterModel, context);
     }
 
     private long logStarted(int inputStatementCount) {
