@@ -1,31 +1,61 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
 
 /**
  * TODO
  */
 public class StatementMapper {
-    private URIMapping uriMapping;
-    private ValueFactory valueFactory;
+    private final URIMapping uriMapping;
+    private final ValueFactory valueFactory;
+
+    private boolean mapSubjects = true;
+    private boolean mapPredicates = true;
+    private boolean mapObjects = true;
 
     public StatementMapper(URIMapping uriMapping, ValueFactory valueFactory) {
         this.uriMapping = uriMapping;
         this.valueFactory = valueFactory;
     }
 
+    public boolean mapsSubjects() {
+        return mapSubjects;
+    }
+
+    public void setMapSubjects(boolean mapSubjects) {
+        this.mapSubjects = mapSubjects;
+    }
+
+    public boolean mapsPredicates() {
+        return mapPredicates;
+    }
+
+    public void setMapPredicates(boolean mapPredicates) {
+        this.mapPredicates = mapPredicates;
+    }
+
+    public boolean mapsObjects() {
+        return mapObjects;
+    }
+
+    public void setMapObjects(boolean mapObjects) {
+        this.mapObjects = mapObjects;
+    }
+
     public Statement mapStatement(Statement statement) {
         Resource subject = statement.getSubject();
-        Resource mappedSubject = (Resource) mapUriNode(subject);
+        Resource mappedSubject = mapSubjects
+                ? (Resource) mapUriNode(subject)
+                : subject;
         URI predicate = statement.getPredicate();
-        URI mappedPredicate = (URI) mapUriNode(predicate);
+        URI mappedPredicate = mapPredicates
+                ? (URI) mapUriNode(predicate)
+                : predicate;
         Value object = statement.getObject();
-        Value mappedObject = mapUriNode(object);
+        Value mappedObject = mapObjects
+                ? mapUriNode(object)
+                : object;
 
         // Intentionally !=
         if (subject != mappedSubject

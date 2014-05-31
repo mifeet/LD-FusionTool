@@ -1,18 +1,23 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
+import com.google.common.base.Supplier;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import cz.cuni.mff.odcleanstore.conflictresolution.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.*;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementFactoryImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.CRUtils;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
 import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
+import org.openrdf.model.*;
+import org.openrdf.model.impl.ValueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +38,11 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     /** Default prefix of graph names where resolved quads are placed. */
     public static final String DEFAULT_RESOLVED_GRAPHS_URI_PREFIX = ODCS.NAMESPACE + "cr/";
 
+    private static final ValueFactory VF = ValueFactoryImpl.getInstance();
+    private static final SortedListModelFactory SORTED_LIST_MODEL_FACTORY = new SortedListModelFactory();
+
     private final Model metadataModel;
-    private final URIMapping uriMapping;
+    private final UriMapping uriMapping;
     private final ConflictResolutionPolicy conflictResolutionPolicy;
     private final ResolutionFunctionRegistry resolutionFunctionRegistry;
     private final ResolvedStatementFactoryImpl resolvedStatementFactory;
@@ -50,14 +58,14 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     public ResourceDescriptionConflictResolverImpl(
             ResolutionFunctionRegistry resolutionFunctionRegistry,
             ConflictResolutionPolicy conflictResolutionPolicy,
-            URIMapping uriMapping,
+            UriMapping uriMapping,
             Model metadata,
             String resolvedGraphsURIPrefix) {
         this.resolutionFunctionRegistry = resolutionFunctionRegistry;
         this.conflictResolutionPolicy = conflictResolutionPolicy;
         this.uriMapping = uriMapping != null
                 ? uriMapping
-                : EmptyURIMapping.getInstance();
+                : EmptyUriMapping.getInstance();
         this.metadataModel = metadata != null
                 ? metadata
                 : new EmptyMetadataModel();
@@ -68,22 +76,44 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
     @Override
     public Collection<ResolvedStatement> resolveConflicts(ResourceDescription resourceDescription) throws ConflictResolutionException {
+        long startTime = logStarted(resourceDescription.getDescribingStatements().size());
         final Resource resolvedResource = resourceDescription.getResource();
-        final Statement[] inputStatements = resourceDescription.getDescribingStatements().toArray(
-                new Statement[resourceDescription.getDescribingStatements().size()]);
-        long startTime = logStarted(inputStatements);
 
-        // Prepare effective resolution strategy based on per-predicate strategies, default strategy & uri mappings
         ConflictResolutionPolicy effectiveResolutionPolicy = getEffectiveResolutionPolicy();
+        Collection<ResolvedStatement> result = createResultCollection(resourceDescription.getDescribingStatements().size());
 
-        // Apply owl:sameAs mappings, remove duplicities, sort into clusters of conflicting quads
-        ConflictClustersCollection conflictClusters = new ConflictClustersCollection(inputStatements, uriMapping, resolvedStatementFactory.getValueFactory());
-
-        // Resolve conflicts:
-        Collection<ResolvedStatement> result = createResultCollection(inputStatements.length);
+        prepareResourceModels(resourceDescription.getDescribingStatements());
         //resolveResource(resourceDescription.getResource(), context, result);
 
         logFinished(startTime, result);
+        return result;
+    }
+
+    private Map<Resource, Model> prepareResourceModels(Collection<Statement> describingStatements) {
+        // TODO: something more efficient?
+        Multimap<Resource, Statement> statementsByCanonicalSubjectMultimap = Multimaps.newListMultimap(
+                new HashMap<Resource, Collection<Statement>>(),
+                new Supplier<List<Statement>>() {
+                    @Override
+                    public List<Statement> get() {
+                        return new ArrayList<Statement>();
+                    }
+                }
+        );
+
+        // Iterator that will map predicates and objects to their canonical equivalent, but leave subjects unchanged
+        Iterator<Statement> it = new PredicateObjectMappingIterator(describingStatements.iterator(), uriMapping, VF);
+        while (it.hasNext()) {
+            Statement mappedStatement = it.next();
+            statementsByCanonicalSubjectMultimap.put(uriMapping.mapResource(mappedStatement.getSubject()), mappedStatement);
+        }
+
+        Map<Resource, Collection<Statement>> statementsByCanonicalSubject = statementsByCanonicalSubjectMultimap.asMap();
+        Map<Resource, Model> result = new HashMap<Resource, Model>(statementsByCanonicalSubject.size());
+        for (Resource canonicalSubject : statementsByCanonicalSubject.keySet()) {
+            Model model = SORTED_LIST_MODEL_FACTORY.fromUnorderedList(statementsByCanonicalSubject.get(canonicalSubject));
+            result.put(canonicalSubject, model);
+        }
         return result;
     }
 
@@ -113,7 +143,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
         if (conflictResolutionPolicy != null && conflictResolutionPolicy.getPropertyResolutionStrategies() != null) {
             for (Map.Entry<URI, ResolutionStrategy> entry : conflictResolutionPolicy.getPropertyResolutionStrategies().entrySet()) {
-                URI mappedURI = uriMapping.mapURI(entry.getKey());
+                URI mappedURI = (URI) uriMapping.mapResource(entry.getKey());
                 ResolutionStrategy strategy = CRUtils.fillResolutionStrategyDefaults(entry.getValue(), effectiveDefaultStrategy);
                 effectivePropertyStrategies.put(mappedURI, strategy);
             }
@@ -151,9 +181,9 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return resolutionFunction.resolve(conflictClusterModel, context);
     }
 
-    private long logStarted(Statement[] inputStatements) {
+    private long logStarted(int inputStatementCount) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Resolving conflicts among {} quads.", inputStatements.length);
+            LOG.debug("Resolving conflicts among {} quads.", inputStatementCount);
             return System.currentTimeMillis();
         } else {
             return 0;
