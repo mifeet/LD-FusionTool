@@ -9,12 +9,21 @@ import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 // TODO: more efficient representation, e.g. using binary search
 public class ConflictClustersMap {
     private static final Supplier<List<Statement>> LIST_SUPPLIER = new ListSupplier();
 
+    /**
+     * Map of canonical subject -> canonical property -> statements
+     */
     private final Map<Resource, ListMultimap<URI, Statement>> canonicalSubjectPropertyMap;
 
     public static ConflictClustersMap fromCollection(Collection<Statement> statements, UriMapping uriMapping) {

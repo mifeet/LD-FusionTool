@@ -241,7 +241,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
         StatementMappingIterator mappingIterator = new StatementMappingIterator(conflictClusterStatements.iterator(), uriMapping, VF);
         Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
-        result.addAll(resolveConflictCluster(subject, property, conflictClusterModel, effectiveResolutionPolicy, conflictClusterModel));
+        Collection<ResolvedStatement> resolvedStatements = resolveConflictCluster(subject, property, conflictClusterModel, effectiveResolutionPolicy, conflictClusterModel);
+        result.addAll(resolvedStatements);
     }
 
     // this method assumes that all statements in conflictClusterModel share the same subject and property
