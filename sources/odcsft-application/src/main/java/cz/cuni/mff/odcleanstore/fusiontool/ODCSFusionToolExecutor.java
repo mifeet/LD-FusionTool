@@ -96,7 +96,7 @@ public class ODCSFusionToolExecutor {
 
             // Write result to output
             timeProfiler.startCounter(EnumFusionCounters.OUTPUT_WRITING);
-            rdfWriter.writeResolvedStatements(resolvedQuads.iterator());
+            rdfWriter.writeResolvedStatements(resolvedQuads);
             timeProfiler.stopAddCounter(EnumFusionCounters.OUTPUT_WRITING);
 
             memoryProfiler.capture();

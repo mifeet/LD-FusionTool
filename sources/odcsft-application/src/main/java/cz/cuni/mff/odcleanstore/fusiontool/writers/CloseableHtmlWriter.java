@@ -2,7 +2,12 @@ package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import org.openrdf.model.*;
+import org.openrdf.model.BNode;
+import org.openrdf.model.Literal;
+import org.openrdf.model.Resource;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -59,10 +64,10 @@ public class CloseableHtmlWriter implements CloseableRDFWriter {
     }
 
     @Override
-    public void writeResolvedStatements(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
-        while (resolvedStatements.hasNext()) {
-            write(resolvedStatements.next());
-        } 
+    public void writeResolvedStatements(Iterable<ResolvedStatement> resolvedStatements) throws IOException {
+        for (ResolvedStatement resolvedQuad : resolvedStatements) {
+            write(resolvedQuad);
+        }
     }
 
     @Override

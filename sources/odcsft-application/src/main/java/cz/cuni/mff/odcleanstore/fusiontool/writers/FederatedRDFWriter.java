@@ -35,7 +35,7 @@ public class FederatedRDFWriter implements CloseableRDFWriter {
     }
 
     @Override
-    public void writeResolvedStatements(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
+    public void writeResolvedStatements(Iterable<ResolvedStatement> resolvedStatements) throws IOException {
         for (CloseableRDFWriter rdfWriter : rdfWriters) {
             rdfWriter.writeResolvedStatements(resolvedStatements);
         }

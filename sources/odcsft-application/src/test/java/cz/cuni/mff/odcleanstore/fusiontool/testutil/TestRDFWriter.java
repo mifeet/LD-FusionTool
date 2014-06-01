@@ -5,7 +5,11 @@ import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import org.openrdf.model.Statement;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class TestRDFWriter implements CloseableRDFWriter {
 
@@ -40,9 +44,9 @@ public class TestRDFWriter implements CloseableRDFWriter {
     }
 
     @Override
-    public void writeResolvedStatements(Iterator<ResolvedStatement> resolvedStatements) throws IOException {
-        while (resolvedStatements.hasNext()) {
-            write(resolvedStatements.next());
+    public void writeResolvedStatements(Iterable<ResolvedStatement> resolvedStatements) throws IOException {
+        for (ResolvedStatement resolvedStatement : resolvedStatements) {
+            write(resolvedStatement);
         }
     }
 

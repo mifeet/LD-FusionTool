@@ -35,7 +35,7 @@ public interface CloseableRDFWriter extends Closeable<IOException> {
      * @param resolvedStatements {@link ResolvedStatement resolved statements} to write
      * @throws IOException I/O error
      */
-    void writeResolvedStatements(Iterator<ResolvedStatement> resolvedStatements) throws IOException;
+    void writeResolvedStatements(Iterable<ResolvedStatement> resolvedStatements) throws IOException;
     
     /**
      * Write a single resolved statement.

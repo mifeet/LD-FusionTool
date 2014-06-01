@@ -102,10 +102,10 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
     }
     
     @Override
-    public void writeResolvedStatements(Iterator<ResolvedStatement> resolvedQuads) throws IOException {
-        while (resolvedQuads.hasNext()) {
-            write(resolvedQuads.next());
-        } 
+    public void writeResolvedStatements(Iterable<ResolvedStatement> resolvedQuads) throws IOException {
+        for (ResolvedStatement resolvedQuad : resolvedQuads) {
+            write(resolvedQuad);
+        }
     }
     
     @Override
