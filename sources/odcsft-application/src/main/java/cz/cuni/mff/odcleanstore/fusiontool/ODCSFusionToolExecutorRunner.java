@@ -9,9 +9,23 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
-import cz.cuni.mff.odcleanstore.fusiontool.config.*;
+import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
+import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.*;
+import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
+import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
+import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.ExternalSortingInputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.SubjectsSetInputLoader;
@@ -27,10 +41,14 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
-import cz.cuni.mff.odcleanstore.fusiontool.util.*;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ConflictingClusterConflictClusterFilter;
+import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
+import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
+import cz.cuni.mff.odcleanstore.fusiontool.util.UriToSameAsIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.FederatedRDFWriter;
@@ -46,8 +64,22 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Loads and prepares all inputs for data fusion executor, executes data fusion and outputs additional metadata
@@ -99,7 +131,7 @@ public class ODCSFusionToolExecutorRunner {
             Model metadata = getMetadata(getConstructSources(config.getMetadataSources()));
 
             // Load & resolve owl:sameAs links
-            URIMappingIterable uriMapping = getUriMapping();
+            UriMappingIterable uriMapping = getUriMapping();
             timeProfiler.stopAddCounter(EnumFusionCounters.META_INITIALIZATION);
 
             // Create & initialize quad loader
@@ -258,12 +290,12 @@ public class ODCSFusionToolExecutorRunner {
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      * @throws IOException I/O error
      */
-    protected URIMappingIterable getUriMapping() throws ODCSFusionToolException, IOException {
+    protected UriMappingIterable getUriMapping() throws ODCSFusionToolException, IOException {
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(),
                 config.getCanonicalURIsInputFile(),
                 config.getPreferredCanonicalURIs());
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(preferredURIs);
+        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(preferredURIs);
 
         // TODO: rework
         List<ConstructSourceConfig> repositorySameAsSourcesConfig = new ArrayList<ConstructSourceConfig>();
@@ -343,7 +375,7 @@ public class ODCSFusionToolExecutorRunner {
      * @param uriMapping mapping of URIs to their canonical URI
      * @return initialized conflict resolver
      */
-    protected ConflictResolver createConflictResolver(Model metadata, URIMappingIterable uriMapping) {
+    protected ConflictResolver createConflictResolver(Model metadata, UriMappingIterable uriMapping) {
         SourceQualityCalculator sourceConfidence = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(),
                 config.getPublisherScoreWeight());
@@ -420,7 +452,7 @@ public class ODCSFusionToolExecutorRunner {
      * @param outputFile file where to write
      * @throws IOException writing error
      */
-    protected void writeCanonicalURIs(URIMappingIterable uriMapping, File outputFile) throws IOException {
+    protected void writeCanonicalURIs(UriMappingIterable uriMapping, File outputFile) throws IOException {
         if (outputFile == null) {
             return;
         }
@@ -459,7 +491,7 @@ public class ODCSFusionToolExecutorRunner {
      * @throws IOException I/O error
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error when creating output
      */
-    protected void writeSameAsLinks(final URIMappingIterable uriMapping, List<Output> outputs,
+    protected void writeSameAsLinks(final UriMappingIterable uriMapping, List<Output> outputs,
             Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException, ODCSFusionToolException {
 
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();

@@ -3,11 +3,11 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import org.openrdf.model.Resource;
@@ -26,7 +26,7 @@ import java.util.Set;
 
 /**
  * Input loader which loads quads for each subject contained in the given collection of subjects.
- * Each call to {@link #nextQuads()} returns triples for one subject.
+ * Each call to {@link #next()} returns triples for one subject.
  * Only the subjects given in constructor are processed and no transitive discovery is done.
  */
 public class SubjectsSetInputLoader implements InputLoader {
@@ -42,8 +42,8 @@ public class SubjectsSetInputLoader implements InputLoader {
     protected UriCollection subjectsQueue = null;
     private ResourceQuadLoader resourceQuadLoader;
     private Set<String> resolvedCanonicalURIs;
-    private URIMappingIterable uriMapping;
-    private AlternativeURINavigator alternativeURINavigator;
+    private UriMappingIterable uriMapping;
+    private AlternativeUriNavigator alternativeUriNavigator;
 
     /**
      * @param subjects collections of subjects to be processed;
@@ -67,16 +67,16 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     @Override
-    public void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException {
+    public void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException {
         this.uriMapping = uriMapping;
-        alternativeURINavigator = new AlternativeURINavigator(uriMapping);
-        this.resourceQuadLoader = createResourceQuadLoader(dataSources, alternativeURINavigator);
+        alternativeUriNavigator = new AlternativeUriNavigator(uriMapping);
+        this.resourceQuadLoader = createResourceQuadLoader(dataSources, alternativeUriNavigator);
         this.resolvedCanonicalURIs = largeCollectionFactory.createSet();
         this.subjectsQueue = createSubjectsQueue(initialSubjects);
     }
 
     @Override
-    public ResourceDescription nextQuads() throws ODCSFusionToolException {
+    public ResourceDescription next() throws ODCSFusionToolException {
         if (subjectsQueue == null) {
             throw new IllegalStateException("Must be initialized with initialize() first");
         }
@@ -150,7 +150,7 @@ public class SubjectsSetInputLoader implements InputLoader {
      * Returns effective canonical URI mapping.
      * @return URI mapping
      */
-    protected URIMappingIterable getUriMapping() {
+    protected UriMappingIterable getUriMapping() {
         return uriMapping;
     }
 
@@ -177,14 +177,14 @@ public class SubjectsSetInputLoader implements InputLoader {
     /**
      * Creates a quad loader retrieving quads from the given data sources (checking all of them).
      * @param dataSources initialized data sources
-     * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
+     * @param alternativeUriNavigator container of alternative owl:sameAs variants for URIs
      * @return initialized quad loader
      */
-    protected ResourceQuadLoader createResourceQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
+    protected ResourceQuadLoader createResourceQuadLoader(Collection<DataSource> dataSources, AlternativeUriNavigator alternativeUriNavigator) {
         if (dataSources.size() == 1) {
-            return new RepositoryResourceQuadLoader(dataSources.iterator().next(), alternativeURINavigator);
+            return new RepositoryResourceQuadLoader(dataSources.iterator().next(), alternativeUriNavigator);
         } else {
-            return new FederatedResourceQuadLoader(dataSources, alternativeURINavigator);
+            return new FederatedResourceQuadLoader(dataSources, alternativeUriNavigator);
         }
     }
 
@@ -196,7 +196,7 @@ public class SubjectsSetInputLoader implements InputLoader {
                 String nextSubject = subjectsQueue.next();
                 String canonicalURI = uriMapping.getCanonicalURI(nextSubject);
 
-                if (outputMappedSubjectsOnly && !alternativeURINavigator.hasAlternativeUris(nextSubject)) {
+                if (outputMappedSubjectsOnly && !alternativeUriNavigator.hasAlternativeUris(nextSubject)) {
                     // Skip subjects with no mapping
                     LOG.debug("Skipping not mapped subject <{}>", nextSubject);
                     continue;

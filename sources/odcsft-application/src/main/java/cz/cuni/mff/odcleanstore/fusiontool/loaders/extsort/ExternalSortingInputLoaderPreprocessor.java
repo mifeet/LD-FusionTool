@@ -1,10 +1,14 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
-import org.openrdf.model.*;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
+import org.openrdf.model.Resource;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
+import org.openrdf.model.ValueFactory;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.slf4j.Logger;
@@ -19,24 +23,24 @@ import org.slf4j.LoggerFactory;
 public class ExternalSortingInputLoaderPreprocessor implements RDFHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ExternalSortingInputLoaderPreprocessor.class);
 
-    private final URIMapping uriMapping;
+    private final UriMapping uriMapping;
     private final RDFHandler rdfHandler;
     private final ValueFactory valueFactory;
     private final boolean outputMappedSubjectsOnly;
-    private final AlternativeURINavigator alternativeUriNavigator;
+    private final AlternativeUriNavigator alternativeUriNavigator;
     private URI defaultContext = null;
     private long statementCounter = 0;
 
     public ExternalSortingInputLoaderPreprocessor(
             RDFHandler rdfHandler,
-            URIMappingIterable uriMapping,
+            UriMappingIterable uriMapping,
             ValueFactory valueFactory,
             boolean outputMappedSubjectsOnly) {
         this.uriMapping = uriMapping;
         this.rdfHandler = rdfHandler;
         this.valueFactory = valueFactory;
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
-        this.alternativeUriNavigator = outputMappedSubjectsOnly ? new AlternativeURINavigator(uriMapping) : null;
+        this.alternativeUriNavigator = outputMappedSubjectsOnly ? new AlternativeUriNavigator(uriMapping) : null;
     }
 
     public void setDefaultContext(URI defaultContext) {
@@ -101,7 +105,7 @@ public class ExternalSortingInputLoaderPreprocessor implements RDFHandler {
      * @param uriMapping an URI mapping to apply
      * @return node with applied URI mapping
      */
-    private Value mapUriNode(Value value, URIMapping uriMapping) {
+    private Value mapUriNode(Value value, UriMapping uriMapping) {
         if (value instanceof URI) {
             return uriMapping.mapURI((URI) value);
         }

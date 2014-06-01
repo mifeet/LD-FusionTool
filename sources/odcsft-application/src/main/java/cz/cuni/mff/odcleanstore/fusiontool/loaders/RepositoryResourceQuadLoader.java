@@ -2,12 +2,12 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Resource;
@@ -82,19 +82,19 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
     private static final String OBJECT_VAR = VAR_PREFIX + "o";
     private static final String GRAPH_VAR = VAR_PREFIX + "g";
     
-    private final AlternativeURINavigator alternativeURINavigator;
+    private final AlternativeUriNavigator alternativeUriNavigator;
     private RepositoryConnection connection;
     private final DataSource dataSource;
 
     /**
      * Creates a new instance.
      * @param dataSource an initialized data source
-     * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
+     * @param alternativeUriNavigator container of alternative owl:sameAs variants for URIs
      */
-    public RepositoryResourceQuadLoader(DataSource dataSource, AlternativeURINavigator alternativeURINavigator) {
+    public RepositoryResourceQuadLoader(DataSource dataSource, AlternativeUriNavigator alternativeUriNavigator) {
         super(dataSource);
         this.dataSource = dataSource;
-        this.alternativeURINavigator = alternativeURINavigator;
+        this.alternativeUriNavigator = alternativeUriNavigator;
     }
 
     /**
@@ -118,7 +118,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
             restriction = EMPTY_RESTRICTION;
         }
         
-        List<String> alternativeURIs = alternativeURINavigator.listAlternativeUris(uri);
+        List<String> alternativeURIs = alternativeUriNavigator.listAlternativeUris(uri);
         if (alternativeURIs.size() <= 1) {
             String query = formatQuery(QUADS_QUERY_SIMPLE, restriction, uri);
             try {

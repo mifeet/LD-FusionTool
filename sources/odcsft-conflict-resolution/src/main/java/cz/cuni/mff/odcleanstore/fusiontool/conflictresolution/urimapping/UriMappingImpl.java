@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
+package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import org.openrdf.model.Resource;
@@ -10,7 +10,11 @@ import org.openrdf.model.vocabulary.OWL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Data structure that handles mapping of URI resources linked with a owl:sameAs link

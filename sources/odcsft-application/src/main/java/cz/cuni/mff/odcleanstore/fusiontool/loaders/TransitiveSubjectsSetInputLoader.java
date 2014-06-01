@@ -1,12 +1,12 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ import java.util.Set;
  * Input loader which loads quads for each subject contained in the given collection of subjects
  * and additionally it adds every object encountered in resolved quads to this collection.
  * Therefore all initially given subject and all resources discovered transitively are processed.
- * Each call to {@link #nextQuads()} returns triples for one subject.
+ * Each call to {@link #next()} returns triples for one subject.
  */
 public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
     private static final Logger LOG = LoggerFactory.getLogger(TransitiveSubjectsSetInputLoader.class);
@@ -58,7 +58,7 @@ public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
         super.updateWithResolvedStatements(resolvedStatements);
 
         // Add discovered objects to the queue
-        URIMapping uriMapping = getUriMapping();
+        UriMapping uriMapping = getUriMapping();
         for (ResolvedStatement resolvedStatement : resolvedStatements) {
             String uri = ODCSUtils.getNodeUri(resolvedStatement.getStatement().getObject());
             if (uri == null) {
@@ -83,7 +83,7 @@ public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
     private UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects) throws ODCSFusionToolException {
         Set<String> buffer = largeCollectionFactory.createSet();
         UriCollection queuedSubjects = new BufferedSubjectsCollection(buffer);
-        URIMappingIterable uriMapping = getUriMapping();
+        UriMappingIterable uriMapping = getUriMapping();
         long count = 0;
         while (seedSubjects.hasNext()) {
             String canonicalURI = uriMapping.getCanonicalURI(seedSubjects.next());

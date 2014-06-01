@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
+package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import org.openrdf.model.Resource;

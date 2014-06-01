@@ -1,8 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import org.openrdf.model.Statement;
 
 import java.util.ArrayList;
@@ -20,12 +20,12 @@ public class FederatedResourceQuadLoader implements ResourceQuadLoader {
     /**
      * Creates a new instance.
      * @param dataSources initialized data sources
-     * @param alternativeURINavigator container of alternative owl:sameAs variants for URIs
+     * @param alternativeUriNavigator container of alternative owl:sameAs variants for URIs
      */
-    public FederatedResourceQuadLoader(Collection<DataSource> dataSources, AlternativeURINavigator alternativeURINavigator) {
+    public FederatedResourceQuadLoader(Collection<DataSource> dataSources, AlternativeUriNavigator alternativeUriNavigator) {
         resourceQuadLoaders = new ArrayList<ResourceQuadLoader>();
         for (DataSource source : dataSources) {
-            ResourceQuadLoader loader = new RepositoryResourceQuadLoader(source, alternativeURINavigator);
+            ResourceQuadLoader loader = new RepositoryResourceQuadLoader(source, alternativeUriNavigator);
             resourceQuadLoaders.add(loader);
         }
     }

@@ -6,29 +6,50 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.*;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ExternalSorter;
+import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger;
+import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParser;
+import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParserUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.AtributeIndexFileNTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileAndAttributeIndexFileMerger;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileNTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.FederatedRDFHandler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
-import org.openrdf.model.*;
+import org.openrdf.model.Resource;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
+import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -38,7 +59,7 @@ import java.util.zip.GZIPOutputStream;
  * to efficiently process large amounts of quads.
  * The loader (1) reads all input quads, (2) maps URIs to canonical URIs,
  * (3) sorts quads using external sort, (4) iterates over large chunks of the sorted quads.
- * Method {@link #nextQuads()} can return descriptions of multiple resources at the same time,
+ * Method {@link #next()} can return descriptions of multiple resources at the same time,
  * however it is guaranteed that all returned descriptions are complete and sorted.
  */
 public class ExternalSortingInputLoader implements InputLoader {
@@ -98,7 +119,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     @Override
-    public void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException {
+    public void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException {
         Preconditions.checkNotNull(uriMapping);
         LOG.info("Initializing input loader");
         if (maxMemoryLimit < Long.MAX_VALUE) {
@@ -156,7 +177,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     @Override
-    public ResourceDescription nextQuads() throws ODCSFusionToolException {
+    public ResourceDescription next() throws ODCSFusionToolException {
         if (dataFileIterator == null || mergedAttributeFileIterator == null) {
             throw new IllegalStateException();
         }
@@ -245,7 +266,7 @@ public class ExternalSortingInputLoader implements InputLoader {
      * <li> O S for input quads (S,P,O,G) such that P is a resource description URI to {@code attributeIndexFile}</li>
      * </ul>
      */
-    private void copyInputsToTempFiles(Collection<AllTriplesLoader> dataSources, URIMappingIterable uriMapping, File dataFile, File attributeIndexFile)
+    private void copyInputsToTempFiles(Collection<AllTriplesLoader> dataSources, UriMappingIterable uriMapping, File dataFile, File attributeIndexFile)
             throws ODCSFusionToolException {
         NTuplesWriter dataFileWriter = null;
         NTuplesWriter attributeIndexFileWriter = null;

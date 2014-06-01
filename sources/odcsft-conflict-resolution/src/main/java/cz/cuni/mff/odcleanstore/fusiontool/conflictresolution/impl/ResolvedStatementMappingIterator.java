@@ -1,10 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.StatementMapper;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ConvertingIterator;
-import cz.cuni.mff.odcleanstore.fusiontool.util.StatementMapper;
 import org.openrdf.model.Statement;
 import org.openrdf.model.ValueFactory;
 
@@ -14,7 +14,7 @@ public class ResolvedStatementMappingIterator extends ConvertingIterator<Resolve
     private final StatementMapper statementMapper;
 
     public ResolvedStatementMappingIterator(Iterator<ResolvedStatement> iterator,
-            URIMapping uriMapping,
+            UriMapping uriMapping,
             ValueFactory valueFactory,
             boolean mapSubjects,
             boolean mapPredicates,

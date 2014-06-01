@@ -1,11 +1,15 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.base.Stopwatch;
-import cz.cuni.mff.odcleanstore.fusiontool.config.*;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
+import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -81,9 +85,9 @@ public class ExternalSortingInputLoaderPerformanceTest {
         inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(),
                 ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemorySize, false);
         try {
-            inputLoader.initialize(new URIMappingIterableImpl());
+            inputLoader.initialize(new UriMappingIterableImpl());
             while (inputLoader.hasNext()) {
-                actualTripleCount += inputLoader.nextQuads().getDescribingStatements().size();
+                actualTripleCount += inputLoader.next().getDescribingStatements().size();
             }
             executionStopwatch.stop();
         } finally {

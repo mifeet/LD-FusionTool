@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
@@ -39,7 +39,7 @@ public class SameAsLinkRepositoryLoader extends RepositoryLoaderBase implements 
      * @return number of loaded owl:sameAs links
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException repository error
      */
-    public long loadSameAsMappings(URIMappingImpl uriMapping) throws ODCSFusionToolException {
+    public long loadSameAsMappings(UriMappingImpl uriMapping) throws ODCSFusionToolException {
         long startTime = System.currentTimeMillis();
         long linkCount = 0;
         
@@ -56,7 +56,7 @@ public class SameAsLinkRepositoryLoader extends RepositoryLoaderBase implements 
         return linkCount;
     }
 
-    private long loadSameAsLinks(URIMappingImpl uriMapping, String query) throws OpenRDFException {
+    private long loadSameAsLinks(UriMappingImpl uriMapping, String query) throws OpenRDFException {
         long linkCount = 0;
         long startTime = System.currentTimeMillis();
         RepositoryConnection connection = constructSource.getRepository().getConnection();

@@ -2,10 +2,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableSet;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.EmptyURIMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.EmptyUriMappingIterable;
 import org.junit.Test;
 import org.openrdf.model.Statement;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -32,7 +32,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
         statements.add(createHttpStatement("s1", "p1", "o1", "g1"));
         statements.add(createHttpStatement("s2", "p2", "o2", "g2"));
 
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
+        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(ImmutableSet.of(
                 createHttpUri("sx").toString(),
                 createHttpUri("px").toString(),
                 createHttpUri("ox").toString(),
@@ -59,7 +59,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
     @Test
     public void respectsSetContext() throws Exception {
         // Arrange
-        URIMappingIterable uriMapping = new EmptyURIMappingIterable();
+        UriMappingIterable uriMapping = new EmptyUriMappingIterable();
 
         // Act
         ArrayList<Statement> result = new ArrayList<Statement>();
@@ -95,7 +95,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
         statements.add(createHttpStatement("s2", "p1", "o1", "g1"));
         statements.add(createHttpStatement("s4", "p1", "o1", "g1"));
 
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
+        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(ImmutableSet.of(
                 createHttpUri("s1").toString(), createHttpUri("s2").toString()));
         uriMapping.addLink(createHttpUri("s1").toString(), createHttpUri("sx").toString());
         uriMapping.addLink(createHttpUri("s2").toString(), createHttpUri("sy").toString());
@@ -111,7 +111,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
 
     private ArrayList<Statement> collectResultsFromPreprocessor(
             ArrayList<Statement> statements,
-            URIMappingIterable uriMapping,
+            UriMappingIterable uriMapping,
             boolean outputMappedSubjectsOnly)
             throws RDFHandlerException {
 

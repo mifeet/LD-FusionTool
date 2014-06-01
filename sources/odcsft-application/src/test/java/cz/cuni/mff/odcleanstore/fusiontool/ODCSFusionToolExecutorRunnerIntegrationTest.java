@@ -8,10 +8,10 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.junit.Before;
 import org.junit.Rule;
@@ -180,9 +180,9 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
 
         // Assert - sameAs
         Set<Statement> sameAs = parseStatements(sameAsFile);
-        URIMappingIterable uriMapping = createUriMapping(sameAs, canonicalUris);
+        UriMappingIterable uriMapping = createUriMapping(sameAs, canonicalUris);
         Set<Statement> expectedSameAs = parseStatements(expectedSameAsFile);
-        URIMappingIterable expectedUriMapping = createUriMapping(expectedSameAs, canonicalUris);
+        UriMappingIterable expectedUriMapping = createUriMapping(expectedSameAs, canonicalUris);
         for (String uri : expectedUriMapping) {
             URI canonicalUri = uriMapping.mapURI(VALUE_FACTORY.createURI(uri));
             URI expectedCanonicalUri = expectedUriMapping.mapURI(VALUE_FACTORY.createURI(uri));
@@ -301,8 +301,8 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         return result;
     }
 
-    private URIMappingIterable createUriMapping(Set<Statement> sameAs, Set<String> canonicalUris) {
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(canonicalUris);
+    private UriMappingIterable createUriMapping(Set<Statement> sameAs, Set<String> canonicalUris) {
+        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(canonicalUris);
         for (Statement statement : sameAs) {
             uriMapping.addLink(statement.getSubject().stringValue(), statement.getObject().stringValue());
         }

@@ -1,9 +1,9 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 
 import com.google.common.base.Preconditions;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.URIMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
@@ -41,7 +41,7 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
     }
 
     @Override
-    public long loadSameAsMappings(URIMappingImpl uriMapping) throws ODCSFusionToolException {
+    public long loadSameAsMappings(UriMappingImpl uriMapping) throws ODCSFusionToolException {
         LOG.info("Parsing sameAs links from {}", paramReader.getLabel());
         try {
             long startTime = System.currentTimeMillis();
@@ -56,10 +56,10 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
     }
 
     private class SameAsLinkHandler extends RDFHandlerBase {
-        private final URIMappingImpl uriMapping;
+        private final UriMappingImpl uriMapping;
         private long loadedCount = 0;
 
-        public SameAsLinkHandler(URIMappingImpl uriMapping) {
+        public SameAsLinkHandler(UriMappingImpl uriMapping) {
             this.uriMapping = uriMapping;
         }
 

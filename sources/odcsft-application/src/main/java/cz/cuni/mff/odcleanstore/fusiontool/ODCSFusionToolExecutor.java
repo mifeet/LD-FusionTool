@@ -3,13 +3,13 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
-import org.openrdf.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,16 +72,16 @@ public class ODCSFusionToolExecutor {
 
             // Load quads for the given subject
             timeProfiler.startCounter(EnumFusionCounters.QUAD_LOADING);
-            Collection<Statement> quads = inputLoader.nextQuads().getDescribingStatements();
-            inputTriples += quads.size();
+            ResourceDescription resourceDescription = inputLoader.next();
+            inputTriples += resourceDescription.getDescribingStatements().size();
             timeProfiler.stopAddCounter(EnumFusionCounters.QUAD_LOADING);
 
             // Resolve conflicts
             timeProfiler.startCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
-            Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(quads);
+            Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(resourceDescription.getDescribingStatements());
             timeProfiler.stopAddCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
             LOG.info("Resolved {} quads resulting in {} quads (processed totally {} quads)",
-                    new Object[] {quads.size(), resolvedQuads.size(), inputTriples});
+                    new Object[] {resourceDescription.getDescribingStatements().size(), resolvedQuads.size(), inputTriples});
 
             // Check if we have reached the limit on output triples
             if (checkMaxOutputTriples && outputTriples + resolvedQuads.size() > maxOutputTriples) {

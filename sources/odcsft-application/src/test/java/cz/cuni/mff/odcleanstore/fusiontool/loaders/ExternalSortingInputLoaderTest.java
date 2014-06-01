@@ -3,7 +3,6 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.conflictresolution.URIMapping;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
@@ -12,12 +11,13 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,7 +73,7 @@ public class ExternalSortingInputLoaderTest {
 
     private AtomicInteger testFileCounter = new AtomicInteger(0);
 
-    private URIMappingIterable uriMapping;
+    private UriMappingIterable uriMapping;
 
     /** A general case of test data */
     private Collection<Statement> testInput1 = ImmutableList.of(
@@ -139,7 +139,7 @@ public class ExternalSortingInputLoaderTest {
     public void setUp() throws Exception {
         // init URI mapping
         // map sa, sb -> sx; pa, pb -> px; oa, ob -> ox; ga, gb -> gx
-        URIMappingIterableImpl uriMappingImpl = new URIMappingIterableImpl(ImmutableSet.of(
+        UriMappingIterableImpl uriMappingImpl = new UriMappingIterableImpl(ImmutableSet.of(
                 createHttpUri("sx").toString(),
                 createHttpUri("px").toString(),
                 createHttpUri("ox").toString(),
@@ -220,7 +220,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader = createExternalSortingInputLoader(testInput1, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                statementBlocks.add(inputLoader.nextQuads().getDescribingStatements());
+                statementBlocks.add(inputLoader.next().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -228,7 +228,7 @@ public class ExternalSortingInputLoaderTest {
 
         // Assert
         for (Collection<Statement> block : statementBlocks) {
-            // for each conflict cluster in a block returned by nextQuads(),
+            // for each conflict cluster in a block returned by next(),
             // all quads belonging to this conflict cluster must be present.
             for (Statement statement : block) {
                 Set<Statement> conflictCluster = conflictClustersMap1.get(statement.getSubject()).get(statement.getPredicate());
@@ -249,7 +249,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader = createExternalSortingInputLoader(testInput1, false);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                statementBlocks.add(inputLoader.nextQuads().getDescribingStatements());
+                statementBlocks.add(inputLoader.next().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -273,7 +273,7 @@ public class ExternalSortingInputLoaderTest {
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                statementBlocks.add(inputLoader.nextQuads().getDescribingStatements());
+                statementBlocks.add(inputLoader.next().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -312,7 +312,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
                 // call only once
-                inputLoader.nextQuads();
+                inputLoader.next();
             }
         } finally {
             inputLoader.close();
@@ -342,7 +342,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
                 // call only once
-                inputLoader.nextQuads();
+                inputLoader.next();
             }
         } catch (Exception e) {
             caughtException = e;
@@ -363,7 +363,7 @@ public class ExternalSortingInputLoaderTest {
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                Collection<Statement> statements = inputLoader.nextQuads().getDescribingStatements();
+                Collection<Statement> statements = inputLoader.next().getDescribingStatements();
                 Statement firstStatement = statements.iterator().next();
                 ResolvedStatement resolvedStatement = new ResolvedStatementImpl(firstStatement, 0.5, Collections.singleton(firstStatement.getContext()));
                 inputLoader.updateWithResolvedStatements(Collections.singleton(resolvedStatement));
@@ -411,7 +411,7 @@ public class ExternalSortingInputLoaderTest {
         statements.add(createHttpStatement("s2", "p1", "o1", "g1"));
         statements.add(createHttpStatement("s4", "p1", "o1", "g1"));
 
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
+        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(ImmutableSet.of(
                 createHttpUri("sx").toString(), createHttpUri("s2").toString()));
         uriMapping.addLink(createHttpUri("s1").toString(), createHttpUri("sx").toString());
         uriMapping.addLink(createHttpUri("s2").toString(), createHttpUri("sy").toString());
@@ -423,7 +423,7 @@ public class ExternalSortingInputLoaderTest {
             inputLoader = createExternalSortingInputLoader(statements, true);
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                result.addAll(inputLoader.nextQuads().getDescribingStatements());
+                result.addAll(inputLoader.next().getDescribingStatements());
             }
         } finally {
             inputLoader.close();
@@ -474,7 +474,7 @@ public class ExternalSortingInputLoaderTest {
         try {
             inputLoader.initialize(uriMapping);
             while (inputLoader.hasNext()) {
-                ResourceDescription resourceDescription = inputLoader.nextQuads();
+                ResourceDescription resourceDescription = inputLoader.next();
                 Collection<Statement> cluster = resourceDescription.getDescribingStatements();
                 TreeSet<Statement> statements = new TreeSet<Statement>(SPOG_COMPARATOR);
                 statements.addAll(cluster);
@@ -547,7 +547,7 @@ public class ExternalSortingInputLoaderTest {
     private void collectResult(ExternalSortingInputLoader inputLoader, Set<Statement> result) throws ODCSFusionToolException {
         inputLoader.initialize(uriMapping);
         while (inputLoader.hasNext()) {
-            result.addAll(inputLoader.nextQuads().getDescribingStatements());
+            result.addAll(inputLoader.next().getDescribingStatements());
         }
     }
 
@@ -571,7 +571,7 @@ public class ExternalSortingInputLoaderTest {
         return result;
     }
 
-    private static Collection<Statement> applyMapping(Collection<Statement> statements, URIMapping uriMapping) {
+    private static Collection<Statement> applyMapping(Collection<Statement> statements, UriMapping uriMapping) {
         ImmutableList.Builder<Statement> result = ImmutableList.builder();
         for (Statement statement : statements) {
             result.add(VF.createStatement(
@@ -584,7 +584,7 @@ public class ExternalSortingInputLoaderTest {
         return result.build();
     }
 
-    private static Value mapNode(Value value, URIMapping uriMapping) {
+    private static Value mapNode(Value value, UriMapping uriMapping) {
         if (value instanceof URI) {
             return uriMapping.mapURI((URI) value);
         }

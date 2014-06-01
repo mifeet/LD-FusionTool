@@ -1,7 +1,14 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import com.google.common.collect.Table;
-import cz.cuni.mff.odcleanstore.conflictresolution.*;
+import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
+import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunction;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
@@ -14,18 +21,32 @@ import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ClusterIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.*;
+import org.openrdf.model.Model;
+import org.openrdf.model.Resource;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * TODO
@@ -94,7 +115,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         ConflictResolutionPolicy effectiveResolutionPolicy = getEffectiveResolutionPolicy();
         ConflictClustersMap conflictClustersMap = ConflictClustersMap.fromCollection(resourceDescription.getDescribingStatements(), uriMapping);
         Collection<ResolvedStatement> result = createResultCollection(resourceDescription.getDescribingStatements().size());
-        AlternativeURINavigator dependentProperties = new AlternativeURINavigator(getDependentPropertyMapping(effectiveResolutionPolicy));
+        AlternativeUriNavigator dependentProperties = new AlternativeUriNavigator(getDependentPropertyMapping(effectiveResolutionPolicy));
 
         Resource canonicalResource = uriMapping.mapResource(resourceDescription.getResource());
         resolveResource(canonicalResource, conflictClustersMap, dependentProperties, effectiveResolutionPolicy, result);
@@ -114,7 +135,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     private void resolveResource(
             Resource canonicalResource,
             ConflictClustersMap conflictClustersMap,
-            AlternativeURINavigator dependentPropertyMapping,
+            AlternativeUriNavigator dependentPropertyMapping,
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
@@ -189,7 +210,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             }
         }
 
-        // Step 3: Add statements for the best subject to the result, but first also map subjects
+        // Step 3: Add statements for the best subject to the result
         if (bestSubject != null) {
             Map<URI, Collection<ResolvedStatement>> selectedStatements = conflictClustersTable.row(bestSubject);
             for (Collection<ResolvedStatement> resolvedStatements : selectedStatements.values()) {
@@ -272,8 +293,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return result;
     }
 
-    private URIMappingIterable getDependentPropertyMapping(ConflictResolutionPolicy effectiveResolutionPolicy) {
-        URIMappingIterableImpl dependentPropertyMapping = new URIMappingIterableImpl();
+    private UriMappingIterable getDependentPropertyMapping(ConflictResolutionPolicy effectiveResolutionPolicy) {
+        UriMappingIterableImpl dependentPropertyMapping = new UriMappingIterableImpl();
         for (URI uri : effectiveResolutionPolicy.getPropertyResolutionStrategies().keySet()) {
             ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(uri);
             if (resolutionStrategy.getDependsOn() != null) {

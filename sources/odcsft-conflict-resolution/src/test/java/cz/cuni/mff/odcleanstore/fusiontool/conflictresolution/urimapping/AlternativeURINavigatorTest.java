@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.urimapping;
+package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
@@ -12,7 +12,7 @@ public class AlternativeURINavigatorTest {
     @Test
     public void listsAlternativesCorrectly() throws Exception {
         // Arrange
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
+        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(ImmutableSet.of(
                 "http://ax",
                 "http://bx",
                 "http://cx"
@@ -29,7 +29,7 @@ public class AlternativeURINavigatorTest {
         Set<String> setD = ImmutableSet.of("http://dx");
 
         // Act
-        AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
+        AlternativeUriNavigator alternativeURINavigator = new AlternativeUriNavigator(uriMapping);
 
         // Assert
         assertThat(ImmutableSet.copyOf(alternativeURINavigator.listAlternativeUris("http://a1")), equalTo(setA));
@@ -45,7 +45,7 @@ public class AlternativeURINavigatorTest {
     @Test
     public void hasAlternativeUrisWorksCorrectly() throws Exception {
         // Arrange
-        URIMappingIterableImpl uriMapping = new URIMappingIterableImpl(ImmutableSet.of(
+        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(ImmutableSet.of(
                 "http://ax",
                 "http://bx",
                 "http://cx"
@@ -62,7 +62,7 @@ public class AlternativeURINavigatorTest {
         Set<String> setD = ImmutableSet.of("http://dx");
 
         // Act
-        AlternativeURINavigator alternativeURINavigator = new AlternativeURINavigator(uriMapping);
+        AlternativeUriNavigator alternativeURINavigator = new AlternativeUriNavigator(uriMapping);
 
         // Assert
         assertThat(alternativeURINavigator.hasAlternativeUris("http://a1"), equalTo(true));

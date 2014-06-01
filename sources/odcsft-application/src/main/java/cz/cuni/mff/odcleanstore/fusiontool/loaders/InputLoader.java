@@ -2,8 +2,8 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
 
 import java.util.Collection;
@@ -12,7 +12,7 @@ import java.util.Collection;
  * Loader of input quads to be resolved.
  * Implementors can themselves control how quads are retrieved, how many are returned in each batch.
  * All quads sharing the same subject, however, are guaranteed to be returned in a single batch of quads
- * returned by {@link #nextQuads()}.
+ * returned by {@link #next()}.
  */
 public interface InputLoader extends Closeable<ODCSFusionToolException> {
     /**
@@ -21,7 +21,7 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
      * @param uriMapping canonical URI mapping
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
-    void initialize(URIMappingIterable uriMapping) throws ODCSFusionToolException;
+    void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException;
 
     /**
      * Returns the next batch of quads.
@@ -33,7 +33,7 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
      * @return next batch of quads
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
-    ResourceDescription nextQuads() throws ODCSFusionToolException;
+    ResourceDescription next() throws ODCSFusionToolException;
 
     /**
      * Indicates if there are more quads available.
@@ -44,7 +44,7 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
 
     /**
      * This method can be used to update state of quad loader with result of conflict resolution
-     * on quads returned by {@link #nextQuads()}.
+     * on quads returned by {@link #next()}.
      * @param resolvedStatements resolved quads produced by conflict resolver
      */
     void updateWithResolvedStatements(Collection<ResolvedStatement> resolvedStatements);
