@@ -1,14 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import com.google.common.collect.Table;
-import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunction;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import cz.cuni.mff.odcleanstore.conflictresolution.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
@@ -28,25 +21,12 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMapp
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ClusterIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * TODO
@@ -150,17 +130,15 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             if (dependentPropertyMapping.hasAlternativeUris(property)) {
                 List<URI> dependentProperties = dependentPropertyMapping.listAlternativeUris(property);
                 resolveResourceDependentProperties(
-                        canonicalResource,
+                        conflictClustersMap.getResourceStatementsMap(canonicalResource), canonicalResource,
                         dependentProperties,
-                        conflictClustersMap.getResourceStatementsMap(canonicalResource),
                         effectiveResolutionPolicy,
                         result);
                 resolvedProperties.addAll(dependentProperties);
             } else {
                 resolveResourceProperty(
-                        canonicalResource,
+                        conflictClustersMap.getConflictClusterStatements(canonicalResource, property), canonicalResource,
                         property,
-                        conflictClustersMap.getConflictClusterStatements(canonicalResource, property),
                         effectiveResolutionPolicy,
                         result);
                 resolvedProperties.add(property);
@@ -168,20 +146,32 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         }
     }
 
-    // TODO: refactor - move ?
+    // TODO: refactor + move ?
     // FIXME: !!!! DO NOT SELECT BEST SUBJECT, BUT COMBINATION OF SUBJECT AND GRAPH
     //   (triples from the same graph should go together even if the same resource URI is used in multiple graphs)
+
+    /**
+     * Resolves conflicts in {@code statementsToResolveByProperty} for a set of mutually dependent properties.
+     * This method <b>doesn't expect statements to be resolved to share the same subject</b> but it assumes that
+     * all the subjects map to the same canonical resource and therefore belong to the same conflict clusters.
+     * @param statementsToResolveByProperty statements to be resolved as a map canonical property -> (unmapped) statements with the property
+     * @param subject canonical subject for the statements to resolve
+     * @param dependentProperties list of mutually dependent properties to be resolved
+     * @param effectiveResolutionPolicy resolution policy
+     * @param result collection where resolved result is added to
+     * @throws ConflictResolutionException CR error
+     */
     private void resolveResourceDependentProperties(
+            Map<URI, List<Statement>> statementsToResolveByProperty,
             Resource subject,
             List<URI> dependentProperties,
-            Map<URI, List<Statement>> statementsByProperty,
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
         // Step 1: resolve conflicts for each (non-canonical) subject and property
         Table<Resource, URI, Collection<ResolvedStatement>> conflictClustersTable = ODCSFusionToolCRUtils.newHashTable();
         for (URI property : dependentProperties) {
-            List<Statement> conflictingStatements = statementsByProperty.get(property);
+            List<Statement> conflictingStatements = statementsToResolveByProperty.get(property);
             if (conflictingStatements == null) {
                 continue;
             }
@@ -192,7 +182,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
                 StatementMappingIterator mappingIterator = new StatementMappingIterator(statements.iterator(), uriMapping, VF);
                 Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
                 Collection<ResolvedStatement> resolvedConflictCluster = resolveConflictCluster(
-                        notMappedSubject, property, conflictClusterModel, effectiveResolutionPolicy, conflictingStatements);
+                        conflictClusterModel, notMappedSubject, property, effectiveResolutionPolicy, conflictingStatements);
                 conflictClustersTable.put(notMappedSubject, property, resolvedConflictCluster);
             }
         }
@@ -221,39 +211,55 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         }
     }
 
-    private double aggregateConflictClusterQuality(Collection<ResolvedStatement> resolvedStatements) {
-        if (resolvedStatements == null || resolvedStatements.isEmpty()) {
-            return 0d;
-        }
-        double sum = 0d;
-        for (ResolvedStatement resolvedStatement : resolvedStatements) {
-            sum += resolvedStatement.getQuality();
-        }
-        return sum / resolvedStatements.size();
-    }
-
+    /**
+     * Resolves conflicts in {@code conflictClusterToResolve} for a single given property.
+     * This method doesn't expect statements to be resolved to share the same subject but it <b>assumes that
+     * all the subjects and properties map to the same canonical resource and property</b> and therefore
+     * belong to the same conflict clusters.
+     * @param conflictClusterToResolve conflicting statements to be resolved;
+     *      subjects and predicates of these statements should map to the given canonical subject and property
+     * @param subject canonical subject for the conflict cluster
+     * @param property canonical property for the conflict cluster
+     * @param effectiveResolutionPolicy resolution policy
+     * @param result collection where resolved result is added to
+     * @throws ConflictResolutionException
+     */
     private void resolveResourceProperty(
+            List<Statement> conflictClusterToResolve,
             Resource subject,
             URI property,
-            List<Statement> conflictClusterStatements,
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
-        StatementMappingIterator mappingIterator = new StatementMappingIterator(conflictClusterStatements.iterator(), uriMapping, VF);
+        StatementMappingIterator mappingIterator = new StatementMappingIterator(conflictClusterToResolve.iterator(), uriMapping, VF);
         Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
-        Collection<ResolvedStatement> resolvedStatements = resolveConflictCluster(subject, property, conflictClusterModel, effectiveResolutionPolicy, conflictClusterModel);
+        Collection<ResolvedStatement> resolvedStatements = resolveConflictCluster(conflictClusterModel, subject, property, effectiveResolutionPolicy, conflictClusterModel);
         result.addAll(resolvedStatements);
     }
 
     // this method assumes that all statements in conflictClusterModel share the same subject and property
+
+    /**
+     * Resolve conflicts in {@code conflictClusterToResolve}. This methods expects that <b>all statements in
+     * {@code conflictClusterToResolve} share the same subject and property</b> (no further mapping is performed).
+     * @param conflictClusterToResolve statements to be resolved;
+     *      subjects and predicate in these triples must be the same for all triples
+     * @param subject canonical subject for the conflict cluster
+     * @param property canonical property for the conflict cluster
+     * @param effectiveResolutionPolicy resolution policy
+     * @param conflictingStatements conflicting statements to be considered during quality calculation.
+     * @return resolved statements produced by conflict resolution function
+     * @throws ConflictResolutionException CR error
+     */
+    @SuppressWarnings("UnusedParameters")
     private Collection<ResolvedStatement> resolveConflictCluster(
+            Model conflictClusterToResolve,
             Resource subject,
             URI property,
-            Model conflictClusterModel,
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<Statement> conflictingStatements) throws ConflictResolutionException {
 
-        if (conflictClusterModel.isEmpty()) {
+        if (conflictClusterToResolve.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -268,7 +274,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         CRContext context = new CRContextImpl(conflictingStatements, metadataModel, resolutionStrategy, resolvedStatementFactory);
 
         // Resolve conflicts & append to result
-        return resolutionFunction.resolve(conflictClusterModel, context);
+        // FIXME: resolution functions generally assume that the model is spog-sorted; while this works now, it can be easily broken in future
+        return resolutionFunction.resolve(conflictClusterToResolve, context);
     }
 
     private ConflictResolutionPolicy getEffectiveResolutionPolicy() {
@@ -314,6 +321,17 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
     protected Collection<ResolvedStatement> createResultCollection(int inputSize) {
         return new ArrayList<>(inputSize / 2);
+    }
+
+    private double aggregateConflictClusterQuality(Collection<ResolvedStatement> resolvedStatements) {
+        if (resolvedStatements == null || resolvedStatements.isEmpty()) {
+            return 0d;
+        }
+        double sum = 0d;
+        for (ResolvedStatement resolvedStatement : resolvedStatements) {
+            sum += resolvedStatement.getQuality();
+        }
+        return sum / resolvedStatements.size();
     }
 
     private long logStarted(int inputStatementCount) {
