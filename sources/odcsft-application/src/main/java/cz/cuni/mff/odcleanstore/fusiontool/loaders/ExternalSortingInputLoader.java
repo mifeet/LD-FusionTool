@@ -127,9 +127,10 @@ public class ExternalSortingInputLoader implements InputLoader {
         }
 
         try {
-            // Will contain S P O G for input quads (S,P,O,G)
+            // Will contain c(S) S P O G for input quads (S,P,O,G)
+            // c(x) means canonical version of x
             File dataFile = createTempFile();
-            // Will contain O S for input quads (S,P,O,G) such that P is a resource description URI
+            // Will contain c(O) c(S) for input quads (S,P,O,G) such that P is a resource description URI and O is a {@link org.openrdf.model.Resource}
             File attributeIndexFile = createTempFile();
 
             copyInputsToTempFiles(dataSources, uriMapping, dataFile, attributeIndexFile);
@@ -137,7 +138,7 @@ public class ExternalSortingInputLoader implements InputLoader {
             File sortedDataFile = sortAndDeleteFile(dataFile);
             File sortedAttributeIndexFile = sortAndDeleteFile(attributeIndexFile);
 
-            // Will contain E S P O G for input quads (E,P',S,G') (S,P,O,G) such that P' is a resource description URI
+            // Will contain c(E) S P O G for input quads (E,P',S,G') (S,P,O,G) such that P' is a resource description URI
             File mergedAttributeFile = createTempFile();
             NTuplesFileMerger fileMerger = new NTuplesFileMerger(new DataFileAndAttributeIndexFileMerger(), parserConfig);
             fileMerger.merge(
@@ -145,6 +146,7 @@ public class ExternalSortingInputLoader implements InputLoader {
                     createTempFileReader(sortedAttributeIndexFile),
                     createTempFileWriter(mergedAttributeFile));
             sortedAttributeIndexFile.delete();
+            //File sortedMergedAttributeFile = sortAndDeleteFile(mergedAttributeFile);
 
             dataFileIterator = createParserIteratorFromSortedFile(sortedDataFile);
             mergedAttributeFileIterator = createParserIteratorFromSortedFile(mergedAttributeFile);
@@ -189,29 +191,30 @@ public class ExternalSortingInputLoader implements InputLoader {
 
             // Read next record from dataFileIterator which represents the primary file
             // - the subject will determine the next cluster
-            Statement firstStatement = createStatement(dataFileIterator.next());
-            Resource firstSubject = firstStatement.getSubject();
+            List<Value> nextTuple = dataFileIterator.next();
+            Statement firstStatement = createStatement(nextTuple);
+            Resource firstCanonicalSubject = (Resource) nextTuple.get(0);
 
             // Add quads for the cluster from primary data file
             describingStatements.add(firstStatement);
-            while (NTuplesParserUtils.hasMatchingRecord(dataFileIterator, firstSubject)) {
+            while (NTuplesParserUtils.hasMatchingRecord(dataFileIterator, firstCanonicalSubject)) {
                 describingStatements.add(createStatement(dataFileIterator.next()));
             }
 
             // Add additional quads from other files
             int extendedDescriptionCount = 0;
-            boolean foundMatch = NTuplesParserUtils.skipLessThan(mergedAttributeFileIterator, firstSubject, VALUE_COMPARATOR);
+            boolean foundMatch = NTuplesParserUtils.skipLessThan(mergedAttributeFileIterator, firstCanonicalSubject, VALUE_COMPARATOR);
             if (foundMatch) {
-                while (NTuplesParserUtils.hasMatchingRecord(mergedAttributeFileIterator, firstSubject)) {
+                while (NTuplesParserUtils.hasMatchingRecord(mergedAttributeFileIterator, firstCanonicalSubject)) {
                     describingStatements.add(createStatement(mergedAttributeFileIterator.next()));
                     extendedDescriptionCount++;
                 }
             }
 
             LOG.debug("Loaded {} quads for resource <{}> (including {} triples in extended description)",
-                    new Object[]{describingStatements.size(), firstSubject, extendedDescriptionCount});
+                    new Object[]{describingStatements.size(), firstCanonicalSubject, extendedDescriptionCount});
 
-            return new ResourceDescriptionImpl(firstSubject, describingStatements);
+            return new ResourceDescriptionImpl(firstCanonicalSubject, describingStatements);
         } catch (Exception e) {
             closeOnException();
             throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_HAS_NEXT,
@@ -262,9 +265,10 @@ public class ExternalSortingInputLoader implements InputLoader {
      * Reads all input quads and outputs them to temporary files.
      * Data are written to temporary files in the following format:
      * <ul>
-     * <li> S P O G for input quads (S,P,O,G) to {@code dataFile}</li>
-     * <li> O S for input quads (S,P,O,G) such that P is a resource description URI to {@code attributeIndexFile}</li>
+     * <li> c(S) S P O G for input quads (S,P,O,G) to {@code dataFile}</li>
+     * <li> c(O) c(S) for input quads (S,P,O,G) such that P is a resource description URI to {@code attributeIndexFile} and O is a {@link org.openrdf.model.Resource}</li>
      * </ul>
+     * where c(x) is the canonical version of x.
      */
     private void copyInputsToTempFiles(Collection<AllTriplesLoader> dataSources, UriMappingIterable uriMapping, File dataFile, File attributeIndexFile)
             throws ODCSFusionToolException {
@@ -274,8 +278,8 @@ public class ExternalSortingInputLoader implements InputLoader {
             dataFileWriter = new NTuplesWriter(createTempFileWriter(dataFile));
             attributeIndexFileWriter = new NTuplesWriter(createTempFileWriter(attributeIndexFile));
             RDFHandler tempFilesWriteHandler = new FederatedRDFHandler(
-                    new DataFileNTuplesWriter(dataFileWriter),
-                    new AtributeIndexFileNTuplesWriter(attributeIndexFileWriter, ConfigConstants.RESOURCE_DESCRIPTION_URIS));
+                    new DataFileNTuplesWriter(dataFileWriter, uriMapping),
+                    new AtributeIndexFileNTuplesWriter(attributeIndexFileWriter, ConfigConstants.RESOURCE_DESCRIPTION_URIS, uriMapping));
 
             ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor(
                     tempFilesWriteHandler, uriMapping, VF, outputMappedSubjectsOnly);

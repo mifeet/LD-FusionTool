@@ -25,38 +25,6 @@ public class ExternalSortingInputLoaderPreprocessorTest {
     public static final ValueFactoryImpl VF = ValueFactoryImpl.getInstance();
 
     @Test
-    public void producesQuadsWithAppliedUriMapping() throws Exception {
-        // Arrange
-        ArrayList<Statement> statements = new ArrayList<Statement>();
-        statements.add(createHttpStatement("s3", "p1", "o3", "g3"));
-        statements.add(createHttpStatement("s1", "p1", "o1", "g1"));
-        statements.add(createHttpStatement("s2", "p2", "o2", "g2"));
-
-        UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(ImmutableSet.of(
-                createHttpUri("sx").toString(),
-                createHttpUri("px").toString(),
-                createHttpUri("ox").toString(),
-                createHttpUri("gx").toString()));
-        uriMapping.addLink(createHttpUri("s1").toString(), createHttpUri("sx").toString());
-        uriMapping.addLink(createHttpUri("s2").toString(), createHttpUri("sx").toString());
-        uriMapping.addLink(createHttpUri("p1").toString(), createHttpUri("px").toString());
-        uriMapping.addLink(createHttpUri("p2").toString(), createHttpUri("px").toString());
-        uriMapping.addLink(createHttpUri("o1").toString(), createHttpUri("ox").toString());
-        uriMapping.addLink(createHttpUri("o2").toString(), createHttpUri("ox").toString());
-        uriMapping.addLink(createHttpUri("g1").toString(), createHttpUri("gx").toString());
-        uriMapping.addLink(createHttpUri("g2").toString(), createHttpUri("gx").toString());
-
-        // Act
-        ArrayList<Statement> result = collectResultsFromPreprocessor(statements, uriMapping, false);
-
-        // Assert
-        assertThat(result.size(), equalTo(3));
-        assertThat(result.get(0), contextAwareStatementIsEqual(createHttpStatement("s3", "px", "o3", "g3")));
-        assertThat(result.get(1), contextAwareStatementIsEqual(createHttpStatement("sx", "px", "ox", "g1")));
-        assertThat(result.get(2), contextAwareStatementIsEqual(createHttpStatement("sx", "px", "ox", "g2")));
-    }
-
-    @Test
     public void respectsSetContext() throws Exception {
         // Arrange
         UriMappingIterable uriMapping = new EmptyUriMappingIterable();
