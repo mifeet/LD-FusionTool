@@ -100,7 +100,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     }
 
     /**
-     * Apply conflict resolution process to the given resource description and return result
+     * Apply conflict resolution process to the given resource description and return result.
      * @param resourceDescription container of quads that make up the description of the respective statement
      * (i.e. quads that are relevant for the conflict resolution process)
      * @return collection of quads derived from the input with resolved
@@ -271,7 +271,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
     private ConflictResolutionPolicy getEffectiveResolutionPolicy() {
         ResolutionStrategy effectiveDefaultStrategy = DEFAULT_RESOLUTION_STRATEGY;
-        Map<URI, ResolutionStrategy> effectivePropertyStrategies = new HashMap<URI, ResolutionStrategy>();
+        Map<URI, ResolutionStrategy> effectivePropertyStrategies = new HashMap<>();
 
         if (conflictResolutionPolicy != null && conflictResolutionPolicy.getDefaultResolutionStrategy() != null) {
             effectiveDefaultStrategy = CRUtils.fillResolutionStrategyDefaults(

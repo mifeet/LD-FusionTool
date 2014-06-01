@@ -35,7 +35,7 @@ public class ConfigImpl implements Config {
     private boolean enableFileCache = false;
     private Long maxOutputTriples = null;
     private boolean isProfilingOn = false;
-    private boolean outputConflictsOnly = false;
+    //private boolean outputConflictsOnly = false;
     private boolean outputMappedSubjectsOnly = false;
     private boolean isLocalCopyProcessing = false;
     private Long memoryLimit = null;
@@ -238,19 +238,19 @@ public class ConfigImpl implements Config {
         this.isProfilingOn = isProfilingOn;
     }
 
-    @Override
-    public boolean getOutputConflictsOnly() {
-        return outputConflictsOnly;
-    }
-
-    /**
-     * Sets value for {@link #getOutputConflictsOnly()}.
-     *
-     * @param outputConflictsOnly see {@link #getOutputConflictsOnly()}
-     */
-    public void setOutputConflictsOnly(boolean outputConflictsOnly) {
-        this.outputConflictsOnly = outputConflictsOnly;
-    }
+    //@Override
+    //public boolean getOutputConflictsOnly() {
+    //    return outputConflictsOnly;
+    //}
+    //
+    ///**
+    // * Sets value for {@link #getOutputConflictsOnly()}.
+    // *
+    // * @param outputConflictsOnly see {@link #getOutputConflictsOnly()}
+    // */
+    //public void setOutputConflictsOnly(boolean outputConflictsOnly) {
+    //    this.outputConflictsOnly = outputConflictsOnly;
+    //}
 
     @Override
     public boolean getOutputMappedSubjectsOnly() {

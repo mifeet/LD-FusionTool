@@ -33,7 +33,7 @@ public final class ODCSFusionToolApplication {
     /** Parsed command line arguments representation. */
     private static class ApplicationArgs {
         private final boolean isVerbose;
-        private final boolean outputConflictsOnly;
+        //private final boolean outputConflictsOnly;
         private final boolean outputMappedSubjectsOnly;
         private final boolean isProfilingOn;
         private final String configFilePath;
@@ -44,7 +44,7 @@ public final class ODCSFusionToolApplication {
             this.isVerbose = isVerbose;
             this.isProfilingOn = isProfilingOn;
             this.configFilePath = configFilePath;
-            this.outputConflictsOnly = outputConflictsOnly;
+            //this.outputConflictsOnly = outputConflictsOnly;
             this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         }
         
@@ -60,9 +60,9 @@ public final class ODCSFusionToolApplication {
             return configFilePath;
         }
         
-        public boolean getOutputConflictsOnly() {
-            return outputConflictsOnly;
-        }
+        //public boolean getOutputConflictsOnly() {
+        //    return outputConflictsOnly;
+        //}
         
         public boolean getOutputMappedSubjectsOnly() {
             return outputMappedSubjectsOnly;
@@ -70,7 +70,9 @@ public final class ODCSFusionToolApplication {
     }
     
     private static String getUsage() {
-        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--profile] [--only-conflicts] [--only-mapped] <xml config file>"
+        //return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--profile] [--only-conflicts] [--only-mapped] <xml config file>"
+        //        + "\n\n  It is recommended to run java with both -Xmx and -Xms options to allocate\n  enough memory if processing large input.";
+        return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--profile] [--only-mapped] <xml config file>"
                 + "\n\n  It is recommended to run java with both -Xmx and -Xms options to allocate\n  enough memory if processing large input.";
     }
 
@@ -102,7 +104,7 @@ public final class ODCSFusionToolApplication {
         try {
             config = ConfigReader.parseConfigXml(configFile);
             ((ConfigImpl) config).setProfilingOn(parsedArgs.isProfilingOn());
-            ((ConfigImpl) config).setOutputConflictsOnly(parsedArgs.getOutputConflictsOnly());
+            //((ConfigImpl) config).setOutputConflictsOnly(parsedArgs.getOutputConflictsOnly());
             ((ConfigImpl) config).setOutputMappedSubjectsOnly(parsedArgs.getOutputMappedSubjectsOnly());
             checkValidInput(config);
         } catch (InvalidInputException e) {

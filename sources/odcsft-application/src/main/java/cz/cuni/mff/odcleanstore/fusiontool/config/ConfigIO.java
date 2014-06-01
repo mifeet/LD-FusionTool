@@ -70,11 +70,11 @@ public interface ConfigIO {
      */
     SeedResourceRestriction getSeedResourceRestriction();
 
-    /**
-     * Indicates whether only conflict clusters with an actual conflict should be included in the output.
-     * @return true iff only conflict clusters with an actual conflict should be included in the output
-     */
-    boolean getOutputConflictsOnly();
+    ///**
+    // * Indicates whether only conflict clusters with an actual conflict should be included in the output.
+    // * @return true iff only conflict clusters with an actual conflict should be included in the output
+    // */
+    //boolean getOutputConflictsOnly();
 
     /**
      * Indicates whether only subjects for which an URI mapping exists should be included in the output.

@@ -1,9 +1,9 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
@@ -57,7 +57,7 @@ public class ODCSFusionToolExecutor {
         return memoryProfiler;
     }
 
-    public void execute(InputLoader inputLoader, CloseableRDFWriter rdfWriter, ConflictResolver conflictResolver)
+    public void execute(InputLoader inputLoader, CloseableRDFWriter rdfWriter, ResourceDescriptionConflictResolver conflictResolver)
             throws ODCSFusionToolException, ConflictResolutionException, IOException {
 
         // Initialize triple counters
@@ -78,7 +78,7 @@ public class ODCSFusionToolExecutor {
 
             // Resolve conflicts
             timeProfiler.startCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
-            Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(resourceDescription.getDescribingStatements());
+            Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(resourceDescription);
             timeProfiler.stopAddCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
             LOG.info("Resolved {} quads resulting in {} quads (processed totally {} quads)",
                     new Object[] {resourceDescription.getDescribingStatements().size(), resolvedQuads.size(), inputTriples});

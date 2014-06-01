@@ -14,7 +14,9 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class ConfigReaderTest {
@@ -65,7 +67,7 @@ public class ConfigReaderTest {
         assertThat(output.getParams().get(ConfigParameters.DATA_SOURCE_FILE_FORMAT), equalTo("ntriples"));
 
         assertThat(config.getMaxDateDifference(), equalTo(ConfigConstants.MAX_DATE_DIFFERENCE));
-        assertThat(config.getOutputConflictsOnly(), equalTo(false));
+        //assertThat(config.getOutputConflictsOnly(), equalTo(false));
         assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
         assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
         assertThat(config.getTempDirectory(), equalTo(ConfigConstants.DEFAULT_TEMP_DIRECTORY));
@@ -182,7 +184,7 @@ public class ConfigReaderTest {
         assertThat(config.getOutputs().get(2).getParams().size(), equalTo(4));
 
         assertThat(config.getMaxDateDifference(), equalTo(ConfigConstants.MAX_DATE_DIFFERENCE));
-        assertThat(config.getOutputConflictsOnly(), equalTo(false));
+        //assertThat(config.getOutputConflictsOnly(), equalTo(false));
         assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
         assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
         assertThat(config.getTempDirectory(), equalTo(ConfigConstants.DEFAULT_TEMP_DIRECTORY));

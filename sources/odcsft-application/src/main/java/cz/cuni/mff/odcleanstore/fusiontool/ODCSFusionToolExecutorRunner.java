@@ -1,11 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
 import com.google.code.externalsorting.ExternalSort;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolver;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory.ConflictResolverBuilder;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
@@ -18,6 +17,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionConflictResolverImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
@@ -42,7 +43,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ConflictingClusterConflictClusterFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
@@ -142,7 +142,7 @@ public class ODCSFusionToolExecutorRunner {
 
             // Initialize executor
             timeProfiler.startCounter(EnumFusionCounters.INITIALIZATION);
-            ConflictResolver conflictResolver = createConflictResolver(metadata, uriMapping);
+            ResourceDescriptionConflictResolver conflictResolver = createConflictResolver(metadata, uriMapping);
             rdfWriter = createRDFWriter();
             ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor(
                     hasVirtuosoSource(config.getDataSources()),
@@ -375,7 +375,7 @@ public class ODCSFusionToolExecutorRunner {
      * @param uriMapping mapping of URIs to their canonical URI
      * @return initialized conflict resolver
      */
-    protected ConflictResolver createConflictResolver(Model metadata, UriMappingIterable uriMapping) {
+    protected ResourceDescriptionConflictResolver createConflictResolver(Model metadata, UriMappingIterable uriMapping) {
         SourceQualityCalculator sourceConfidence = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(),
                 config.getPublisherScoreWeight());
@@ -384,18 +384,16 @@ public class ODCSFusionToolExecutorRunner {
                 config.getAgreeCoefficient(),
                 new DistanceMeasureImpl());
 
-        ConflictResolverBuilder builder = ConflictResolverFactory.configureResolver()
-                .setResolutionFunctionRegistry(registry)
-                .setResolvedGraphsURIPrefix(config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX)
-                .setMetadata(metadata)
-                .setURIMapping(uriMapping)
-                .setDefaultResolutionStrategy(config.getDefaultResolutionStrategy())
-                .setPropertyResolutionStrategies(config.getPropertyResolutionStrategies());
-        if (config.getOutputConflictsOnly()) {
-            builder.setConflictClusterFilter(new ConflictingClusterConflictClusterFilter());
-        }
-
-        return builder.create();
+        // TODO
+        //if (config.getOutputConflictsOnly()) {
+        //    builder.setConflictClusterFilter(new ConflictingClusterConflictClusterFilter());
+        //}
+        return new ResourceDescriptionConflictResolverImpl(
+                registry,
+                new ConflictResolutionPolicyImpl(config.getDefaultResolutionStrategy(), config.getPropertyResolutionStrategies()),
+                uriMapping,
+                metadata,
+                config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX);
     }
 
     /**
