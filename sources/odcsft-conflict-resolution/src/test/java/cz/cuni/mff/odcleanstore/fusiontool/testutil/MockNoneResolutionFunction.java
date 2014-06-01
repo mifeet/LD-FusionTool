@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
+package cz.cuni.mff.odcleanstore.fusiontool.testutil;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunction;
@@ -13,17 +13,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MockResolutionFunction implements ResolutionFunction {
-    private CRContext lastContext = null;
+public class MockNoneResolutionFunction implements ResolutionFunction {
     private AtomicInteger conflictClusterCounter = new AtomicInteger();
-
-    public CRContext getLastContext() {
-        return lastContext;
-    }
 
     @Override
     public Collection<ResolvedStatement> resolve(Model statements, CRContext crContext) throws ConflictResolutionException {
-        this.lastContext = crContext;
         int conflictClusterNumber = conflictClusterCounter.getAndIncrement();
 
         Collection<ResolvedStatement> result = new ArrayList<>();
@@ -35,7 +29,8 @@ public class MockResolutionFunction implements ResolutionFunction {
                     fQuality,
                     source,
                     conflictClusterNumber,
-                    crContext.getResolutionStrategy());
+                    crContext.getResolutionStrategy(),
+                    crContext.getConflictingStatements());
             result.add(resolvedStatement);
         }
         return result;

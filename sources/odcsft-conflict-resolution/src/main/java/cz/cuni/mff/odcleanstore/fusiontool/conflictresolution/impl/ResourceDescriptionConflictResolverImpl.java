@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
+import com.google.common.collect.Table;
 import cz.cuni.mff.odcleanstore.conflictresolution.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
@@ -13,12 +14,14 @@ import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.util.iterators.Iterators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +106,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     /**
      * Resolve conflicts in statements contained in {@code conflictClustersMap} for the given {@code canonicalResource}.
      * @param canonicalResource canonical version of resource to be resolved
-     * @param conflictClustersMap conflictClustersMap statements grouped by canonical subject and predicate
+     * @param conflictClustersMap conflictClustersMap statements grouped by canonical subject and property
      * @param dependentPropertyMapping property dependencies
      * @param effectiveResolutionPolicy conflict resolution policy to be used
      * @param result collection where the resolved result is added to
@@ -115,60 +118,115 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
-        Iterator<URI> predicateIt = conflictClustersMap.listPredicates(canonicalResource);
-        Set<URI> resolvedPredicates = new HashSet<>();
-        while (predicateIt.hasNext()) {
-            URI predicate = predicateIt.next();
-            if (resolvedPredicates.contains(predicate)) {
+        Iterator<URI> propertyIt = conflictClustersMap.listProperties(canonicalResource);
+        Set<URI> resolvedProperties = new HashSet<>();
+        while (propertyIt.hasNext()) {
+            URI property = propertyIt.next();
+            if (resolvedProperties.contains(property)) {
                 continue;
             }
 
-            if (dependentPropertyMapping.hasAlternativeUris(predicate)) {
-                List<URI> dependentProperties = dependentPropertyMapping.listAlternativeUris(predicate);
+            if (dependentPropertyMapping.hasAlternativeUris(property)) {
+                List<URI> dependentProperties = dependentPropertyMapping.listAlternativeUris(property);
                 resolveResourceDependentProperties(
                         canonicalResource,
                         dependentProperties,
                         conflictClustersMap.getResourceStatementsMap(canonicalResource),
                         effectiveResolutionPolicy,
                         result);
-                resolvedPredicates.addAll(dependentProperties);
+                resolvedProperties.addAll(dependentProperties);
             } else {
                 resolveResourceProperty(
                         canonicalResource,
-                        predicate,
-                        conflictClustersMap.getConflictClusterStatements(canonicalResource, predicate),
+                        property,
+                        conflictClustersMap.getConflictClusterStatements(canonicalResource, property),
                         effectiveResolutionPolicy,
                         result);
-                resolvedPredicates.add(predicate);
+                resolvedProperties.add(property);
             }
         }
     }
 
+    // TODO: refactor - move ?
     private void resolveResourceDependentProperties(
             Resource subject,
             List<URI> dependentProperties,
-            Map<URI, List<Statement>> statementsByPredicate,
+            Map<URI, List<Statement>> statementsByProperty,
             ConflictResolutionPolicy effectiveResolutionPolicy,
-            Collection<ResolvedStatement> result) {
-        throw new UnsupportedOperationException();
+            Collection<ResolvedStatement> result) throws ConflictResolutionException {
+
+        // Step 1: resolve conflicts for each (non-canonical) subject and property
+        Table<Resource, URI, Collection<ResolvedStatement>> conflictClustersTable = ODCSFusionToolCRUtils.newHashTable();
+        for (URI property : dependentProperties) {
+            List<Statement> conflictingStatements = statementsByProperty.get(property);
+            Iterator<Statement> conflictingStatementsIterator = conflictingStatements != null
+                    ? conflictingStatements.iterator()
+                    : Collections.<Statement>emptyIterator();
+            StatementMappingIterator mappingIterator = new StatementMappingIterator(conflictingStatementsIterator, uriMapping, VF, false, true, true);
+            Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
+            for (Resource notMappedSubject : conflictClusterModel.subjects()) {
+                Collection<ResolvedStatement> resolvedConflictCluster = resolveConflictCluster(
+                        notMappedSubject,
+                        property,
+                        conflictClusterModel.filter(notMappedSubject, null, null),
+                        effectiveResolutionPolicy,
+                        conflictingStatements);
+                conflictClustersTable.put(notMappedSubject, property, resolvedConflictCluster);
+            }
+        }
+
+        // Step 2: Choose the best subject by aggregate quality
+        Resource bestSubject = null;
+        double bestSubjectQuality = -1;
+        for (Resource notMappedSubject : conflictClustersTable.rowKeySet()) {
+            double aggregateQualitySum = 0;
+            for (URI property : dependentProperties) {
+                aggregateQualitySum += aggregateConflictClusterQuality(conflictClustersTable.get(notMappedSubject, property));
+            }
+            double notMappedSubjectQuality = aggregateQualitySum / dependentProperties.size();
+            if (notMappedSubjectQuality > bestSubjectQuality) {
+                bestSubject = notMappedSubject;
+                bestSubjectQuality = notMappedSubjectQuality;
+            }
+        }
+
+        // Step 3: Add statements for the best subject to the result, but first also map subjects
+        if (bestSubject != null) {
+            Map<URI, Collection<ResolvedStatement>> selectedStatements = conflictClustersTable.row(bestSubject);
+            for (Collection<ResolvedStatement> resolvedStatements : selectedStatements.values()) {
+                Iterators.addAll(new ResolvedStatementMappingIterator(resolvedStatements.iterator(), uriMapping, VF, true, false, false), result);
+            }
+        }
+    }
+
+    private double aggregateConflictClusterQuality(Collection<ResolvedStatement> resolvedStatements) {
+        if (resolvedStatements == null || resolvedStatements.isEmpty()) {
+            return 0d;
+        }
+        double sum = 0d;
+        for (ResolvedStatement resolvedStatement : resolvedStatements) {
+            sum += resolvedStatement.getQuality();
+        }
+        return sum / resolvedStatements.size();
     }
 
     private void resolveResourceProperty(
             Resource subject,
-            URI predicate,
+            URI property,
             List<Statement> conflictClusterStatements,
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
-        StatementMappingIterator mappedStatementIterator = new StatementMappingIterator(
+        StatementMappingIterator mappingIterator = new StatementMappingIterator(
                 conflictClusterStatements.iterator(), uriMapping, VF, true, true, true);
-        Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappedStatementIterator);
-        result.addAll(resolveConflictCluster(subject, predicate, conflictClusterModel, effectiveResolutionPolicy, conflictClusterModel));
+        Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
+        result.addAll(resolveConflictCluster(subject, property, conflictClusterModel, effectiveResolutionPolicy, conflictClusterModel));
     }
 
+    // this method assumes that all statements in conflictClusterModel share the same subject and property
     private Collection<ResolvedStatement> resolveConflictCluster(
             Resource subject,
-            URI predicate,
+            URI property,
             Model conflictClusterModel,
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<Statement> conflictingStatements) throws ConflictResolutionException {
@@ -178,7 +236,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         }
 
         // Get resolution strategy
-        ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(predicate);
+        ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(property);
         if (resolutionStrategy == null) {
             resolutionStrategy = effectiveResolutionPolicy.getDefaultResolutionStrategy();
         }

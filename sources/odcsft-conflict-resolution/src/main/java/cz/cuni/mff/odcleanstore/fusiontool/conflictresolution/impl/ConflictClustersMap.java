@@ -15,15 +15,15 @@ import java.util.*;
 public class ConflictClustersMap {
     private static final Supplier<List<Statement>> LIST_SUPPLIER = new ListSupplier();
 
-    private final Map<Resource, ListMultimap<URI, Statement>> canonicalSubjectPredicateMap;
+    private final Map<Resource, ListMultimap<URI, Statement>> canonicalSubjectPropertyMap;
 
     public static ConflictClustersMap fromCollection(Collection<Statement> statements, UriMapping uriMapping) {
         Map<Resource, ListMultimap<URI, Statement>> map = new HashMap<Resource, ListMultimap<URI, Statement>>();
         for (Statement statement : statements) {
             Resource canonicalSubject = uriMapping.mapResource(statement.getSubject());
-            URI canonicalPredicate = (URI) uriMapping.mapResource(statement.getPredicate());
+            URI canonicalProperty = (URI) uriMapping.mapResource(statement.getPredicate());
             ListMultimap<URI, Statement> subjectMap = getOrCreateSubjectMultimap(canonicalSubject, map);
-            subjectMap.put(canonicalPredicate, statement);
+            subjectMap.put(canonicalProperty, statement);
         }
         return new ConflictClustersMap(map);
     }
@@ -37,28 +37,28 @@ public class ConflictClustersMap {
         return subjectMultimap;
     }
 
-    private ConflictClustersMap(Map<Resource, ListMultimap<URI, Statement>> canonicalSubjectPredicateMap) {
-        this.canonicalSubjectPredicateMap = canonicalSubjectPredicateMap;
+    private ConflictClustersMap(Map<Resource, ListMultimap<URI, Statement>> canonicalSubjectPropertyMap) {
+        this.canonicalSubjectPropertyMap = canonicalSubjectPropertyMap;
     }
 
-    public Iterator<URI> listPredicates(Resource canonicalSubject) {
-        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPredicateMap.get(canonicalSubject);
+    public Iterator<URI> listProperties(Resource canonicalSubject) {
+        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPropertyMap.get(canonicalSubject);
         if (subjectSubMap == null) {
             return Collections.emptyIterator();
         }
         return Iterators.unmodifiableIterator(subjectSubMap.keySet().iterator());
     }
 
-    public List<Statement> getConflictClusterStatements(Resource canonicalSubject, URI canonicalPredicate) {
-        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPredicateMap.get(canonicalSubject);
+    public List<Statement> getConflictClusterStatements(Resource canonicalSubject, URI canonicalProperty) {
+        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPropertyMap.get(canonicalSubject);
         if (subjectSubMap == null) {
             return Collections.emptyList();
         }
-        return Collections.unmodifiableList(subjectSubMap.get(canonicalPredicate));
+        return Collections.unmodifiableList(subjectSubMap.get(canonicalProperty));
     }
 
     public Map<URI, List<Statement>> getResourceStatementsMap(Resource canonicalSubject) {
-        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPredicateMap.get(canonicalSubject);
+        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPropertyMap.get(canonicalSubject);
         if (subjectSubMap == null) {
             return Collections.emptyMap();
         }

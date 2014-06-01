@@ -9,6 +9,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.*;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Pair;
 import org.junit.Before;
 import org.junit.Test;
@@ -251,7 +252,7 @@ public class ResourceDescriptionConflictResolverImplTest {
         conflictResolutionPolicy.setPropertyResolutionStrategy(ImmutableMap.of(
                 createHttpUri("pb"), pbResolutionStrategy,
                 createHttpUri("p1"), p1ResolutionStrategy));
-        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy);
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, new MockNoneResolutionFunction());
         Collection<Statement> testInput = ImmutableList.of(
                 createHttpStatement("s1", "pa", "o1", "g1"),
                 createHttpStatement("s1", "p1", "o1", "g2"),
@@ -326,14 +327,251 @@ public class ResourceDescriptionConflictResolverImplTest {
         assertThat(resultStatement, resolvedStatementMatchesStatement(inputStatement));
     }
 
-    private ResourceDescriptionConflictResolver createResolver() throws ResolutionFunctionNotRegisteredException {
-        return createResolver(new ConflictResolutionPolicyImpl());
+    @Test
+    public void resolvesDependentPropertiesTogether() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa1", "good"),
+                createHttpStatement("sa", "d2", "oa2", "bad"),
+                createHttpStatement("sa", "d3", "oa3", "good"),
+                createHttpStatement("sb", "d1", "ob1", "bad"),
+                createHttpStatement("sb", "d2", "ob2", "good"),
+                createHttpStatement("sb", "d3", "ob3", "bad"),
+                createHttpStatement("sa", "d4", "oa4", "bad"),
+                createHttpStatement("sb", "d4", "ob4", "good")
+        );
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d3")))
+                .with(createHttpUri("d2"), resolutionStrategyWithDependsOn(createHttpUri("d3")))
+                .build();
+        ResolutionFunction resolutionFunction = MockBestResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Collection<Statement> expectedStatements = ImmutableList.of(
+                createHttpStatement("sx", "d1", "oa1"),
+                createHttpStatement("sx", "d2", "oa2"),
+                createHttpStatement("sx", "d3", "oa3"),
+                createHttpStatement("sx", "d4", "ob4"));
+        assertThat(result, hasSize(expectedStatements.size()));
+        for (Statement expectedStatement : expectedStatements) {
+            assertThat(result, hasItem(resolvedStatementMatchesStatement(expectedStatement)));
+        }
     }
 
-    private ResourceDescriptionConflictResolver createResolver(ConflictResolutionPolicy conflictResolutionPolicy)
+    @Test
+    public void mapsStatementsWithDependentPropertiesCorrectly() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "pa", "oa", "ga"),
+                createHttpStatement("sb", "pb", "ob", "gb")
+        );
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("dpa"), resolutionStrategyWithDependsOn(createHttpUri("pb")))
+                .build();
+
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, new MockNoneResolutionFunction());
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Collection<Statement> expectedStatements = ImmutableList.of(createHttpStatement("sx", "px", "ox"));
+        assertThat(result, hasSize(expectedStatements.size()));
+        for (Statement expectedStatement : expectedStatements) {
+            assertThat(result, hasItem(resolvedStatementMatchesStatement(expectedStatement)));
+        }
+    }
+
+    @Test
+    public void resolvesDependentPropertyGroupsCorrectly() throws Exception {
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa1", "good"),
+                createHttpStatement("sa", "d2", "oa2", "good"),
+                createHttpStatement("sa", "d3", "oa3", "bad"),
+                createHttpStatement("sa", "d4", "oa4", "good"),
+
+                createHttpStatement("sa", "d5", "oa5", "bad"),
+
+                createHttpStatement("sb", "d1", "ob1", "bad"),
+                createHttpStatement("sb", "d2", "ob2", "bad"),
+                createHttpStatement("sb", "d3", "ob3", "good"),
+                createHttpStatement("sb", "d4", "ob4", "bad"),
+
+                createHttpStatement("sb", "d5", "ob5", "good")
+        );
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d2")))
+                .with(createHttpUri("d3"), resolutionStrategyWithDependsOn(createHttpUri("d4")))
+                .with(createHttpUri("d4"), resolutionStrategyWithDependsOn(createHttpUri("d2")))
+                .build();
+        ResolutionFunction resolutionFunction = MockBestResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Collection<Statement> expectedStatements = ImmutableList.of(
+                createHttpStatement("sx", "d1", "oa1"),
+                createHttpStatement("sx", "d2", "oa2"),
+                createHttpStatement("sx", "d3", "oa3"),
+                createHttpStatement("sx", "d4", "oa4"),
+                createHttpStatement("sx", "d5", "ob5"));
+        assertThat(result, hasSize(expectedStatements.size()));
+        for (Statement expectedStatement : expectedStatements) {
+            assertThat(result, hasItem(resolvedStatementMatchesStatement(expectedStatement)));
+        }
+    }
+
+    @Test
+    public void choosesBestStatementForDependentProperties() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa1", "good"),
+                createHttpStatement("sa", "d1", "oa1", "bad"),
+                createHttpStatement("sa", "d2", "oa2", "good"),
+                createHttpStatement("sb", "d1", "ob1", "good"),
+                createHttpStatement("sb", "d2", "ob2", "good"));
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d2")))
+                .build();
+        ResolutionFunction resolutionFunction = MockNoneResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Collection<Statement> expectedStatements = ImmutableList.of(
+                createHttpStatement("sx", "d1", "ob1"),
+                createHttpStatement("sx", "d2", "ob2"));
+        assertThat(result, hasSize(expectedStatements.size()));
+        for (Statement expectedStatement : expectedStatements) {
+            assertThat(result, hasItem(resolvedStatementMatchesStatement(expectedStatement)));
+        }
+    }
+
+    @Test
+    public void removesDuplicatesWithDependentProperties() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa", "ga"),
+                createHttpStatement("sa", "d1", "oa", "ga"),
+                createHttpStatement("sb", "d1", "ob", "gb"),
+                createHttpStatement("sb", "d1", "ob", "gb"));
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d2")))
+                .build();
+        ResolutionFunction resolutionFunction = new MockNoneResolutionFunction();
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Collection<Statement> expectedStatements = ImmutableList.of(createHttpStatement("sx", "d1", "ox"));
+        assertThat(result, hasSize(expectedStatements.size()));
+        for (Statement expectedStatement : expectedStatements) {
+            assertThat(result, hasItem(resolvedStatementMatchesStatement(expectedStatement)));
+        }
+    }
+
+    @Test
+    public void resolvesWithDependentPropertiesCorrectlyWhenSomePropertiesMissing() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa1", "good"),
+                createHttpStatement("sa", "d3", "oa3", "good"),
+                createHttpStatement("sb", "d1", "ob1", "good"),
+                createHttpStatement("sb", "d2", "ob2", "good"),
+                createHttpStatement("sb", "d3", "ob3", "bad"),
+
+                createHttpStatement("sa", "d4", "oa4", "good"),
+                createHttpStatement("sb", "d5", "ob5", "bad"));
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d3")))
+                .with(createHttpUri("d2"), resolutionStrategyWithDependsOn(createHttpUri("d3")))
+                .with(createHttpUri("d4"), resolutionStrategyWithDependsOn(createHttpUri("d5")))
+                .build();
+        ResolutionFunction resolutionFunction = MockBestResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Collection<Statement> expectedStatements = ImmutableList.of(
+                createHttpStatement("sx", "d1", "ob1"),
+                createHttpStatement("sx", "d2", "ob2"),
+                createHttpStatement("sx", "d3", "ob3"),
+                createHttpStatement("sx", "d4", "oa4"));
+        assertThat(result, hasSize(expectedStatements.size()));
+        for (Statement expectedStatement : expectedStatements) {
+            assertThat(result, hasItem(resolvedStatementMatchesStatement(expectedStatement)));
+        }
+    }
+
+    @Test
+    public void resolvesIntraSourceConflictsWithDependentProperties() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa1", "bad"),
+                createHttpStatement("sa", "d1", "oa1", "good"),
+                createHttpStatement("sa", "d2", "oa2", "good"),
+                createHttpStatement("sb", "d1", "ob1", "bad"),
+                createHttpStatement("sb", "d1", "ob1", "good"),
+                createHttpStatement("sb", "d2", "ob2", "bad"));
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d2")))
+                .build();
+        ResolutionFunction resolutionFunction = MockBestResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Collection<Statement> expectedStatements = ImmutableList.of(
+                createHttpStatement("sx", "d1", "oa1"),
+                createHttpStatement("sx", "d2", "oa2"));
+        assertThat(result, hasSize(expectedStatements.size()));
+        for (Statement expectedStatement : expectedStatements) {
+            assertThat(result, hasItem(resolvedStatementMatchesStatement(expectedStatement)));
+        }
+        for (ResolvedStatement resolvedStatement : result) {
+            assertThat(resolvedStatement.getSourceGraphNames(), is((Collection<Resource>) Collections.singleton((Resource) createHttpUri("good"))));
+        }
+    }
+
+    private ResourceDescriptionConflictResolver createResolver() throws ResolutionFunctionNotRegisteredException {
+        return createResolver(new ConflictResolutionPolicyImpl(), new MockNoneResolutionFunction());
+    }
+
+    private ResourceDescriptionConflictResolver createResolver(ConflictResolutionPolicy conflictResolutionPolicy, ResolutionFunction resolutionFunction)
             throws ResolutionFunctionNotRegisteredException {
         ResolutionFunctionRegistry resolutionFunctionRegistry = mock(ResolutionFunctionRegistry.class);
-        when(resolutionFunctionRegistry.get(anyString())).thenReturn(new MockResolutionFunction());
+        when(resolutionFunctionRegistry.get(anyString())).thenReturn(resolutionFunction);
         return new ResourceDescriptionConflictResolverImpl(
                 resolutionFunctionRegistry,
                 conflictResolutionPolicy,
@@ -352,6 +590,11 @@ public class ResourceDescriptionConflictResolverImplTest {
         }
 
         return result.asMap().values();
+    }
+
+    private ResolutionStrategyImpl resolutionStrategyWithDependsOn(URI dependsOn) {
+        return new ResolutionStrategyImpl("XXX", EnumCardinality.MANYVALUED, EnumAggregationErrorStrategy.IGNORE,
+                Collections.<String, String>emptyMap(), dependsOn);
     }
 
 }
