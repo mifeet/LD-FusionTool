@@ -14,52 +14,18 @@ public class StatementMapper {
     private final UriMapping uriMapping;
     private final ValueFactory valueFactory;
 
-    private boolean mapSubjects = true;
-    private boolean mapPredicates = true;
-    private boolean mapObjects = true;
-
     public StatementMapper(UriMapping uriMapping, ValueFactory valueFactory) {
         this.uriMapping = uriMapping;
         this.valueFactory = valueFactory;
     }
 
-    public boolean mapsSubjects() {
-        return mapSubjects;
-    }
-
-    public void setMapSubjects(boolean mapSubjects) {
-        this.mapSubjects = mapSubjects;
-    }
-
-    public boolean mapsPredicates() {
-        return mapPredicates;
-    }
-
-    public void setMapPredicates(boolean mapPredicates) {
-        this.mapPredicates = mapPredicates;
-    }
-
-    public boolean mapsObjects() {
-        return mapObjects;
-    }
-
-    public void setMapObjects(boolean mapObjects) {
-        this.mapObjects = mapObjects;
-    }
-
     public Statement mapStatement(Statement statement) {
         Resource subject = statement.getSubject();
-        Resource mappedSubject = mapSubjects
-                ? (Resource) mapUriNode(subject)
-                : subject;
+        Resource mappedSubject = (Resource) mapUriNode(subject);
         URI predicate = statement.getPredicate();
-        URI mappedPredicate = mapPredicates
-                ? (URI) mapUriNode(predicate)
-                : predicate;
+        URI mappedPredicate = (URI) mapUriNode(predicate);
         Value object = statement.getObject();
-        Value mappedObject = mapObjects
-                ? mapUriNode(object)
-                : object;
+        Value mappedObject = mapUriNode(object);
 
         // Intentionally !=
         if (subject != mappedSubject
@@ -81,8 +47,8 @@ public class StatementMapper {
      * @return node with applied URI mapping
      */
     protected Value mapUriNode(Value value) {
-        if (value instanceof URI) {
-            return uriMapping.mapURI((URI) value);
+        if (value instanceof Resource) {
+            return uriMapping.mapResource((Resource) value);
         }
         return value;
     }

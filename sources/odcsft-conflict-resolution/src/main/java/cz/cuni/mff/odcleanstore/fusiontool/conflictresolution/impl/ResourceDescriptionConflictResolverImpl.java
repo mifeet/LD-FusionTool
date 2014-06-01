@@ -189,7 +189,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             while (subjectClusterIterator.hasNext()) {
                 List<Statement> statements = subjectClusterIterator.next();
                 Resource notMappedSubject = statements.get(0).getSubject();
-                StatementMappingIterator mappingIterator = new StatementMappingIterator(statements.iterator(), uriMapping, VF, true, true, true);
+                StatementMappingIterator mappingIterator = new StatementMappingIterator(statements.iterator(), uriMapping, VF);
                 Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
                 Collection<ResolvedStatement> resolvedConflictCluster = resolveConflictCluster(
                         notMappedSubject, property, conflictClusterModel, effectiveResolutionPolicy, conflictingStatements);
@@ -239,8 +239,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
-        StatementMappingIterator mappingIterator = new StatementMappingIterator(
-                conflictClusterStatements.iterator(), uriMapping, VF, true, true, true);
+        StatementMappingIterator mappingIterator = new StatementMappingIterator(conflictClusterStatements.iterator(), uriMapping, VF);
         Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
         result.addAll(resolveConflictCluster(subject, property, conflictClusterModel, effectiveResolutionPolicy, conflictClusterModel));
     }

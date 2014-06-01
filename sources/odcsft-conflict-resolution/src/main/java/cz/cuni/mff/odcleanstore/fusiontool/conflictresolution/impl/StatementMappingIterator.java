@@ -11,18 +11,13 @@ import java.util.Iterator;
 public class StatementMappingIterator extends ConvertingIterator<Statement, Statement> {
     private final StatementMapper statementMapper;
 
-    public StatementMappingIterator(Iterator<Statement> iterator,
+    public StatementMappingIterator(
+            Iterator<Statement> iterator,
             UriMapping uriMapping,
-            ValueFactory valueFactory,
-            boolean mapSubjects,
-            boolean mapPredicates,
-            boolean mapObjects) {
+            ValueFactory valueFactory) {
 
         super(iterator);
         statementMapper = new StatementMapper(uriMapping, valueFactory);
-        statementMapper.setMapSubjects(mapSubjects);
-        statementMapper.setMapPredicates(mapPredicates);
-        statementMapper.setMapObjects(mapObjects);
     }
 
     @Override
