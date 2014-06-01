@@ -8,6 +8,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import org.junit.Test;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
+import org.openrdf.model.vocabulary.RDFS;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -20,8 +21,12 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class ConfigReaderTest {
+
+    private static final URI FB_LONGITUDE = new URIImpl("http://rdf.freebase.com/ns/location.geocode.longitude");
+    private static final URI FB_LATITUDE = new URIImpl("http://rdf.freebase.com/ns/location.geocode.latitude");
+
     @Test
-     public void parsesMinimalConfigFile() throws Exception {
+    public void parsesMinimalConfigFile() throws Exception {
         // Arrange
         File configFile = getResourceFile("/config/sample-config-minimal.xml");
 
@@ -35,6 +40,7 @@ public class ConfigReaderTest {
         assertThat(config.getDefaultResolutionStrategy().getResolutionFunctionName(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getAggregationErrorStrategy(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getCardinality(), nullValue());
+        assertThat(config.getDefaultResolutionStrategy().getDependsOn(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getParams(), notNullValue());
         assertThat(config.getDefaultResolutionStrategy().getParams().size(), equalTo(0));
         assertThat(config.getEnableFileCache(), equalTo(false));
@@ -97,6 +103,7 @@ public class ConfigReaderTest {
                 .put("xsd", "http://www.w3.org/2001/XMLSchema#")
                 .put("owl", "http://www.w3.org/2002/07/owl#")
                 .put("odcs", "http://opendata.cz/infrastructure/odcleanstore/")
+                .put("fb", "http://rdf.freebase.com/ns/")
                 .build();
         assertThat(config.getPrefixes(), equalTo(expectedPrefixes));
 
@@ -153,16 +160,14 @@ public class ConfigReaderTest {
         assertThat(config.getDefaultResolutionStrategy().getCardinality(), equalTo(EnumCardinality.MANYVALUED));
 
         assertThat(config.getPropertyResolutionStrategies().size(), equalTo(3));
-        assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://www.w3.org/2000/01/rdf-schema#label")).getResolutionFunctionName(),
-                equalTo("BEST"));
-        assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://www.w3.org/2000/01/rdf-schema#label")).getParams(),
-                equalTo((Map<String, String>)ImmutableMap.of("name", "value")));
-        assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://rdf.freebase.com/ns/location.geocode.longtitude")).getResolutionFunctionName(),
-                equalTo("AVG"));
-        assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://rdf.freebase.com/ns/location.geocode.latitude")).getResolutionFunctionName(),
-                equalTo("AVG"));
-        assertThat(config.getPropertyResolutionStrategies().get(new URIImpl("http://rdf.freebase.com/ns/location.geocode.latitude")).getParams(),
-                equalTo((Map<String, String>)ImmutableMap.<String, String>of()));
+        assertThat(config.getPropertyResolutionStrategies().get(RDFS.LABEL).getResolutionFunctionName(), equalTo("BEST"));
+        assertThat(config.getPropertyResolutionStrategies().get(RDFS.LABEL).getDependsOn(), nullValue());
+        assertThat(config.getPropertyResolutionStrategies().get(RDFS.LABEL).getParams(), equalTo((Map<String, String>) ImmutableMap.of("name", "value")));
+        assertThat(config.getPropertyResolutionStrategies().get(FB_LONGITUDE).getResolutionFunctionName(), equalTo("AVG"));
+        assertThat(config.getPropertyResolutionStrategies().get(FB_LONGITUDE).getDependsOn(), equalTo(FB_LATITUDE));
+        assertThat(config.getPropertyResolutionStrategies().get(FB_LATITUDE).getResolutionFunctionName(), equalTo("AVG"));
+        assertThat(config.getPropertyResolutionStrategies().get(FB_LATITUDE).getParams(), equalTo((Map<String, String>) ImmutableMap.<String, String>of()));
+        assertThat(config.getPropertyResolutionStrategies().get(FB_LATITUDE).getDependsOn(), equalTo(FB_LATITUDE));
 
         assertThat(config.getOutputs().size(), equalTo(3));
         assertThat(config.getOutputs().get(0).getName(), equalTo("n3-output"));
@@ -229,6 +234,7 @@ public class ConfigReaderTest {
         assertThat(config.getDefaultResolutionStrategy().getResolutionFunctionName(), equalTo("NONE"));
         assertThat(config.getDefaultResolutionStrategy().getAggregationErrorStrategy(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getCardinality(), nullValue());
+        assertThat(config.getDefaultResolutionStrategy().getDependsOn(), nullValue());
         assertThat(config.getDefaultResolutionStrategy().getParams(),
                 equalTo((Map<String, String>) ImmutableMap.of("name", "value")));
 

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
@@ -22,7 +19,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.util.NamespacePrefixExpander;
 import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
@@ -39,7 +35,6 @@ import java.util.Map;
  * @author Jan Michelfeit
  */
 public final class ConfigReader {
-    private static final ValueFactory VALUE_FACTORY = ValueFactoryImpl.getInstance();
 
     /**
      * Parses the given configuration file and produces returns the contained configuration as an {@link Config} instance.
@@ -68,31 +63,31 @@ public final class ConfigReader {
         if (configXml.getPrefixes() != null) {
             prefixes = extractPrefixes(configXml.getPrefixes());
         } else {
-            prefixes = new HashMap<String, String>();
+            prefixes = new HashMap<>();
         }
         config.setPrefixes(Collections.unmodifiableMap(prefixes));
 
         // Data sources
-        List<DataSourceConfig> dataSources = new LinkedList<DataSourceConfig>();
+        List<DataSourceConfig> dataSources = new LinkedList<>();
         for (DataSourceXml dsXml : configXml.getSources().getDataSources()) {
             dataSources.add(extractDataSource(dsXml));
         }
         config.setDataSources(Collections.unmodifiableList(dataSources));
-        
+
         // SameAs sources
-        List<ConstructSourceConfig> sameAsSources = new LinkedList<ConstructSourceConfig>();
+        List<ConstructSourceConfig> sameAsSources = new LinkedList<>();
         for (ConstructSourceXml csXml : configXml.getSources().getSameAsSources()) {
             sameAsSources.add(extractConstructSource(csXml));
         }
         config.setSameAsSources(Collections.unmodifiableList(sameAsSources));
-        
+
         // Metadata sources
-        List<ConstructSourceConfig> metadataSources = new LinkedList<ConstructSourceConfig>();
+        List<ConstructSourceConfig> metadataSources = new LinkedList<>();
         for (ConstructSourceXml csXml : configXml.getSources().getMetadataSources()) {
             metadataSources.add(extractConstructSource(csXml));
         }
         config.setMetadataSources(Collections.unmodifiableList(metadataSources));
-        
+
         // Data processing settings
         if (configXml.getDataProcessing() != null) {
             SeedResourceRestrictionXml seedRestriction = configXml.getDataProcessing().getSeedResourceRestriction();
@@ -102,26 +97,26 @@ public final class ConfigReader {
                 extractDataProcessingParams(params, config);
             }
         }
-        
+
         // Conflict resolution settings
         NamespacePrefixExpander prefixExpander = new NamespacePrefixExpander(config.getPrefixes());
         if (configXml.getConflictResolution() != null) {
             ConflictResolutionXml crXml = configXml.getConflictResolution();
             if (crXml.getDefaultResolutionStrategy() != null) {
-                config.setDefaultResolutionStrategy(extractResolutionStrategy(crXml.getDefaultResolutionStrategy()));
-            } 
+                config.setDefaultResolutionStrategy(extractResolutionStrategy(
+                        crXml.getDefaultResolutionStrategy(), prefixExpander));
+            }
             config.setPropertyResolutionStrategies(extractPropertyResolutionStrategies(
-                    crXml.getPropertyResolutionStrategies(),
-                    prefixExpander));
+                    crXml.getPropertyResolutionStrategies(), prefixExpander));
         }
 
         // Outputs
-        List<Output> outputs = new LinkedList<Output>();
+        List<Output> outputs = new LinkedList<>();
         for (OutputXml outputXml : configXml.getOutputs()) {
             outputs.add(extractOutput(outputXml));
         }
         config.setOutputs(outputs);
-        
+
         return config;
     }
 
@@ -129,22 +124,25 @@ public final class ConfigReader {
             List<PropertyResolutionStrategyXml> propertyResolutionStrategies,
             NamespacePrefixExpander prefixExpander)
             throws InvalidInputException {
-        Map<URI, ResolutionStrategy> result = new HashMap<URI, ResolutionStrategy>(propertyResolutionStrategies.size());
+        Map<URI, ResolutionStrategy> result = new HashMap<>(propertyResolutionStrategies.size());
         for (PropertyResolutionStrategyXml strategyXml : propertyResolutionStrategies) {
-            ResolutionStrategy strategy = extractResolutionStrategy(strategyXml);
+            ResolutionStrategy strategy = extractResolutionStrategy(strategyXml, prefixExpander);
             for (PropertyXml propertyXml : strategyXml.getProperties()) {
-                URI uri = VALUE_FACTORY.createURI(prefixExpander.expandPrefix(propertyXml.getId()));
+                URI uri = prefixExpander.convertToUriWithExpansion(propertyXml.getId());
                 result.put(uri, strategy);
             }
         }
         return result;
     }
 
-    private ResolutionStrategy extractResolutionStrategy(ResolutionStrategyXml strategyXml) {
+    private ResolutionStrategy extractResolutionStrategy(ResolutionStrategyXml strategyXml, NamespacePrefixExpander prefixExpander) throws InvalidInputException {
         ResolutionStrategyImpl strategy = new ResolutionStrategyImpl();
         strategy.setResolutionFunctionName(strategyXml.getResolutionFunctionName());
         strategy.setCardinality(strategyXml.getCardinality());
         strategy.setAggregationErrorStrategy(strategyXml.getAggregationErrorStrategy());
+        if (strategyXml.getDependsOn() != null) {
+            strategy.setDependsOn(prefixExpander.convertToUriWithExpansion(strategyXml.getDependsOn()));
+        }
         if (strategyXml.getParams() != null) {
             strategy.setParams(extractAllParams(strategyXml.getParams()));
         }
@@ -159,9 +157,9 @@ public final class ConfigReader {
     //        }
     //        return null;
     //    }
-    
+
     private Map<String, String> extractAllParams(List<ParamXml> params) {
-        Map<String, String> result = new HashMap<String, String>(params.size());
+        Map<String, String> result = new HashMap<>(params.size());
         for (ParamXml param : params) {
             result.put(param.getName(), param.getValue());
         }
@@ -169,7 +167,7 @@ public final class ConfigReader {
     }
 
     private Map<String, String> extractPrefixes(List<PrefixXml> prefixes) {
-        Map<String, String> prefixMap = new HashMap<String, String>();
+        Map<String, String> prefixMap = new HashMap<>();
         for (PrefixXml prefixXml : prefixes) {
             prefixMap.put(prefixXml.getId(), prefixXml.getNamespace());
         }
@@ -194,7 +192,7 @@ public final class ConfigReader {
                     config.setCanonicalURIsInputFile(null);
                 }
             } else if (ConfigParameters.PROCESSING_ENABLE_FILE_CACHE.equalsIgnoreCase(param.getName()) && !ODCSUtils.isNullOrEmpty(param.getValue())) {
-                config.setEnableFileCache(Boolean.parseBoolean(param.getValue()));                
+                config.setEnableFileCache(Boolean.parseBoolean(param.getValue()));
             } else if (ConfigParameters.PROCESSING_MAX_OUTPUT_TRIPLES.equalsIgnoreCase(param.getName())) {
                 long value = convertToLong(param.getValue(), "Value of " + ConfigParameters.PROCESSING_MAX_OUTPUT_TRIPLES + " is not a valid number");
                 config.setMaxOutputTriples(value);
@@ -206,7 +204,7 @@ public final class ConfigReader {
             }
         }
     }
-    
+
     private DataSourceConfig extractDataSource(DataSourceXml dataSourceXml) throws InvalidInputException {
         EnumDataSourceType type;
         try {
@@ -214,13 +212,13 @@ public final class ConfigReader {
         } catch (IllegalArgumentException e) {
             throw new InvalidInputException("Unknown type of data source: " + dataSourceXml.getType());
         }
-        
+
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(type, dataSourceXml.getName());
-        
+
         for (ParamXml param : dataSourceXml.getParams()) {
             dataSourceConfig.getParams().put(param.getName().toLowerCase(), param.getValue());
         }
-        
+
         SparqlRestriction namedGraphRestriction = extractGraphRestriction(dataSourceXml.getGraphRestriction());
         if (namedGraphRestriction != null) {
             dataSourceConfig.setNamedGraphRestriction(namedGraphRestriction);
@@ -228,7 +226,7 @@ public final class ConfigReader {
 
         return dataSourceConfig;
     }
-    
+
     private ConstructSourceConfig extractConstructSource(ConstructSourceXml constructSourceXml) throws InvalidInputException {
         EnumDataSourceType type;
         try {
@@ -236,19 +234,19 @@ public final class ConfigReader {
         } catch (IllegalArgumentException e) {
             throw new InvalidInputException("Unknown type of data source: " + constructSourceXml.getType());
         }
-        
+
         String constructQuery = constructSourceXml.getConstructQuery();
         if (constructQuery == null) {
             throw new InvalidInputException("Empty CONSTRUCT query");
         }
-        
-        ConstructSourceConfigImpl constructSourceConfig = 
+
+        ConstructSourceConfigImpl constructSourceConfig =
                 new ConstructSourceConfigImpl(type, constructSourceXml.getName(), constructQuery);
-        
+
         for (ParamXml param : constructSourceXml.getParams()) {
             constructSourceConfig.getParams().put(param.getName().toLowerCase(), param.getValue());
         }
-        
+
         return constructSourceConfig;
     }
 
@@ -259,22 +257,22 @@ public final class ConfigReader {
         } catch (IllegalArgumentException e) {
             throw new InvalidInputException("Unknown type of output: " + outputXml.getType());
         }
-        
+
         OutputImpl output = new OutputImpl(type, outputXml.getName());
-        
+
         for (ParamXml param : outputXml.getParams()) {
             String key = param.getName().toLowerCase();
             String value = param.getValue();
             validateOutputParam(key, value, output);
             output.getParams().put(key, value);
         }
-        
+
         String metadataContextString = output.getParams().get(ConfigParameters.OUTPUT_METADATA_CONTEXT);
         if (metadataContextString != null) {
             URI context = convertToURI(metadataContextString, "metadataContext is not a valid URI for output " + output);
             output.setMetadataContext(context);
         }
-        
+
         String dataContextString = output.getParams().get(ConfigParameters.OUTPUT_DATA_CONTEXT);
         if (dataContextString != null) {
             URI context = convertToURI(dataContextString, "dataContext is not a valid URI for output " + output);
@@ -327,11 +325,11 @@ public final class ConfigReader {
             throw new InvalidInputException(errorMessage, e);
         }
     }
-    
+
     private SparqlRestriction extractGraphRestriction(RestrictionXml restrictionXml) {
         return extractRestriction(restrictionXml, ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
     }
-    
+
     private SeedResourceRestriction extractSeedResourceRestriction(SeedResourceRestrictionXml seedResourceRestrictionXml) {
         SparqlRestriction restriction = extractRestriction(seedResourceRestrictionXml, ConfigConstants.DEFAULT_RESTRICTION_RESOURCE_VAR);
         if (restriction == null) {
@@ -349,7 +347,7 @@ public final class ConfigReader {
             return null;
         }
         String pattern = preprocessGroupGraphPattern(restrictionXml.getValue());
-        
+
         if (restrictionXml.getVar() == null) {
             return new SparqlRestrictionImpl(pattern, defaultVarName);
         } else {

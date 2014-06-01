@@ -6,6 +6,7 @@
     <Prefix id="xsd" namespace="http://www.w3.org/2001/XMLSchema#" />
     <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
+    <Prefix id="fb" namespace="http://rdf.freebase.com/ns/" />
   </Prefixes>
   
   <Sources>
@@ -65,8 +66,8 @@
   <!-- Definition of conflict resolution settings (optional) -->
   <ConflictResolution>
     <DefaultStrategy function="ALL" cardinality="MANYVALUED" aggregationErrorStrategy="RETURN_ALL" />
-    <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED">
-      <Property id="http://rdf.freebase.com/ns/location.geocode.longtitude"/>
+    <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED" dependsOn="fb:location.geocode.latitude">
+      <Property id="fb:location.geocode.longitude"/>
       <Property id="http://rdf.freebase.com/ns/location.geocode.latitude" />
     </ResolutionStrategy>
     <ResolutionStrategy function="BEST">

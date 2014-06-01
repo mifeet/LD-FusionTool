@@ -8,6 +8,7 @@
     <Prefix id="xsd" namespace="http://www.w3.org/2001/XMLSchema#" />
     <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
+    <Prefix id="fb" namespace="http://rdf.freebase.com/ns/" />
   </Prefixes>
   
   <!-- Definitions of inputs; the <Source/> tag can contain three types of sources:
@@ -126,7 +127,7 @@
     <!-- Spefifies the default conflict resolution policy; (optional);
          'function' attribute defines the conflict resolution function (optional attribute, defaults to ALL),
          'cardinality' attribute defines the expected cardinality of the property - possible values are 'MANYVALUED' and 'SINGLEVALUED'
-		        (optional, default to MANYVALUED),
+		        (optional, defaults to MANYVALUED),
          'aggregationErrroStrategy' defines the aggregation error strategy - possible values are 'IGNORE' and 'RETURN_ALL'
                (optional, defaults to RETURN_ALL)
           <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function -->
@@ -135,14 +136,16 @@
     <!-- <ResolutionStrategy> elements specify a conflict resolution policy:
          'function' attribute defines the conflict resolution method (optional attribute, defaults to ALL),
           'cardinality' attribute defines the expected cardinality of the property - possible values are 'MANYVALUED' and 'SINGLEVALUED'
-		        (optional, default to MANYVALUED),
+		        (optional, defaults to MANYVALUED),
          'aggregationErrorStrategy' defines the aggregation error strategy - possible values are 'IGNORE' and 'RETURN_ALL'
-              (optional, default to RETURN_ALL)
+              (optional, defaults to RETURN_ALL)
+         'dependsOn' specifies dependency of properties, i.e. values of dependent properties will be resolved together and not independently
+              (optional, defaults to no dependency)
          <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function -->
-    <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED">
+    <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED" dependsOn="fb:latitude">
       <!-- Definition of properties to which the resolution strategy applies to -->
-      <Property id="http://rdf.freebase.com/ns/location.geocode.longtitude"/>
-      <Property id="http://rdf.freebase.com/ns/location.geocode.latitude" />
+      <Property id="fb:location.geocode.longtitude"/>
+      <Property id="fb:location.geocode.latitude" />
     </ResolutionStrategy>
     <ResolutionStrategy function="BEST">
       <Property id="rdfs:label"/>

@@ -3,14 +3,13 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config.xml;
 
-import java.util.List;
-
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
+import java.util.List;
 
 // CHECKSTYLE:OFF
 
@@ -27,6 +26,9 @@ public class ResolutionStrategyXml {
     
     @Attribute(name = "aggregationErrorStrategy", required = false)
     private EnumAggregationErrorStrategy aggregationErrorStrategy;
+
+    @Attribute(name = "dependsOn", required = false)
+    private String dependsOn;
 
     @ElementList(required = false, inline = true)
     private List<ParamXml> params;
@@ -47,4 +49,7 @@ public class ResolutionStrategyXml {
         return params;
     }
 
+    public String getDependsOn() {
+        return dependsOn;
+    }
 }
