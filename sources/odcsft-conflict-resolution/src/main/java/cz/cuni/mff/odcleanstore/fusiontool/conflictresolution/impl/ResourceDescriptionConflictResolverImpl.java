@@ -14,6 +14,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ClusterIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.AlternativeURINavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterable;
@@ -21,7 +22,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.urimapping.URIMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.util.iterators.Iterators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,9 +81,9 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     /**
      * Apply conflict resolution process to the given resource description and return result
      * @param resourceDescription container of quads that make up the description of the respective statement
-     *      (i.e. quads that are relevant for the conflict resolution process)
+     * (i.e. quads that are relevant for the conflict resolution process)
      * @return collection of quads derived from the input with resolved
-     *         conflicts, (F-)quality estimate and provenance information.
+     * conflicts, (F-)quality estimate and provenance information.
      * @throws ConflictResolutionException error during the conflict resolution process
      * @see ResolvedStatement
      */
@@ -159,18 +159,17 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         Table<Resource, URI, Collection<ResolvedStatement>> conflictClustersTable = ODCSFusionToolCRUtils.newHashTable();
         for (URI property : dependentProperties) {
             List<Statement> conflictingStatements = statementsByProperty.get(property);
-            Iterator<Statement> conflictingStatementsIterator = conflictingStatements != null
-                    ? conflictingStatements.iterator()
-                    : Collections.<Statement>emptyIterator();
-            StatementMappingIterator mappingIterator = new StatementMappingIterator(conflictingStatementsIterator, uriMapping, VF, false, true, true);
-            Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
-            for (Resource notMappedSubject : conflictClusterModel.subjects()) {
+            if (conflictingStatements == null) {
+                continue;
+            }
+            ClusterIterator<Statement> subjectClusterIterator = new ClusterIterator<>(conflictingStatements, StatementBySubjectComparator.getInstance());
+            while (subjectClusterIterator.hasNext()) {
+                List<Statement> statements = subjectClusterIterator.next();
+                Resource notMappedSubject = statements.get(0).getSubject();
+                StatementMappingIterator mappingIterator = new StatementMappingIterator(statements.iterator(), uriMapping, VF, true, true, true);
+                Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
                 Collection<ResolvedStatement> resolvedConflictCluster = resolveConflictCluster(
-                        notMappedSubject,
-                        property,
-                        conflictClusterModel.filter(notMappedSubject, null, null),
-                        effectiveResolutionPolicy,
-                        conflictingStatements);
+                        notMappedSubject, property, conflictClusterModel, effectiveResolutionPolicy, conflictingStatements);
                 conflictClustersTable.put(notMappedSubject, property, resolvedConflictCluster);
             }
         }
@@ -194,7 +193,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         if (bestSubject != null) {
             Map<URI, Collection<ResolvedStatement>> selectedStatements = conflictClustersTable.row(bestSubject);
             for (Collection<ResolvedStatement> resolvedStatements : selectedStatements.values()) {
-                Iterators.addAll(new ResolvedStatementMappingIterator(resolvedStatements.iterator(), uriMapping, VF, true, false, false), result);
+                result.addAll(resolvedStatements);
             }
         }
     }
@@ -307,6 +306,19 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         if (LOG.isDebugEnabled()) {
             LOG.debug("Conflict resolution executed in {} ms, resolved to {} quads",
                     System.currentTimeMillis() - startTime, result.size());
+        }
+    }
+
+    private static class StatementBySubjectComparator implements Comparator<Statement> {
+        private static final Comparator<Statement> INSTANCE = new StatementBySubjectComparator();
+
+        public static Comparator<Statement> getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public int compare(Statement o1, Statement o2) {
+            return CRUtils.compareValues(o1.getSubject(), o2.getSubject());
         }
     }
 }
