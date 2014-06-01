@@ -110,7 +110,7 @@ public class ExternalSortingInputLoaderTest {
             createHttpStatement("x", "y", "z", "g1")
     );
 
-    // TODO: add corresponding integration test
+    // FIXME: add corresponding integration test
     private Collection<Statement> testInput3 = ImmutableList.of(
             // Resource description with two dependent resources and one normal triple
             createHttpStatement("s1", "p1", "o1"),

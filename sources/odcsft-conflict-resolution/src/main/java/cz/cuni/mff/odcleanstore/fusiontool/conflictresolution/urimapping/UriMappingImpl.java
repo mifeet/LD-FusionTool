@@ -130,7 +130,7 @@ public class UriMappingImpl implements UriMapping {
     public Resource mapResource(Resource resource) {
         if (resource instanceof URI && uriDFUParent.containsKey(resource.stringValue())) {
             String canonicalUri = dfuRoot(resource.stringValue());
-            return VF.createURI(canonicalUri); // TODO: keep a map of URIs to avoid object creations?
+            return VF.createURI(canonicalUri);
         }
         return resource;
     }

@@ -169,6 +169,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     }
 
     // TODO: refactor - move ?
+    // FIXME: !!!! DO NOT SELECT BEST SUBJECT, BUT COMBINATION OF SUBJECT AND GRAPH
+    //   (triples from the same graph should go together even if the same resource URI is used in multiple graphs)
     private void resolveResourceDependentProperties(
             Resource subject,
             List<URI> dependentProperties,

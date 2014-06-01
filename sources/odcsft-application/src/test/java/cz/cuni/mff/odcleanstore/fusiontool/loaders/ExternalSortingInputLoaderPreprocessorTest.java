@@ -1,7 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableSet;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.SpogComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor;
@@ -21,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 public class ExternalSortingInputLoaderPreprocessorTest {
-    public static final SpogComparator COMPARATOR = new SpogComparator();
     public static final ValueFactoryImpl VF = ValueFactoryImpl.getInstance();
 
     @Test
@@ -30,7 +28,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
         UriMappingIterable uriMapping = new EmptyUriMappingIterable();
 
         // Act
-        ArrayList<Statement> result = new ArrayList<Statement>();
+        ArrayList<Statement> result = new ArrayList<>();
         ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(
                 new StatementCollector(result),
                 uriMapping,
@@ -57,7 +55,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
     @Test
     public void filtersUnmappedSubjectsWhenOutputMappedSubjectsOnlyIsTrue() throws Exception {
         // Arrange
-        ArrayList<Statement> statements = new ArrayList<Statement>();
+        ArrayList<Statement> statements = new ArrayList<>();
         statements.add(createHttpStatement("s1", "p1", "o1", "g1"));
         statements.add(createHttpStatement("s3", "p1", "o1", "g1"));
         statements.add(createHttpStatement("s2", "p1", "o1", "g1"));
@@ -83,7 +81,7 @@ public class ExternalSortingInputLoaderPreprocessorTest {
             boolean outputMappedSubjectsOnly)
             throws RDFHandlerException {
 
-        ArrayList<Statement> result = new ArrayList<Statement>();
+        ArrayList<Statement> result = new ArrayList<>();
         ExternalSortingInputLoaderPreprocessor preprocessor = new ExternalSortingInputLoaderPreprocessor(
                 new StatementCollector(result),
                 uriMapping,
