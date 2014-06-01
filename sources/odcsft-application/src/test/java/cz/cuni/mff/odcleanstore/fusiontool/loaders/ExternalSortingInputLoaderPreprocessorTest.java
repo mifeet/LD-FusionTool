@@ -1,10 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableSet;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.EmptyUriMappingIterable;
 import org.junit.Test;
 import org.openrdf.model.Statement;
 import org.openrdf.model.impl.ValueFactoryImpl;

@@ -15,7 +15,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ClusterIterator;
@@ -71,7 +71,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         this.conflictResolutionPolicy = conflictResolutionPolicy;
         this.uriMapping = uriMapping != null
                 ? uriMapping
-                : EmptyUriMapping.getInstance();
+                : EmptyUriMappingIterable.getInstance();
         this.metadataModel = metadata != null
                 ? metadata
                 : new EmptyMetadataModel();

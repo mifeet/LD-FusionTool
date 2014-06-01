@@ -4,11 +4,14 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 
+import java.util.Collections;
+import java.util.Iterator;
+
 /**
  * An empty URI mapping. Maps every URI to itself.
  */
-public class EmptyUriMapping implements UriMapping {
-    private static final EmptyUriMapping INSTANCE = new EmptyUriMapping();
+public class EmptyUriMappingIterable implements UriMappingIterable {
+    private static final EmptyUriMappingIterable INSTANCE = new EmptyUriMappingIterable();
 
     /**
      * Return the shared default instance of this class.
@@ -31,5 +34,10 @@ public class EmptyUriMapping implements UriMapping {
     @Override
     public Resource mapResource(Resource resource) {
         return resource;
+    }
+
+    @Override
+    public Iterator<String> iterator() {
+        return Collections.emptyIterator();
     }
 }
