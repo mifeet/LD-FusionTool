@@ -40,6 +40,7 @@ public class ResourceDescriptionConflictResolverImplTest {
             return new ArrayList<>();
         }
     };
+    private static final URI RESOURCE_DESCRIPTION_URI = createHttpUri("resourceDescriptionProperty");
 
     private UriMappingImpl uriMapping;
 
@@ -681,7 +682,8 @@ public class ResourceDescriptionConflictResolverImplTest {
                 conflictResolutionPolicy,
                 uriMapping,
                 new EmptyMetadataModel(),
-                "http://cr/");
+                "http://cr/",
+                Collections.singleton(RESOURCE_DESCRIPTION_URI));
     }
 
     private Collection<Collection<MockResolvedStatement>> getConflictClusters(Collection<ResolvedStatement> resolvedStatements) {

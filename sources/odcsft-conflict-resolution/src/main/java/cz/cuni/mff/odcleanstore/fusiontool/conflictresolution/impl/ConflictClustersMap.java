@@ -1,26 +1,17 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 // TODO: more efficient representation, e.g. using binary search
 public class ConflictClustersMap {
-    private static final Supplier<List<Statement>> LIST_SUPPLIER = new ListSupplier();
-
     /**
      * Map of canonical subject -> canonical property -> statements
      */
@@ -40,7 +31,7 @@ public class ConflictClustersMap {
     private static ListMultimap<URI, Statement> getOrCreateSubjectMultimap(Resource canonicalSubject, Map<Resource, ListMultimap<URI, Statement>> map) {
         ListMultimap<URI, Statement> subjectMultimap = map.get(canonicalSubject);
         if (subjectMultimap == null) {
-            subjectMultimap = Multimaps.newListMultimap(new HashMap<URI, Collection<Statement>>(), LIST_SUPPLIER);
+            subjectMultimap = ODCSFusionToolCRUtils.newStatementMultimap();
             map.put(canonicalSubject, subjectMultimap);
         }
         return subjectMultimap;
@@ -48,22 +39,6 @@ public class ConflictClustersMap {
 
     private ConflictClustersMap(Map<Resource, ListMultimap<URI, Statement>> canonicalSubjectPropertyMap) {
         this.canonicalSubjectPropertyMap = canonicalSubjectPropertyMap;
-    }
-
-    public Iterator<URI> listProperties(Resource canonicalSubject) {
-        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPropertyMap.get(canonicalSubject);
-        if (subjectSubMap == null) {
-            return Collections.emptyIterator();
-        }
-        return Iterators.unmodifiableIterator(subjectSubMap.keySet().iterator());
-    }
-
-    public List<Statement> getConflictClusterStatements(Resource canonicalSubject, URI canonicalProperty) {
-        ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPropertyMap.get(canonicalSubject);
-        if (subjectSubMap == null) {
-            return Collections.emptyList();
-        }
-        return Collections.unmodifiableList(subjectSubMap.get(canonicalProperty));
     }
 
     public Map<URI, List<Statement>> getResourceStatementsMap(Resource canonicalSubject) {
@@ -74,11 +49,16 @@ public class ConflictClustersMap {
         return Multimaps.asMap(subjectSubMap);
     }
 
-
-    private static class ListSupplier implements Supplier<List<Statement>> {
-        @Override
-        public List<Statement> get() {
-            return new ArrayList<Statement>(5);
+    public Map<URI, List<Statement>> getUnionStatementsMap(Set<Resource> canonicalSubjects) {
+        ListMultimap<URI, Statement> result = ODCSFusionToolCRUtils.newStatementMultimap();
+        for (Resource canonicalSubject : canonicalSubjects) {
+            ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPropertyMap.get(canonicalSubject);
+            if (subjectSubMap == null) {
+                continue;
+            }
+            result.putAll(subjectSubMap);
         }
+        return Multimaps.asMap(result);
     }
+
 }

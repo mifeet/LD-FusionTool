@@ -53,6 +53,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     private final ConflictResolutionPolicy conflictResolutionPolicy;
     private final ResolutionFunctionRegistry resolutionFunctionRegistry;
     private final ResolvedStatementFactoryImpl resolvedStatementFactory;
+    private final Set<URI> resourceDescriptionProperties;
 
     /**
      * Creates a new instance with the given settings.
@@ -61,13 +62,16 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
      * @param uriMapping mapping of URIs to their canonical URI (based on owl:sameAs links)
      * @param metadata additional metadata for use by resolution functions (e.g. source quality etc.)
      * @param resolvedGraphsURIPrefix prefix of graph names where resolved quads are placed
+     * @param resourceDescriptionProperties resource description properties, i.e. properties whose values are structured attributes
+     *      which should be resolved transitively
      */
     public ResourceDescriptionConflictResolverImpl(
             ResolutionFunctionRegistry resolutionFunctionRegistry,
             ConflictResolutionPolicy conflictResolutionPolicy,
             UriMapping uriMapping,
             Model metadata,
-            String resolvedGraphsURIPrefix) {
+            String resolvedGraphsURIPrefix,
+            Set<URI> resourceDescriptionProperties) {
         this.resolutionFunctionRegistry = resolutionFunctionRegistry;
         this.conflictResolutionPolicy = conflictResolutionPolicy;
         this.uriMapping = uriMapping != null
@@ -79,6 +83,10 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         this.resolvedStatementFactory = resolvedGraphsURIPrefix != null
                 ? new ResolvedStatementFactoryImpl(resolvedGraphsURIPrefix)
                 : new ResolvedStatementFactoryImpl(DEFAULT_RESOLVED_GRAPHS_URI_PREFIX);
+        this.resourceDescriptionProperties = new HashSet<>();
+        for (URI property : resourceDescriptionProperties) {
+            this.resourceDescriptionProperties.add((URI) uriMapping.mapResource(property));
+        }
     }
 
     /**
