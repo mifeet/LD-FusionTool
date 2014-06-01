@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * TODO
  */
@@ -50,10 +52,11 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
     private final Model metadataModel;
     private final UriMapping uriMapping;
-    private final ConflictResolutionPolicy conflictResolutionPolicy;
+    private final ConflictResolutionPolicy effectiveResolutionPolicy;
     private final ResolutionFunctionRegistry resolutionFunctionRegistry;
     private final ResolvedStatementFactoryImpl resolvedStatementFactory;
     private final Set<URI> resourceDescriptionProperties;
+    private final AlternativeUriNavigator dependentPropertyMapping;
 
     /**
      * Creates a new instance with the given settings.
@@ -73,7 +76,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             String resolvedGraphsURIPrefix,
             Set<URI> resourceDescriptionProperties) {
         this.resolutionFunctionRegistry = resolutionFunctionRegistry;
-        this.conflictResolutionPolicy = conflictResolutionPolicy;
+        this.effectiveResolutionPolicy = getEffectiveResolutionPolicy(conflictResolutionPolicy, uriMapping);
+        this.dependentPropertyMapping = new AlternativeUriNavigator(getDependentPropertyMapping(effectiveResolutionPolicy, uriMapping));
         this.uriMapping = uriMapping != null
                 ? uriMapping
                 : EmptyUriMappingIterable.getInstance();
@@ -102,17 +106,13 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     public Collection<ResolvedStatement> resolveConflicts(ResourceDescription resourceDescription) throws ConflictResolutionException {
         long startTime = logStarted(resourceDescription.getDescribingStatements().size());
 
-        ConflictResolutionPolicy effectiveResolutionPolicy = getEffectiveResolutionPolicy();
         ConflictClustersMap conflictClustersMap = ConflictClustersMap.fromCollection(resourceDescription.getDescribingStatements(), uriMapping);
         Collection<ResolvedStatement> result = createResultCollection(resourceDescription.getDescribingStatements().size());
-        AlternativeUriNavigator dependentPropertyMapping = new AlternativeUriNavigator(getDependentPropertyMapping(effectiveResolutionPolicy));
 
         Resource canonicalResource = uriMapping.mapResource(resourceDescription.getResource());
         resolveResource(
                 conflictClustersMap.getResourceStatementsMap(canonicalResource),
                 canonicalResource,
-                dependentPropertyMapping,
-                effectiveResolutionPolicy,
                 result);
 
         logFinished(startTime, result);
@@ -122,15 +122,11 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     /**
      * Resolve conflicts in statements contained in {@code conflictClustersMap} for the given {@code canonicalResource}.
      * @param statementsToResolveByProperty statements to be resolved as a map canonical property -> (unmapped) statements with the property
-     * @param dependentPropertyMapping property dependencies
-     * @param effectiveResolutionPolicy conflict resolution policy to be used
      * @param result collection where the resolved result is added to
      */
     private void resolveResource(
             Map<URI, List<Statement>> statementsToResolveByProperty,
             Resource expectedSubject,
-            AlternativeUriNavigator dependentPropertyMapping,
-            ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<ResolvedStatement> result) throws ConflictResolutionException {
 
         Set<URI> resolvedProperties = new HashSet<>();
@@ -140,21 +136,19 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
                 continue;
             }
 
-            List<URI> dependentProperties = getDependentProperties(canonicalProperty, dependentPropertyMapping);
+            List<URI> dependentProperties = getDependentProperties(canonicalProperty);
             if (dependentProperties == null) {
                 List<Statement> conflictClusterStatements = statementsToResolveByProperty.get(canonicalProperty);
                 Model conflictClusterModel = createMappedModel(conflictClusterStatements);
                 Collection<ResolvedStatement> resolvedStatements = resolveConflictCluster(
-                        conflictClusterModel, canonicalProperty, effectiveResolutionPolicy, conflictClusterModel);
+                        conflictClusterModel, canonicalProperty, conflictClusterModel);
                 addToResult(resolvedStatements, result, expectedSubject);
                 resolvedProperties.add(canonicalProperty);
 
             } else {
                 List<ResolvedStatement> resolvedStatements = resolveResourceDependentProperties(
                         statementsToResolveByProperty,
-                        dependentProperties,
-                        effectiveResolutionPolicy
-                );
+                        dependentProperties);
                 addToResult(resolvedStatements, result, expectedSubject);
                 resolvedProperties.addAll(dependentProperties);
             }
@@ -180,13 +174,11 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
      * treats the input triples as though they do map to the same canonical subject.
      * @param statementsToResolveByProperty statements to be resolved as a map canonical property -> (unmapped) statements with the property
      * @param dependentProperties list of mutually dependent properties to be resolved
-     * @param effectiveResolutionPolicy resolution policy
      * @throws ConflictResolutionException CR error
      */
     private ArrayList<ResolvedStatement> resolveResourceDependentProperties(
             Map<URI, List<Statement>> statementsToResolveByProperty,
-            List<URI> dependentProperties,
-            ConflictResolutionPolicy effectiveResolutionPolicy) throws ConflictResolutionException {
+            List<URI> dependentProperties) throws ConflictResolutionException {
 
         // Step 1: resolve conflicts for each (non-canonical) subject and property
         Table<Resource, URI, Collection<ResolvedStatement>> conflictClustersTable = ODCSFusionToolCRUtils.newHashTable();
@@ -202,7 +194,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
                 Resource notMappedSubject = statements.get(0).getSubject();
                 Model conflictClusterModel = createMappedModel(statements);
                 Collection<ResolvedStatement> resolvedConflictCluster = resolveConflictCluster(
-                        conflictClusterModel, property, effectiveResolutionPolicy, mappedConflictingStatements);
+                        conflictClusterModel, property, mappedConflictingStatements);
                 conflictClustersTable.put(notMappedSubject, property, resolvedConflictCluster);
             }
         }
@@ -241,7 +233,6 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
      * @param conflictClusterToResolve statements to be resolved;
      * subjects and predicate in these triples must be the same for all triples
      * @param property canonical property for the conflict cluster
-     * @param effectiveResolutionPolicy resolution policy
      * @param conflictingMappedStatements conflicting statements to be considered during quality calculation.
      * @return resolved statements produced by conflict resolution function
      * @throws ConflictResolutionException CR error
@@ -249,7 +240,6 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     private Collection<ResolvedStatement> resolveConflictCluster(
             Model conflictClusterToResolve,
             URI property,
-            ConflictResolutionPolicy effectiveResolutionPolicy,
             Collection<Statement> conflictingMappedStatements) throws ConflictResolutionException {
 
         if (conflictClusterToResolve.isEmpty()) {
@@ -281,7 +271,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
     }
 
-    private ConflictResolutionPolicy getEffectiveResolutionPolicy() {
+    private static ConflictResolutionPolicy getEffectiveResolutionPolicy(ConflictResolutionPolicy conflictResolutionPolicy, UriMapping uriMapping) {
         ResolutionStrategy effectiveDefaultStrategy = DEFAULT_RESOLUTION_STRATEGY;
         Map<URI, ResolutionStrategy> effectivePropertyStrategies = new HashMap<>();
 
@@ -305,7 +295,9 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return result;
     }
 
-    private UriMappingIterable getDependentPropertyMapping(ConflictResolutionPolicy effectiveResolutionPolicy) {
+    private static UriMappingIterable getDependentPropertyMapping(ConflictResolutionPolicy effectiveResolutionPolicy, UriMapping uriMapping) {
+        checkNotNull(effectiveResolutionPolicy);
+        checkNotNull(uriMapping);
         UriMappingIterableImpl dependentPropertyMapping = new UriMappingIterableImpl();
         for (URI uri : effectiveResolutionPolicy.getPropertyResolutionStrategies().keySet()) {
             ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(uri);
@@ -337,7 +329,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return sum / resolvedStatements.size();
     }
 
-    private List<URI> getDependentProperties(URI property, AlternativeUriNavigator dependentPropertyMapping) {
+    private List<URI> getDependentProperties(URI property) {
         if (dependentPropertyMapping.hasAlternativeUris(property)) {
             return dependentPropertyMapping.listAlternativeUris(property);
         } else {
