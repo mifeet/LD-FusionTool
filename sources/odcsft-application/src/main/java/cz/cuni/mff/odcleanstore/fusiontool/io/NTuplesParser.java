@@ -40,6 +40,7 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
     }
 
     private static class Parser extends NTriplesParser implements Closeable<IOException> {
+        private int expectedElements = 2;
         private int c;
         private List<Value> tuple;
 
@@ -83,7 +84,7 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
         }
 
         private int parseTuple(int c) throws IOException, RDFParseException {
-            tuple = new ArrayList<Value>();
+            tuple = new ArrayList<Value>(expectedElements);
             while (c != -1 && c != '.' && c != '\r' && c != '\n') {
                 c = parseObject(c);
                 tuple.add(object);
@@ -100,6 +101,9 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
 
             c = assertLineTerminates(c);
             c = skipLine(c);
+            if (tuple.size() > expectedElements) {
+                expectedElements = tuple.size();
+            }
             return c;
         }
     }
