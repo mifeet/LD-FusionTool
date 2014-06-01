@@ -9,17 +9,12 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.util.iterators.Iterators;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class for listing of alternative URIs based on a given mapping of URIs to canonical URIs.
  * When {@link #listAlternativeUris(String)} is called for the first time, the map of alternative
  * URIs is build in O(N log N) time and O(N) space where N is number of mapped URIs.
- * @author Jan Michelfeit
  */
 public class AlternativeUriNavigator {
     private static final int EXPECTED_ALTERNATIVES = 3;
