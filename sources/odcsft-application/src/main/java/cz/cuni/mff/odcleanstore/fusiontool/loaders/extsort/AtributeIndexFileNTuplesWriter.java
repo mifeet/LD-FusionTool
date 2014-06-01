@@ -24,16 +24,16 @@ public class AtributeIndexFileNTuplesWriter extends RDFHandlerBase {
     private final Set<URI> resourceDescriptionUris;
     private final UriMapping uriMapping;
 
-    public AtributeIndexFileNTuplesWriter(NTuplesWriter nTuplesWriter, Set<URI> resourceDescriptionUris, UriMapping uriMapping) {
+    public AtributeIndexFileNTuplesWriter(NTuplesWriter nTuplesWriter, Set<URI> canonicalResourceDescriptionUris, UriMapping uriMapping) {
         this.nTuplesWriter = nTuplesWriter;
-        this.resourceDescriptionUris = resourceDescriptionUris;
+        this.resourceDescriptionUris = canonicalResourceDescriptionUris;
         this.uriMapping = uriMapping;
     }
 
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
         try {
-            if (st.getObject() instanceof Resource && resourceDescriptionUris.contains(st.getPredicate())) {
+            if (st.getObject() instanceof Resource && resourceDescriptionUris.contains(uriMapping.mapResource(st.getPredicate()))) {
                 nTuplesWriter.writeTuple(
                         uriMapping.mapResource((Resource) st.getObject()),
                         uriMapping.mapResource(st.getSubject()));

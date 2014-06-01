@@ -48,8 +48,10 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -88,6 +90,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     private final Long maxMemoryLimit;
     private final ParserConfig parserConfig;
     private final ExternalSorter externalSorter;
+    private final Set<URI> canonicalResourceDescriptionProperties = new HashSet<>();
 
     private NTuplesParser dataFileIterator;
     private NTuplesParser mergedAttributeFileIterator;
@@ -124,6 +127,11 @@ public class ExternalSortingInputLoader implements InputLoader {
         LOG.info("Initializing input loader");
         if (maxMemoryLimit < Long.MAX_VALUE) {
             LOG.info("  maximum memory limit is {} MB", String.format("%,.2f", maxMemoryLimit / (double) ODCSFusionToolAppUtils.MB_BYTES));
+        }
+
+        canonicalResourceDescriptionProperties.clear();
+        for (URI resourceDescriptionProperty : ConfigConstants.RESOURCE_DESCRIPTION_URIS) {
+            canonicalResourceDescriptionProperties.add((URI) uriMapping.mapResource(resourceDescriptionProperty));
         }
 
         try {
@@ -279,7 +287,7 @@ public class ExternalSortingInputLoader implements InputLoader {
             attributeIndexFileWriter = new NTuplesWriter(createTempFileWriter(attributeIndexFile));
             RDFHandler tempFilesWriteHandler = new FederatedRDFHandler(
                     new DataFileNTuplesWriter(dataFileWriter, uriMapping),
-                    new AtributeIndexFileNTuplesWriter(attributeIndexFileWriter, ConfigConstants.RESOURCE_DESCRIPTION_URIS, uriMapping));
+                    new AtributeIndexFileNTuplesWriter(attributeIndexFileWriter, canonicalResourceDescriptionProperties, uriMapping));
 
             ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor(
                     tempFilesWriteHandler, uriMapping, VF, outputMappedSubjectsOnly);

@@ -56,6 +56,7 @@ import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.creat
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -484,6 +485,71 @@ public class ExternalSortingInputLoaderTest {
             }
         }
     }
+
+    @Test
+    public void handlesLiteralsAsValuesOfDescriptionProperties() throws Exception {
+        // Arrange
+        URI resource = createHttpUri("s1");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("s1", "p1", "o1"),
+                createStatement(resource, resourceDescriptionProperty, createHttpUri("dependent1")),
+                VF.createStatement(resource, resourceDescriptionProperty, VF.createLiteral("a")),
+                createHttpStatement("dependent1", "p2", "o2"));
+
+        // Act
+        ResourceDescription result = null;
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput, false);
+        try {
+            inputLoader.initialize(uriMapping);
+            while (inputLoader.hasNext()) {
+                ResourceDescription resourceDescription = inputLoader.next();
+                if (resourceDescription.getResource().equals(resource)) {
+                    result = resourceDescription;
+                }
+            }
+        } finally {
+            inputLoader.close();
+        }
+
+        // Assert
+        assertThat(result, notNullValue());
+        System.out.println(result.getDescribingStatements());
+        assertThat(result.getDescribingStatements().size(), is(testInput.size()));
+    }
+
+    @Test
+    public void includesCorrectDependentResourcesWhenDescriptionPropertyIsMapped() throws Exception {
+        // Arrange
+        URI mappedDescriptionProperty = createHttpUri("mappedDescriptionProperty");
+        URI resource = createHttpUri("s1");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("s1", "p1", "o1"),
+                createStatement(resource, mappedDescriptionProperty, createHttpUri("dependent1")),
+                createHttpStatement("dependent1", "p2", "o2"));
+        UriMappingIterableImpl propertyUriMapping = new UriMappingIterableImpl(ImmutableSet.of(resourceDescriptionProperty.stringValue()));
+        propertyUriMapping.addLink(mappedDescriptionProperty, resourceDescriptionProperty);
+
+        // Act
+        ResourceDescription result = null;
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput, false);
+        try {
+            inputLoader.initialize(propertyUriMapping);
+            while (inputLoader.hasNext()) {
+                ResourceDescription resourceDescription = inputLoader.next();
+                if (resourceDescription.getResource().equals(resource)) {
+                    result = resourceDescription;
+                }
+            }
+        } finally {
+            inputLoader.close();
+        }
+
+        // Assert
+        assertThat(result, notNullValue());
+        System.out.println(result.getDescribingStatements());
+        assertThat(result.getDescribingStatements().size(), is(testInput.size()));
+    }
+
 
     private ExternalSortingInputLoader createExternalSortingInputLoader(Collection<Statement> testInput, boolean outputMappedSubjectsOnly) throws IOException, RDFHandlerException {
         return new ExternalSortingInputLoader(

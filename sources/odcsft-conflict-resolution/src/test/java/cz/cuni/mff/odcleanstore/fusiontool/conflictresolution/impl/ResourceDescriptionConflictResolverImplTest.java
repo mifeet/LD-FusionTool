@@ -50,6 +50,7 @@ import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ResolvedStatementMatc
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ResolvedStatementMatchesStatement.resolvedStatementMatchesStatement;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
@@ -291,9 +292,12 @@ public class ResourceDescriptionConflictResolverImplTest {
 
         // Assert
         Map<URI, ResolutionStrategy> expectedResolutionStrategies = new HashMap<>();
-        expectedResolutionStrategies.put(createHttpUri("px"), new ResolutionStrategyImpl("PB", EnumCardinality.SINGLEVALUED, EnumAggregationErrorStrategy.IGNORE));
-        expectedResolutionStrategies.put(createHttpUri("p1"), new ResolutionStrategyImpl("P1", EnumCardinality.SINGLEVALUED, EnumAggregationErrorStrategy.IGNORE));
-        expectedResolutionStrategies.put(createHttpUri("p2"), new ResolutionStrategyImpl("DEFAULT", EnumCardinality.SINGLEVALUED, EnumAggregationErrorStrategy.IGNORE));
+        expectedResolutionStrategies.put(createHttpUri("px"),
+                new ResolutionStrategyImpl("PB", EnumCardinality.SINGLEVALUED, EnumAggregationErrorStrategy.IGNORE));
+        expectedResolutionStrategies.put(createHttpUri("p1"),
+                new ResolutionStrategyImpl("P1", EnumCardinality.SINGLEVALUED, EnumAggregationErrorStrategy.IGNORE));
+        expectedResolutionStrategies.put(createHttpUri("p2"),
+                new ResolutionStrategyImpl("DEFAULT", EnumCardinality.SINGLEVALUED, EnumAggregationErrorStrategy.IGNORE));
 
         Map<URI, ResolutionStrategy> actualResolutionStrategies = new HashMap<>();
         for (ResolvedStatement resolvedStatement : result) {
@@ -591,6 +595,45 @@ public class ResourceDescriptionConflictResolverImplTest {
         }
     }
 
+    @Test
+    public void usesCorrectConflictingStatementsWithDependentProperties() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa1", "good"),
+                createHttpStatement("sa", "d1", "oa2", "bad"),
+                createHttpStatement("sb", "d1", "ob1", "bad"),
+                createHttpStatement("sb", "d1", "ob2", "bad"),
+                createHttpStatement("s1", "d1", "o11", "bad"));
+        ResolutionFunction resolutionFunction = MockBestResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d2")))
+                .build();
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, new MockNoneResolutionFunction());
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        Map<URI, Collection<Statement>> expectedConflictingStatementsMap = new HashMap<>();
+        expectedConflictingStatementsMap.put(createHttpUri("sx"), ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa1", "good"),
+                createHttpStatement("sa", "d1", "oa2", "bad"),
+                createHttpStatement("sb", "d1", "ob1", "bad"),
+                createHttpStatement("sb", "d1", "ob2", "bad")));
+        expectedConflictingStatementsMap.put(createHttpUri("s1"), ImmutableList.of(
+                createHttpStatement("s1", "d1", "o11", "bad")));
+
+        assertThat(result, hasSize(expectedConflictingStatementsMap.size()));
+        for (ResolvedStatement resolvedStatement : result) {
+            MockResolvedStatement mockResolvedStatement = (MockResolvedStatement) resolvedStatement;
+            Collection<Statement> expectedConflictingStatements = expectedConflictingStatementsMap.get(resolvedStatement.getStatement().getSubject());
+            assertThat(mockResolvedStatement.getConflictingStatements(), containsInAnyOrder(expectedConflictingStatements.toArray()));
+        }
+    }
+
     private ResourceDescriptionConflictResolver createResolver() throws ResolutionFunctionNotRegisteredException {
         return createResolver(new ConflictResolutionPolicyImpl(), new MockNoneResolutionFunction());
     }
@@ -623,5 +666,4 @@ public class ResourceDescriptionConflictResolverImplTest {
         return new ResolutionStrategyImpl("XXX", EnumCardinality.MANYVALUED, EnumAggregationErrorStrategy.IGNORE,
                 Collections.<String, String>emptyMap(), dependsOn);
     }
-
 }
