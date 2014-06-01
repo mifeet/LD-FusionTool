@@ -1,11 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * TODO
@@ -17,6 +16,14 @@ public class StatementMapper {
     public StatementMapper(UriMapping uriMapping, ValueFactory valueFactory) {
         this.uriMapping = uriMapping;
         this.valueFactory = valueFactory;
+    }
+
+    public Collection<Statement> mapStatements(Collection<Statement> statements) {
+        ArrayList<Statement> result = new ArrayList<>(statements.size());
+        for (Statement statement : statements) {
+            result.add(mapStatement(statement));
+        }
+        return result;
     }
 
     public Statement mapStatement(Statement statement) {

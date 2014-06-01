@@ -20,6 +20,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMapp
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ClusterIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.StatementMapper;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -175,6 +176,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             if (conflictingStatements == null) {
                 continue;
             }
+            Collection<Statement> mappedConflictingStatements = new StatementMapper(uriMapping, VF).mapStatements(conflictingStatements);
             ClusterIterator<Statement> subjectClusterIterator = new ClusterIterator<>(conflictingStatements, StatementBySubjectComparator.getInstance());
             while (subjectClusterIterator.hasNext()) {
                 List<Statement> statements = subjectClusterIterator.next();
@@ -182,7 +184,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
                 StatementMappingIterator mappingIterator = new StatementMappingIterator(statements.iterator(), uriMapping, VF);
                 Model conflictClusterModel = SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
                 Collection<ResolvedStatement> resolvedConflictCluster = resolveConflictCluster(
-                        conflictClusterModel, notMappedSubject, property, effectiveResolutionPolicy, conflictingStatements);
+                        conflictClusterModel, notMappedSubject, property, effectiveResolutionPolicy, mappedConflictingStatements);
                 conflictClustersTable.put(notMappedSubject, property, resolvedConflictCluster);
             }
         }

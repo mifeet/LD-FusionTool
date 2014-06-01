@@ -1,19 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunction;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import com.google.common.collect.*;
+import cz.cuni.mff.odcleanstore.conflictresolution.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
@@ -21,11 +10,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.ConflictResolutionPolicyBuilder;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockBestResolutionFunctionWithQuality;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockNoneResolutionFunction;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockNoneResolutionFunctionWithQuality;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockResolvedStatement;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.*;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Pair;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,26 +20,14 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpUri;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ResolvedStatementMatchesSources.resolvedStatementMatchesSources;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ResolvedStatementMatchesStatement.resolvedStatementMatchesStatement;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -619,10 +592,10 @@ public class ResourceDescriptionConflictResolverImplTest {
         // Assert
         Map<URI, Collection<Statement>> expectedConflictingStatementsMap = new HashMap<>();
         expectedConflictingStatementsMap.put(createHttpUri("sx"), ImmutableList.of(
-                createHttpStatement("sa", "d1", "oa1", "good"),
-                createHttpStatement("sa", "d1", "oa2", "bad"),
-                createHttpStatement("sb", "d1", "ob1", "bad"),
-                createHttpStatement("sb", "d1", "ob2", "bad")));
+                createHttpStatement("sx", "d1", "oa1", "good"),
+                createHttpStatement("sx", "d1", "oa2", "bad"),
+                createHttpStatement("sx", "d1", "ob1", "bad"),
+                createHttpStatement("sx", "d1", "ob2", "bad")));
         expectedConflictingStatementsMap.put(createHttpUri("s1"), ImmutableList.of(
                 createHttpStatement("s1", "d1", "o11", "bad")));
 
@@ -632,6 +605,67 @@ public class ResourceDescriptionConflictResolverImplTest {
             Collection<Statement> expectedConflictingStatements = expectedConflictingStatementsMap.get(resolvedStatement.getStatement().getSubject());
             assertThat(mockResolvedStatement.getConflictingStatements(), containsInAnyOrder(expectedConflictingStatements.toArray()));
         }
+    }
+
+    @Test
+    public void contextConflictingStatementsAreMapped() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "p1", "oa", "good"),
+                createHttpStatement("sb", "p1", "ob", "bad"));
+        ResolutionFunction resolutionFunction = MockBestResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy().build();
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        MockResolvedStatement resolvedStatement = (MockResolvedStatement) Iterables.getOnlyElement(result);
+        Collection<Statement> expectedConflictingStatements = ImmutableList.of(
+                createHttpStatement("sx", "p1", "ox", "good"),
+                createHttpStatement("sx", "p1", "ox", "bad"));
+        Collection<Statement> actualConflictingStatements = resolvedStatement.getConflictingStatements();
+        assertThat(actualConflictingStatements, containsInAnyOrder(expectedConflictingStatements.toArray()));
+    }
+
+    @Test
+    public void contextConflictingStatementsAreMappedWithDependentProperties() throws Exception {
+        // Arrange
+        Resource resource = createHttpUri("sx");
+        Collection<Statement> testInput = ImmutableList.of(
+                createHttpStatement("sa", "d1", "oa", "good"),
+                createHttpStatement("sb", "d1", "ob", "bad"),
+                createHttpStatement("sa", "d2", "o1", "bad"));
+        ResolutionFunction resolutionFunction = MockBestResolutionFunctionWithQuality.newResolutionFunction()
+                .withQuality(createHttpUri("good"), 0.9)
+                .withQuality(createHttpUri("bad"), 0.2);
+        ConflictResolutionPolicy conflictResolutionPolicy = ConflictResolutionPolicyBuilder.newPolicy()
+                .with(createHttpUri("d1"), resolutionStrategyWithDependsOn(createHttpUri("d2"))).build();
+        ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, resolutionFunction);
+
+        // Act
+        Collection<ResolvedStatement> result = resolver.resolveConflicts(new ResourceDescriptionImpl(resource, testInput));
+
+        // Assert
+        MockResolvedStatement resolvedStatement = (MockResolvedStatement) getFirstStatementWithProperty(result, createHttpUri("d1"));
+        Collection<Statement> expectedConflictingStatements = ImmutableList.of(
+                createHttpStatement("sx", "d1", "ox", "good"),
+                createHttpStatement("sx", "d1", "ox", "bad"));
+        Collection<Statement> actualConflictingStatements = resolvedStatement.getConflictingStatements();
+        assertThat(actualConflictingStatements, containsInAnyOrder(expectedConflictingStatements.toArray()));
+    }
+
+    private ResolvedStatement getFirstStatementWithProperty(Collection<ResolvedStatement> result, URI property) {
+        for (ResolvedStatement resolvedStatement : result) {
+            if (resolvedStatement.getStatement().getPredicate().equals(property)) {
+                return resolvedStatement;
+            }
+        }
+        return null;
     }
 
     private ResourceDescriptionConflictResolver createResolver() throws ResolutionFunctionNotRegisteredException {
