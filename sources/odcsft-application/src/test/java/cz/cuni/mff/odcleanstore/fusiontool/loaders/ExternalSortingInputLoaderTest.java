@@ -18,7 +18,10 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -106,13 +109,13 @@ public class ExternalSortingInputLoaderTest {
     /** Map of canonical subject -> canonical predicate -> set of statements in conflict cluster for {@link #testInput1} */
     private Map<Resource, Map<URI, Set<Statement>>> conflictClustersMap1;
 
-    private Collection<Statement> testInput2 = ImmutableList.of(
+    private final Collection<Statement> testInput2 = ImmutableList.of(
             createHttpStatement("s1", "p1", "o1", "g1"),
             createHttpStatement("x", "y", "z", "g1")
     );
 
     // FIXME: add corresponding integration test
-    private Collection<Statement> testInput3 = ImmutableList.of(
+    private final Collection<Statement> testInput3 = ImmutableList.of(
             // Resource description with two dependent resources and one normal triple
             createHttpStatement("s1", "p1", "o1"),
             createStatement(createHttpUri("s1"), resourceDescriptionProperty, createHttpUri("dependent1")),
@@ -457,18 +460,13 @@ public class ExternalSortingInputLoaderTest {
 
     @Test
     public void includesCorrectDependentResourcesInResourceDescriptions() throws Exception {
-        // Act
-        Map<Resource, TreeSet<Statement>> result = new HashMap<>();
+        // Arrange
+        Map<Resource, TreeSet<Statement>> result;
         ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput3, false);
+
+        // Act
         try {
-            inputLoader.initialize(uriMapping);
-            while (inputLoader.hasNext()) {
-                ResourceDescription resourceDescription = inputLoader.next();
-                Collection<Statement> cluster = resourceDescription.getDescribingStatements();
-                TreeSet<Statement> statements = new TreeSet<>(SPOG_COMPARATOR);
-                statements.addAll(cluster);
-                result.put(resourceDescription.getResource(), statements);
-            }
+            result = collectResourceDescriptions(inputLoader);
         } finally {
             inputLoader.close();
         }
@@ -548,6 +546,62 @@ public class ExternalSortingInputLoaderTest {
         assertThat(result, notNullValue());
         System.out.println(result.getDescribingStatements());
         assertThat(result.getDescribingStatements().size(), is(testInput.size()));
+    }
+
+    @Ignore
+    @Test
+    public void mergesFilesTogetherWhenOneUriIsPrefixOfAnother() throws Exception {
+        // Arrange
+        ImmutableList<Statement> testInput = ImmutableList.of(
+                createHttpStatement("prefix/dependent", "p", "o"),
+                createHttpStatement("prefix", "a", "o"),
+                createStatement(createHttpUri("prefix"), resourceDescriptionProperty, createHttpUri("prefix/dependent")));
+        ExternalSortingInputLoader inputLoader = createExternalSortingInputLoader(testInput, false);
+        Map<Resource, Collection<Statement>> expectedResult = new HashMap<>();
+        expectedResult.put(createHttpUri("prefix/dependent"), ImmutableList.of(createHttpStatement("prefix/dependent", "p", "o", null)));
+        expectedResult.put(createHttpUri("prefix"), ImmutableList.of(
+                createHttpStatement("prefix/dependent", "p", "o"),
+                createHttpStatement("prefix", "a", "o"),
+                VF.createStatement(createHttpUri("prefix"), resourceDescriptionProperty, createHttpUri("prefix/dependent"))));
+        Map<Resource, TreeSet<Statement>> result;
+
+        // Act
+        try {
+            result = collectResourceDescriptions(inputLoader);
+        } finally {
+            inputLoader.close();
+        }
+
+        // Assert
+        assertThat(result.size(), is(expectedResult.size()));
+        for (Map.Entry<Resource, Collection<Statement>> entry : expectedResult.entrySet()) {
+            Matcher<Statement>[] expectedStatements = toContextAwareEqualMatchers(entry.getValue());
+            Collection<Statement> actualStatements = result.get(entry.getKey());
+            String errorMessage = "Statements for resource " + entry.getKey() + " do not match";
+            assertThat(errorMessage, actualStatements, Matchers.containsInAnyOrder(expectedStatements));
+        }
+    }
+
+    private Matcher<Statement>[] toContextAwareEqualMatchers(Collection<Statement> value) {
+        Matcher<Statement>[] result = new Matcher[value.size()];
+        int i = 0;
+        for (Statement statement : value) {
+            result[i++] = contextAwareStatementIsEqual(statement);
+        }
+        return result;
+    }
+
+    private Map<Resource, TreeSet<Statement>> collectResourceDescriptions(ExternalSortingInputLoader inputLoader) throws ODCSFusionToolException {
+        Map<Resource, TreeSet<Statement>> result = new HashMap<>();
+        inputLoader.initialize(uriMapping);
+        while (inputLoader.hasNext()) {
+            ResourceDescription resourceDescription = inputLoader.next();
+            Collection<Statement> cluster = resourceDescription.getDescribingStatements();
+            TreeSet<Statement> statements = new TreeSet<>(SPOG_COMPARATOR);
+            statements.addAll(cluster);
+            result.put(resourceDescription.getResource(), statements);
+        }
+        return result;
     }
 
 
