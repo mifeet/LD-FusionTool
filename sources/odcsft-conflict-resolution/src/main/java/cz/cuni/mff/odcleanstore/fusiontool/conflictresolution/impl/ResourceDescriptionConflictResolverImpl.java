@@ -106,8 +106,10 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         Resource canonicalResource = uriMapping.mapResource(resourceDescription.getResource());
         Collection<ResolvedStatement> resourceResolvedStatements = resolveResource(
                 conflictClustersMap.getResourceStatementsMap(canonicalResource),
+                canonicalResource,
                 totalResult,
-                conflictClustersMap);
+                conflictClustersMap,
+                new HashSet<Resource>(1));
         totalResult.addToResult(resourceResolvedStatements);
 
         logFinished(startTime, totalResult);
@@ -117,15 +119,26 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     /**
      * Resolve conflicts in statements contained in {@code conflictClustersMap} for the given {@code canonicalResource}.
      * @param statementsToResolveByProperty statements to be resolved as a map canonical property -> (unmapped) statements with the property
+     * @param canonicalResource
      * @param totalResult collector of result; note that the return value is <b>not</b> added to the result when this method returns
-     *      (only result of resolution of other resources within the resource description may be added)
+     * (only result of resolution of other resources within the resource description may be added)
      * @param conflictClustersMap
+     * @param resolvedResources set of already resolved resources for cycle detection
      * @return result of conflict resolution for the respective resource; note that the result is <b>not</b> added to {@code totalResult}
      */
     private Collection<ResolvedStatement> resolveResource(
             Map<URI, List<Statement>> statementsToResolveByProperty,
+            Resource canonicalResource,
             ResolvedResult totalResult,
-            ConflictClustersMap conflictClustersMap) throws ConflictResolutionException {
+            ConflictClustersMap conflictClustersMap,
+            Set<Resource> resolvedResources) throws ConflictResolutionException {
+
+        if (resolvedResources.contains(canonicalResource)) {
+            LOG.warn("Detected cycle in resource description: resource {} was already resolved", canonicalResource);
+            return Collections.emptySet(); // TODO: think through
+        }
+        resolvedResources.add(canonicalResource);
+        LOG.trace("Resolving conflicts for canonical resource {}", canonicalResource);
 
         Set<URI> resolvedProperties = new HashSet<>();
         Set<URI> canonicalProperties = statementsToResolveByProperty.keySet();
@@ -140,12 +153,12 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
                 List<Statement> conflictClusterStatements = statementsToResolveByProperty.get(canonicalProperty);
                 Model conflictClusterModel = createMappedModel(conflictClusterStatements);
                 Collection<ResolvedStatement> resolvedStatements = resolveConflictCluster(
-                        conflictClusterModel, canonicalProperty, conflictClusterModel, conflictClustersMap, totalResult);
+                        conflictClusterModel, canonicalResource, canonicalProperty, conflictClusterModel, conflictClustersMap, totalResult, resolvedResources);
                 result.addAll(resolvedStatements);
                 resolvedProperties.add(canonicalProperty);
             } else {
                 Collection<ResolvedStatement> resolvedStatements = resolveResourceDependentProperties(
-                        statementsToResolveByProperty, dependentProperties, conflictClustersMap, totalResult);
+                        statementsToResolveByProperty, canonicalResource, dependentProperties, conflictClustersMap, totalResult, resolvedResources);
                 result.addAll(resolvedStatements);
                 resolvedProperties.addAll(dependentProperties);
             }
@@ -162,16 +175,19 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
      * This method <b>doesn't strictly require statements to share the same subject or map to the same canonical subject</b> but it
      * treats the input triples as though they do map to the same canonical subject.
      * @param statementsToResolveByProperty statements to be resolved as a map canonical property -> (unmapped) statements with the property
+     * @param canonicalResource
      * @param dependentProperties list of mutually dependent properties to be resolved
      * @param conflictClustersMap
-     * @param totalResult
-     * @throws ConflictResolutionException CR error
+     * @param totalResult @throws ConflictResolutionException CR error
+     * @param resolvedResources
      */
     private Collection<ResolvedStatement> resolveResourceDependentProperties(
             Map<URI, List<Statement>> statementsToResolveByProperty,
+            Resource canonicalResource,
             List<URI> dependentProperties,
             ConflictClustersMap conflictClustersMap,
-            ResolvedResult totalResult) throws ConflictResolutionException {
+            ResolvedResult totalResult,
+            Set<Resource> resolvedResources) throws ConflictResolutionException {
 
         // Step 1: resolve conflicts for each (non-canonical) subject and property
         Table<Resource, URI, Collection<ResolvedStatement>> conflictClustersTable = ODCSFusionToolCRUtils.newHashTable();
@@ -187,7 +203,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
                 Resource notMappedSubject = statements.get(0).getSubject();
                 Model conflictClusterModel = createMappedModel(statements);
                 Collection<ResolvedStatement> resolvedConflictCluster = resolveConflictCluster(
-                        conflictClusterModel, property, mappedConflictingStatements, conflictClustersMap, totalResult);
+                        conflictClusterModel, canonicalResource, property, mappedConflictingStatements, conflictClustersMap, totalResult, resolvedResources);
                 conflictClustersTable.put(notMappedSubject, property, resolvedConflictCluster);
             }
         }
@@ -214,6 +230,10 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             for (Collection<ResolvedStatement> resolvedStatements : selectedStatements.values()) {
                 chosenStatements.addAll(resolvedStatements);
             }
+
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("... resource {} chosen as best option for dependent properties {} of {} ", new Object[]{bestSubject, dependentProperties, canonicalResource});
+            }
         }
         return chosenStatements;
     }
@@ -223,19 +243,22 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     /**
      * Resolve conflicts in {@code conflictClusterToResolve}. This methods expects that <b>all statements in
      * {@code conflictClusterToResolve} share the same subject and property</b> (no further mapping is performed).
-     * @param conflictClusterToResolve statements to be resolved;
-     * subjects and predicate in these triples must be the same for all triples
+     * @param conflictClusterToResolve statements to be resolved; subjects and predicate in these triples must be the same for all triples
+     * @param canonicalResource
      * @param canonicalProperty canonical property for the conflict cluster
      * @param conflictingMappedStatements conflicting statements to be considered during quality calculation.
-     * @param totalResult
-     * @return resolved statements produced by conflict resolution function
+     * @param totalResult @return resolved statements produced by conflict resolution function
+     * @param resolvedResources
      * @throws ConflictResolutionException CR error
      */
     private Collection<ResolvedStatement> resolveConflictCluster(
             Model conflictClusterToResolve,
+            Resource canonicalResource,
             URI canonicalProperty,
             Collection<Statement> conflictingMappedStatements,
-            ConflictClustersMap conflictClustersMap, ResolvedResult totalResult) throws ConflictResolutionException {
+            ConflictClustersMap conflictClustersMap,
+            ResolvedResult totalResult,
+            Set<Resource> resolvedResources) throws ConflictResolutionException {
 
         if (conflictClusterToResolve.isEmpty()) {
             return Collections.emptyList();
@@ -246,10 +269,13 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             Set<Resource> objects = ResourceDescriptionConflictResolverUtils.collectResourceObjects(conflictClusterToResolve);
             Map<URI, List<Statement>> descriptionStatements = conflictClustersMap.getUnionStatementsMap(objects);
             URI newObject = generateUniqueUri();
+            LOG.trace("...resolving values of description property {} (new dependent resource is {})", canonicalProperty, canonicalResource);
             Collection<ResolvedStatement> resolvedStatements = resolveResource(
                     descriptionStatements,
+                    newObject,
                     totalResult,
-                    conflictClustersMap);
+                    conflictClustersMap,
+                    resolvedResources);
             totalResult.addToResult(new SubjectMappingIterator(resolvedStatements.iterator(), newObject, resolvedStatementFactory)); // overwrite subjects in result
 
             Resource subject = conflictClusterToResolve.iterator().next().getSubject();
