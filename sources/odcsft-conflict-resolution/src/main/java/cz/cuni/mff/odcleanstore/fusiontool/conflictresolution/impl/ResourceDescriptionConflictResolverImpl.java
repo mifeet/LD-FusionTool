@@ -1,7 +1,14 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import com.google.common.collect.Table;
-import cz.cuni.mff.odcleanstore.conflictresolution.*;
+import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
+import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunction;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
@@ -19,12 +26,24 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ClusterIterat
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.StatementMapper;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
-import org.openrdf.model.*;
+import org.openrdf.model.Model;
+import org.openrdf.model.Resource;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * TODO
@@ -269,7 +288,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             Set<Resource> objects = ResourceDescriptionConflictResolverUtils.collectResourceObjects(conflictClusterToResolve);
             Map<URI, List<Statement>> descriptionStatements = conflictClustersMap.getUnionStatementsMap(objects);
             URI newObject = generateUniqueUri();
-            LOG.trace("...resolving values of description property {} (new dependent resource is {})", canonicalProperty, canonicalResource);
+            LOG.trace("...resolving values of description property {} (new dependent resource is {})", canonicalProperty, newObject);
             Collection<ResolvedStatement> resolvedStatements = resolveResource(
                     descriptionStatements,
                     newObject,
