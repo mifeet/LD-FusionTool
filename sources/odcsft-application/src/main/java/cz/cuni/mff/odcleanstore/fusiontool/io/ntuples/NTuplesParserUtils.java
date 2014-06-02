@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
 import org.openrdf.model.Value;
 
@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Comparator;
 
 /**
- * Helper methods for use with {@link cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParser}.
+ * Helper methods for use with {@link NTuplesParser}.
  */
 public final class NTuplesParserUtils {
     /**

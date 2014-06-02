@@ -12,10 +12,10 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationE
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.ExternalSorter;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParser;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesParserUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesFileMerger;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesParser;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesParserUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.AtributeIndexFileNTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileAndAttributeIndexFileMerger;
@@ -358,7 +358,8 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     private static Comparator<String> getSortComparator() {
         // compare lines as string, which works fine for NQuads/NTuples
-        // TODO: NTuples files only by the first component?
+        // TODO: NTuples files only by the first component
+        // ?
         return new Comparator<String>() {
             @Override
             public int compare(String r1, String r2) {

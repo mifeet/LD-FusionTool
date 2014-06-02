@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
@@ -25,14 +25,14 @@ public class NTuplesFileMerger {
     }
 
     /**
-     * Merges two files serialized with format used by {@link cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter}
+     * Merges two files serialized with format used by {@link NTuplesWriter}
      * using full inner join by the first item in each tuple.
      * Necessary buffering is done on the right side.
      * After join of corresponding lines, the matching records are transformed with transformed and written to {@code outputWriter}.
      * The method expects that both input files are sorted by first item on each line.
-     * @param leftReader reader of file serialized with {@link cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter}
+     * @param leftReader reader of file serialized with {@link NTuplesWriter}
      * and sorted by first {@code Value} on each  line using {@link cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator}
-     * @param rightReader reader of file serialized with {@link cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter}
+     * @param rightReader reader of file serialized with {@link NTuplesWriter}
      * and sorted by first {@code Value} on each  line using {@link cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator}
      * @param outputWriter writer for merged result
      */

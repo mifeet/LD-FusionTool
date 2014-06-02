@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort;
 
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesFileMerger;
 import org.openrdf.model.Value;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
 import org.junit.Test;
 import org.openrdf.model.ValueFactory;

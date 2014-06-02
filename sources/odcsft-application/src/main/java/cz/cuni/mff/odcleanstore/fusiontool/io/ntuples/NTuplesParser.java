@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.io;
+package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;

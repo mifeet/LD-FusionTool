@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
-import cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesWriter;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.helpers.RDFHandlerBase;
@@ -10,7 +10,7 @@ import java.io.IOException;
 
 /**
  * Formatter of incoming statements to the format required by the primary temporary data file.
- * Data are written to the underlying {@link cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesWriter} in the following format:
+ * Data are written to the underlying {@link cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesWriter} in the following format:
  * <ul>
  *     <li> c(S) S P O G for all input quads (S,P,O,G)</li>
  * </ul>

@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
 
 /**
-* Exception thrown by {@link cz.cuni.mff.odcleanstore.fusiontool.io.NTuplesFileMerger.NTupleMergeTransform}.
+* Exception thrown by {@link cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesFileMerger.NTupleMergeTransform}.
 */
 public class NTupleMergeTransformException extends Exception  {
     /**

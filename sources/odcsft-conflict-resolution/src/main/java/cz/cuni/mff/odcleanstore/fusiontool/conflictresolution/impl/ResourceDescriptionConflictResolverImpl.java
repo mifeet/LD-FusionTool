@@ -251,7 +251,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             }
 
             if (LOG.isTraceEnabled()) {
-                LOG.trace("... resource {} chosen as best option for dependent properties {} of {} ", new Object[]{bestSubject, dependentProperties, canonicalResource});
+                LOG.trace("... resource {} chosen as best option out of {} for dependent properties {} of resource {} ",
+                        new Object[]{bestSubject, conflictClustersTable.rowKeySet().size(), dependentProperties, canonicalResource});
             }
         }
         return chosenStatements;
