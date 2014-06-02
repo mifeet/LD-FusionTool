@@ -311,7 +311,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         }
         ResolutionFunction resolutionFunction = getResolutionFunction(resolutionStrategy);
         CRContext context = new CRContextImpl(conflictingMappedStatements, metadataModel, resolutionStrategy, resolvedStatementFactory);
-        // FIXME: resolution functions generally assume that the model is spog-sorted; while this works now, it can be easily broken in future
+        // TODO: resolution functions generally assume that the model is spog-sorted; while this works now, it can be easily broken in future
         return resolutionFunction.resolve(conflictClusterToResolve, context);
     }
 
