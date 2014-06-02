@@ -152,7 +152,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             ConflictClustersMap conflictClustersMap,
             Set<Resource> resolvedResources) throws ConflictResolutionException {
 
-        if (resolvedResources.contains(canonicalResource)) {
+        if (resolvedResources.contains(canonicalResource)) { // FIXME: does it work for generated resources?
             LOG.warn("Detected cycle in resource description: resource {} was already resolved", canonicalResource);
             return Collections.emptySet(); // TODO: think through
         }
@@ -215,7 +215,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             if (conflictingStatements == null) {
                 continue;
             }
-            Collection<Statement> mappedConflictingStatements = new StatementMapper(uriMapping, VF).mapStatements(conflictingStatements);
+            Collection<Statement> mappedConflictingStatements = new StatementMapper(uriMapping, VF).mapStatements(conflictingStatements); // FIXME: this may contain duplicates!
             ClusterIterator<Statement> subjectClusterIterator = new ClusterIterator<>(conflictingStatements, StatementBySubjectComparator.getInstance());
             while (subjectClusterIterator.hasNext()) {
                 List<Statement> statements = subjectClusterIterator.next();
@@ -289,7 +289,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             Set<Resource> objects = ResourceDescriptionConflictResolverUtils.collectResourceObjects(conflictClusterToResolve);
             Map<URI, List<Statement>> descriptionStatements = conflictClustersMap.getUnionStatementsMap(objects);
             URI newObject = generateUniqueUri();
-            LOG.trace("...resolving values of description property {} (new dependent resource is {})", canonicalProperty, newObject);
+            LOG.trace("... resolving values of description property {} (new dependent resource is {})", canonicalProperty, newObject);
             Collection<ResolvedStatement> resolvedStatements = resolveResource(
                     descriptionStatements,
                     newObject,
