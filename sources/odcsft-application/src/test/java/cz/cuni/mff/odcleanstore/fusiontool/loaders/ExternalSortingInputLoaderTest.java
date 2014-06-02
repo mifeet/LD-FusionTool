@@ -21,7 +21,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -548,7 +547,6 @@ public class ExternalSortingInputLoaderTest {
         assertThat(result.getDescribingStatements().size(), is(testInput.size()));
     }
 
-    @Ignore
     @Test
     public void mergesFilesTogetherWhenOneUriIsPrefixOfAnother() throws Exception {
         // Arrange

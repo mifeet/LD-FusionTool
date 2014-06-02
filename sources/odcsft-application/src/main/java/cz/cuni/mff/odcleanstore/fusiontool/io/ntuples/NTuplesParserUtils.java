@@ -1,6 +1,11 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Value;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.rio.RDFParseException;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -9,6 +14,9 @@ import java.util.Comparator;
  * Helper methods for use with {@link NTuplesParser}.
  */
 public final class NTuplesParserUtils {
+    public static final ValueComparator VALUE_COMPARATOR = new ValueComparator();
+    private static final ValueFactory VF = ValueFactoryImpl.getInstance();
+
     /**
      * Returns true if calling {@link NTuplesParser#next()} on the given
      * parser would return a tuple which has its first item equal to {@code comparedFirstValue}.
@@ -40,5 +48,41 @@ public final class NTuplesParserUtils {
             parser.next();
         }
         return cmp == 0;
+    }
+
+    /**
+     * Parses an URI or blank node in NTriples format.
+     * Any characters after the first URI or blank node are ignored.
+     * Assumes the input is valid, doesn't do much validation.
+     * @param str string to parse
+     * @return parsed URI or blank node
+     * @throws org.openrdf.rio.RDFParseException parse error
+     */
+    public static Resource parseValidResource(String str) throws RDFParseException {
+        int length = str.length();
+        if (length < 3) {
+            throw new RDFParseException("String '" + str + "' is not a valid URI nor blank node");
+        }
+        char firstChar = str.charAt(0);
+        if (firstChar == '<') {
+            int endIndex = str.indexOf('>', 1);
+            if (endIndex < 0) {
+                throw new RDFParseException("Expected '>' but none found in '" + str + "'");
+            }
+            String uri = str.substring(1, endIndex);
+            return VF.createURI(uri);
+        } else if (firstChar == '_' && str.charAt(1) == ':') {
+            int endIndex = 2;
+            while (endIndex < length && str.charAt(endIndex) != ' ' && str.charAt(endIndex) != '\t') {
+                endIndex++;
+            }
+            while (str.charAt(endIndex - 1) == '.') {
+                endIndex--; // dot mustn't be the last character
+            }
+            String nodeId = str.substring(2, endIndex);
+            return VF.createBNode(nodeId);
+        } else {
+            throw new RDFParseException(String.format("Expected '>' or '_:' but found '%s' in '%s'", str.charAt(0), str));
+        }
     }
 }

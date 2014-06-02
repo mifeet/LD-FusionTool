@@ -2,7 +2,6 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
@@ -31,6 +30,7 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +68,6 @@ public class ExternalSortingInputLoader implements InputLoader {
     private static final Logger LOG = LoggerFactory.getLogger(ExternalSortingInputLoader.class);
 
     private static final ValueFactory VF = ValueFactoryImpl.getInstance();
-    private static final ValueComparator VALUE_COMPARATOR = new ValueComparator();
     private static final String TEMP_FILE_PREFIX = "odcs-ft.sort-loader.";
     private static final Charset CHARSET = Charset.defaultCharset();
 
@@ -211,7 +210,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
             // Add additional quads from other files
             int extendedDescriptionCount = 0;
-            boolean foundMatch = NTuplesParserUtils.skipLessThan(mergedAttributeFileIterator, firstCanonicalSubject, VALUE_COMPARATOR);
+            boolean foundMatch = NTuplesParserUtils.skipLessThan(mergedAttributeFileIterator, firstCanonicalSubject, NTuplesParserUtils.VALUE_COMPARATOR);
             if (foundMatch) {
                 while (NTuplesParserUtils.hasMatchingRecord(mergedAttributeFileIterator, firstCanonicalSubject)) {
                     describingStatements.add(createStatement(mergedAttributeFileIterator.next()));
@@ -357,15 +356,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     private static Comparator<String> getSortComparator() {
-        // compare lines as string, which works fine for NQuads/NTuples
-        // TODO: NTuples files only by the first component
-        // ?
-        return new Comparator<String>() {
-            @Override
-            public int compare(String r1, String r2) {
-                return r1.compareTo(r2);
-            }
-        };
+        return SortComparator.INSTANCE;
     }
 
     private File createTempFile() throws IOException {
@@ -419,6 +410,21 @@ public class ExternalSortingInputLoader implements InputLoader {
             close(); // clean up temporary files defensively in case the caller doesn't call close() on exception
         } catch (Exception e2) {
             // ignore
+        }
+    }
+
+    private static class SortComparator implements Comparator<String> {
+        public static final SortComparator INSTANCE = new SortComparator();
+
+        @Override
+        public int compare(String r1, String r2) {
+            try {
+                Resource resource1 = NTuplesParserUtils.parseValidResource(r1);
+                Resource resource2 = NTuplesParserUtils.parseValidResource(r2);
+                return NTuplesParserUtils.VALUE_COMPARATOR.compare(resource1, resource2);
+            } catch (RDFParseException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

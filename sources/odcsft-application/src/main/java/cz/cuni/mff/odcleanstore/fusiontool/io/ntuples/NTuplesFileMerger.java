@@ -1,6 +1,5 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.ValueComparator;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
 import org.openrdf.model.Value;
 import org.openrdf.rio.ParserConfig;
@@ -15,7 +14,6 @@ import java.util.List;
  * TODO
  */
 public class NTuplesFileMerger {
-    private static final ValueComparator VALUE_COMPARATOR = new ValueComparator();
     private final NTupleMergeTransform transform;
     private final ParserConfig parserConfig;
 
@@ -43,9 +41,9 @@ public class NTuplesFileMerger {
         List<List<Value>> rightBuffer = new ArrayList<List<Value>>();
         try {
             while (leftParser.hasNext() && rightParser.hasNext()) {
-                boolean wasEqual = NTuplesParserUtils.skipLessThan(leftParser, rightParser.peek().get(0), VALUE_COMPARATOR);
+                boolean wasEqual = NTuplesParserUtils.skipLessThan(leftParser, rightParser.peek().get(0), NTuplesParserUtils.VALUE_COMPARATOR);
                 if (!wasEqual && leftParser.hasNext()) {
-                    wasEqual = NTuplesParserUtils.skipLessThan(rightParser, leftParser.peek().get(0), VALUE_COMPARATOR);
+                    wasEqual = NTuplesParserUtils.skipLessThan(rightParser, leftParser.peek().get(0), NTuplesParserUtils.VALUE_COMPARATOR);
                 }
 
                 if (wasEqual) {
@@ -82,7 +80,7 @@ public class NTuplesFileMerger {
     }
 
     private int compare(List<Value> left, List<Value> right) {
-        return VALUE_COMPARATOR.compare(left.get(0), right.get(0));
+        return NTuplesParserUtils.VALUE_COMPARATOR.compare(left.get(0), right.get(0));
     }
 
     /**
