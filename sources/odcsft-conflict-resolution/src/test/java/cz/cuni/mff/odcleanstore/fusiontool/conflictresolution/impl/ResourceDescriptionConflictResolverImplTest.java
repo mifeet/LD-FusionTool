@@ -8,6 +8,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicy
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
+import cz.cuni.mff.odcleanstore.conflictresolution.quality.DummyFQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.*;
@@ -660,6 +661,8 @@ public class ResourceDescriptionConflictResolverImplTest {
         assertThat(actualConflictingStatements, containsInAnyOrder(expectedConflictingStatements.toArray()));
     }
 
+    // FIXME: test for non-aggregable nested resource description statements
+
     private ResolvedStatement getFirstStatementWithProperty(Collection<ResolvedStatement> result, URI property) {
         for (ResolvedStatement resolvedStatement : result) {
             if (resolvedStatement.getStatement().getPredicate().equals(property)) {
@@ -683,6 +686,7 @@ public class ResourceDescriptionConflictResolverImplTest {
                 uriMapping,
                 new EmptyMetadataModel(),
                 "http://cr/",
+                new NestedResourceDescriptionQualityCalculatorImpl(new DummyFQualityCalculator()),
                 Collections.singleton(RESOURCE_DESCRIPTION_URI));
     }
 

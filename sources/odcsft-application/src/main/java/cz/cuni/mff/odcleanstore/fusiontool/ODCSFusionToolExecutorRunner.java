@@ -7,6 +7,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
+import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.DecidingConflictFQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
@@ -19,6 +20,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.NestedResourceDescriptionQualityCalculatorImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionConflictResolverImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
@@ -86,7 +88,7 @@ import java.util.Set;
  * Loads and prepares all inputs for data fusion executor, executes data fusion and outputs additional metadata
  * such as canonical URIs.
  * See sample configuration files (sample-config-full.xml) for overview of all processing options.
- *
+ * <p/>
  * This class is not thread-safe.
  * @see cz.cuni.mff.odcleanstore.fusiontool.ODCSFusionToolExecutor
  */
@@ -112,7 +114,7 @@ public class ODCSFusionToolExecutorRunner {
     public ODCSFusionToolExecutorRunner(Config config) {
         this.config = config;
         isTransitive = config.getSeedResourceRestriction() != null
-            && config.getSeedResourceRestriction().isTransitive();
+                && config.getSeedResourceRestriction().isTransitive();
         repositoryFactory = new RepositoryFactory(config.getParserConfig());
     }
 
@@ -184,8 +186,8 @@ public class ODCSFusionToolExecutorRunner {
             UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
             LargeCollectionFactory largeCollectionFactory = createLargeCollectionFactory();
             return (isTransitive)
-                ? new TransitiveSubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly())
-                : new SubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
+                    ? new TransitiveSubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly())
+                    : new SubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly());
         }
     }
 
@@ -328,7 +330,7 @@ public class ODCSFusionToolExecutorRunner {
      * corresponding quads are loaded and resolved.
      * @param dataSources initialized data sources
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
-     *      or null to iterate all subjects
+     * or null to iterate all subjects
      * @return collection of seed subject URIs
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException query error
      */
@@ -378,13 +380,16 @@ public class ODCSFusionToolExecutorRunner {
      * @return initialized conflict resolver
      */
     protected ResourceDescriptionConflictResolver createConflictResolver(Model metadata, UriMappingIterable uriMapping) {
+        DistanceMeasureImpl distanceMeasure = new DistanceMeasureImpl();
         SourceQualityCalculator sourceQualityCalculator = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(),
                 config.getPublisherScoreWeight());
         ResolutionFunctionRegistry registry = ConflictResolverFactory.createInitializedResolutionFunctionRegistry(
                 sourceQualityCalculator,
                 config.getAgreeCoefficient(),
-                new DistanceMeasureImpl());
+                distanceMeasure);
+        NestedResourceDescriptionQualityCalculatorImpl nestedResourceDescriptionQualityCalculator = new NestedResourceDescriptionQualityCalculatorImpl(
+                new DecidingConflictFQualityCalculator(sourceQualityCalculator, config.getAgreeCoefficient(), distanceMeasure));
 
         // TODO
         //if (config.getOutputConflictsOnly()) {
@@ -396,6 +401,7 @@ public class ODCSFusionToolExecutorRunner {
                 uriMapping,
                 metadata,
                 config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX,
+                nestedResourceDescriptionQualityCalculator,
                 ConfigConstants.RESOURCE_DESCRIPTION_URIS);
     }
 
@@ -408,7 +414,8 @@ public class ODCSFusionToolExecutorRunner {
      * @return set of URIs preferred for canonical URIs
      * @throws IOException error reading canonical URIs from file
      */
-    protected Set<String> getPreferredURIs(Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
+    protected Set<String> getPreferredURIs(
+            Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
             Collection<String> preferredCanonicalURIs) throws IOException {
 
         Set<String> preferredURIs = new HashSet<String>(settingsPreferredURIs.size());
@@ -492,7 +499,8 @@ public class ODCSFusionToolExecutorRunner {
      * @throws IOException I/O error
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error when creating output
      */
-    protected void writeSameAsLinks(final UriMappingIterable uriMapping, List<Output> outputs,
+    protected void writeSameAsLinks(
+            final UriMappingIterable uriMapping, List<Output> outputs,
             Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException, ODCSFusionToolException {
 
         List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();

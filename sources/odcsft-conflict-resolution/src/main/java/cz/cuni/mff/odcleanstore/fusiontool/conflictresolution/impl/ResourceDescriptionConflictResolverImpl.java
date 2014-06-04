@@ -15,10 +15,10 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementFactoryImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
-import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.MediatingScatteringFQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.NestedResourceDescriptionQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMappingIterable;
@@ -66,6 +66,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     private final UriMapping uriMapping;
     private final ConflictResolutionPolicy effectiveResolutionPolicy;
     private final ResolutionFunctionRegistry resolutionFunctionRegistry;
+    private final NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator;
     private final ResolvedStatementFactoryImpl resolvedStatementFactory;
     private final Set<URI> resourceDescriptionProperties;
     private final AlternativeUriNavigator dependentPropertyMapping;
@@ -86,8 +87,10 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             UriMapping uriMapping,
             Model metadata,
             String resolvedGraphsURIPrefix, // TODO: replace with UriGenerator class generating uris both for contexts and generated dependent resources
+            NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator,
             Set<URI> resourceDescriptionProperties) {
         this.resolutionFunctionRegistry = resolutionFunctionRegistry;
+        this.nestedResourceDescriptionQualityCalculator = nestedResourceDescriptionQualityCalculator;
         this.effectiveResolutionPolicy = ResourceDescriptionConflictResolverUtils.getEffectiveResolutionPolicy(conflictResolutionPolicy, uriMapping);
         this.dependentPropertyMapping = new AlternativeUriNavigator(ResourceDescriptionConflictResolverUtils.getDependentPropertyMapping(
                 effectiveResolutionPolicy,
@@ -235,7 +238,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         for (Resource notMappedSubject : conflictClustersTable.rowKeySet()) {
             double aggregateQualitySum = 0;
             for (URI property : dependentProperties) {
-                aggregateQualitySum += ResourceDescriptionConflictResolverUtils.aggregateConflictClusterQuality(conflictClustersTable.get(notMappedSubject,
+                aggregateQualitySum += nestedResourceDescriptionQualityCalculator.aggregateConflictClusterQuality(conflictClustersTable.get(notMappedSubject,
                         property));
             }
             double notMappedSubjectQuality = aggregateQualitySum / dependentProperties.size();
@@ -320,11 +323,9 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             ResolutionStrategy resolutionStrategy, ConflictClustersMap conflictClustersMap,
             ResolvedResult totalResult, Set<Resource> resolvedResources, URI canonicalProperty) throws ResolutionFunctionNotRegisteredException {
         if (resourceDescriptionProperties.contains(canonicalProperty)) {
-            // FIXME: fquality calculator
-            MediatingScatteringFQualityCalculator fQualityCalculator = new MediatingScatteringFQualityCalculator();
             ResourceDescriptionConflictResolverContext resolverContext = new ResourceDescriptionConflictResolverContext(
                     conflictClustersMap, totalResult, resolvedResources);
-            return new NestedResourceDescriptionResolution(fQualityCalculator, resolverContext);
+            return new NestedResourceDescriptionResolution(nestedResourceDescriptionQualityCalculator, resolverContext);
         } else {
             return resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
         }

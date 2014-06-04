@@ -3,12 +3,14 @@ package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
-import cz.cuni.mff.odcleanstore.conflictresolution.quality.MediatingFQualityCalculator;
-import cz.cuni.mff.odcleanstore.conflictresolution.resolution.MediatingResolutionFunction;
+import cz.cuni.mff.odcleanstore.conflictresolution.quality.DummyFQualityCalculator;
+import cz.cuni.mff.odcleanstore.conflictresolution.resolution.ResolutionFunctionBase;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.NestedResourceDescriptionQualityCalculator;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
+import org.openrdf.model.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,8 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -26,21 +26,23 @@ import java.util.Set;
  * adds the resolved quads with {@code N} as their subject to {@link #resolverContext}.{#link ResourceDescriptionConflictResolverContext#totalResult},
  * and returns a single result quad whose object is {@code N}.
  */
-class NestedResourceDescriptionResolution extends MediatingResolutionFunction {
+class NestedResourceDescriptionResolution extends ResolutionFunctionBase {
     private static final Logger LOG = LoggerFactory.getLogger(NestedResourceDescriptionResolution.class);
+    private final NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator;
     private final ResourceDescriptionConflictResolverImpl.ResourceDescriptionConflictResolverContext resolverContext;
 
     /**
      * Creates a new instance.
-     * @param fQualityCalculator calculator of F-quality to be used for estimation of
+     * @param nestedResourceDescriptionQualityCalculator calculator of F-quality to be used for estimation of
      * produced {@link cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement result quads}
      * (see {@link cz.cuni.mff.odcleanstore.conflictresolution.quality.MediatingFQualityCalculator})
      */
     public NestedResourceDescriptionResolution(
-            MediatingFQualityCalculator fQualityCalculator,
+            NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator,
             ResourceDescriptionConflictResolverImpl.ResourceDescriptionConflictResolverContext resourceDescriptionConflictResolverContext) {
-        super(fQualityCalculator);
-        resolverContext = resourceDescriptionConflictResolverContext;
+        super(new DummyFQualityCalculator());
+        this.nestedResourceDescriptionQualityCalculator = nestedResourceDescriptionQualityCalculator;
+        this.resolverContext = resourceDescriptionConflictResolverContext;
     }
 
     @Override
@@ -64,7 +66,7 @@ class NestedResourceDescriptionResolution extends MediatingResolutionFunction {
         LOG.trace("... resolving values of description property {} (new dependent resource is {})", canonicalProperty, newObject);
         Collection<ResolvedStatement> resolvedStatements = resolverContext.resolveNestedResource(nestedResourceSubjects, newObject);
 
-        double aggregateQuality = ResourceDescriptionConflictResolverUtils.aggregateConflictClusterQuality(resolvedStatements);
+        double aggregateQuality = nestedResourceDescriptionQualityCalculator.aggregateConflictClusterQuality(resolvedStatements);
         Collection<Resource> sources = ResourceDescriptionConflictResolverUtils.collectContexts(resolvedStatements);
         ResolvedStatement resultStatement = context.getResolvedStatementFactory().create(
                 context.getCanonicalSubject(), canonicalProperty, newObject, aggregateQuality, sources);
@@ -85,5 +87,10 @@ class NestedResourceDescriptionResolution extends MediatingResolutionFunction {
             }
         }
         return result;
+    }
+
+    @Override
+    protected double getNonAggregableStatementFQuality(Value value, Collection<Resource> sources, CRContext crContext) {
+        return nestedResourceDescriptionQualityCalculator.getLiteralNestedResourceFQuality(value, sources, crContext);
     }
 }

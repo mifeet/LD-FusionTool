@@ -40,17 +40,6 @@ public class ResourceDescriptionConflictResolverUtils {
         return dependentPropertyMapping;
     }
 
-    static double aggregateConflictClusterQuality(Collection<ResolvedStatement> resolvedStatements) {
-        if (resolvedStatements == null || resolvedStatements.isEmpty()) {
-            return 0d;
-        }
-        double sum = 0d;
-        for (ResolvedStatement resolvedStatement : resolvedStatements) {
-            sum += resolvedStatement.getQuality();
-        }
-        return sum / resolvedStatements.size();
-    }
-
     static ConflictResolutionPolicy getEffectiveResolutionPolicy(ConflictResolutionPolicy conflictResolutionPolicy, UriMapping uriMapping) {
         ResolutionStrategy effectiveDefaultStrategy = ResourceDescriptionConflictResolverImpl.DEFAULT_RESOLUTION_STRATEGY;
         Map<URI, ResolutionStrategy> effectivePropertyStrategies = new HashMap<>();
