@@ -14,8 +14,8 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunction
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementFactoryImpl;
-import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.CRUtils;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
+import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.MediatingScatteringFQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,11 +85,13 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             ConflictResolutionPolicy conflictResolutionPolicy,
             UriMapping uriMapping,
             Model metadata,
-            String resolvedGraphsURIPrefix, // TODO: replace with UriGenerator class that could generate uris both for contexts and generated dependent resources
+            String resolvedGraphsURIPrefix, // TODO: replace with UriGenerator class generating uris both for contexts and generated dependent resources
             Set<URI> resourceDescriptionProperties) {
         this.resolutionFunctionRegistry = resolutionFunctionRegistry;
         this.effectiveResolutionPolicy = ResourceDescriptionConflictResolverUtils.getEffectiveResolutionPolicy(conflictResolutionPolicy, uriMapping);
-        this.dependentPropertyMapping = new AlternativeUriNavigator(ResourceDescriptionConflictResolverUtils.getDependentPropertyMapping(effectiveResolutionPolicy, uriMapping));
+        this.dependentPropertyMapping = new AlternativeUriNavigator(ResourceDescriptionConflictResolverUtils.getDependentPropertyMapping(
+                effectiveResolutionPolicy,
+                uriMapping));
         this.uriMapping = uriMapping != null
                 ? uriMapping
                 : EmptyUriMappingIterable.getInstance();
@@ -215,7 +216,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             if (conflictingStatements == null) {
                 continue;
             }
-            Collection<Statement> mappedConflictingStatements = new StatementMapper(uriMapping, VF).mapStatements(conflictingStatements); // FIXME: this may contain duplicates!
+            Collection<Statement> mappedConflictingStatements = new StatementMapper(uriMapping,
+                    VF).mapStatements(conflictingStatements); // FIXME: this may contain duplicates!
             ClusterIterator<Statement> subjectClusterIterator = new ClusterIterator<>(conflictingStatements, StatementBySubjectComparator.getInstance());
             while (subjectClusterIterator.hasNext()) {
                 List<Statement> statements = subjectClusterIterator.next();
@@ -233,7 +235,8 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         for (Resource notMappedSubject : conflictClustersTable.rowKeySet()) {
             double aggregateQualitySum = 0;
             for (URI property : dependentProperties) {
-                aggregateQualitySum += ResourceDescriptionConflictResolverUtils.aggregateConflictClusterQuality(conflictClustersTable.get(notMappedSubject, property));
+                aggregateQualitySum += ResourceDescriptionConflictResolverUtils.aggregateConflictClusterQuality(conflictClustersTable.get(notMappedSubject,
+                        property));
             }
             double notMappedSubjectQuality = aggregateQualitySum / dependentProperties.size();
             if (notMappedSubjectQuality > bestSubjectQuality) {
@@ -252,7 +255,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
             if (LOG.isTraceEnabled()) {
                 LOG.trace("... resource {} chosen as best option out of {} for dependent properties {} of resource {} ",
-                        new Object[]{bestSubject, conflictClustersTable.rowKeySet().size(), dependentProperties, canonicalResource});
+                        new Object[] {bestSubject, conflictClustersTable.rowKeySet().size(), dependentProperties, canonicalResource});
             }
         }
         return chosenStatements;
@@ -263,17 +266,17 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     /**
      * Resolve conflicts in {@code conflictClusterToResolve}. This methods expects that <b>all statements in
      * {@code conflictClusterToResolve} share the same subject and property</b> (no further mapping is performed).
-     * @param conflictClusterToResolve statements to be resolved; subjects and predicate in these triples must be the same for all triples
-     * @param canonicalResource
+     * @param conflictClusterToResolve statements to be resolved;
+     * <b>statements in the model must be canonical-mapped</b> so that subjects and predicates are all the same
+     * @param canonicalSubject canonical subject for the conflict cluster
      * @param canonicalProperty canonical property for the conflict cluster
      * @param conflictingMappedStatements conflicting statements to be considered during quality calculation.
      * @param totalResult @return resolved statements produced by conflict resolution function
-     * @param resolvedResources
-     * @throws ConflictResolutionException CR error
+     * @param resolvedResources @throws ConflictResolutionException CR error
      */
     private Collection<ResolvedStatement> resolveConflictCluster(
             Model conflictClusterToResolve,
-            Resource canonicalResource,
+            Resource canonicalSubject,
             URI canonicalProperty,
             Collection<Statement> conflictingMappedStatements,
             ConflictClustersMap conflictClustersMap,
@@ -284,37 +287,15 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             return Collections.emptyList();
         }
 
-        if (resourceDescriptionProperties.contains(canonicalProperty)) {
-            // TODO: extract method (or resolution function?)
-            Set<Resource> objects = ResourceDescriptionConflictResolverUtils.collectResourceObjects(conflictClusterToResolve);
-            Map<URI, List<Statement>> descriptionStatements = conflictClustersMap.getUnionStatementsMap(objects);
-            URI newObject = generateUniqueUri();
-            LOG.trace("... resolving values of description property {} (new dependent resource is {})", canonicalProperty, newObject);
-            Collection<ResolvedStatement> resolvedStatements = resolveResource(
-                    descriptionStatements,
-                    newObject,
-                    totalResult,
-                    conflictClustersMap,
-                    resolvedResources);
-            totalResult.addToResult(new SubjectMappingIterator(resolvedStatements.iterator(), newObject, resolvedStatementFactory)); // overwrite subjects in result
+        ResolutionStrategy resolutionStrategy = getResolutionStrategy(canonicalProperty);
+        ResolutionFunction resolutionFunction = getResolutionFunction(
+                resolutionStrategy, conflictClustersMap, totalResult, resolvedResources, canonicalProperty);
+        CRContext context = new CRContextImpl(
+                conflictingMappedStatements, metadataModel, resolutionStrategy, resolvedStatementFactory, canonicalSubject, canonicalProperty);
 
-            Resource subject = conflictClusterToResolve.iterator().next().getSubject();
-            double aggregateQuality = ResourceDescriptionConflictResolverUtils.aggregateConflictClusterQuality(resolvedStatements);
-            return Collections.singleton(resolvedStatementFactory.create(
-                    subject, canonicalProperty, newObject, aggregateQuality, ResourceDescriptionConflictResolverUtils.collectContexts(resolvedStatements)));
-            // FIXME: do not return here, but continue with statements having literals as their object, treating them as non-aggregable quads
-        }
-
-        ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(canonicalProperty);
-        if (resolutionStrategy == null) {
-            resolutionStrategy = effectiveResolutionPolicy.getDefaultResolutionStrategy();
-        }
-        ResolutionFunction resolutionFunction = getResolutionFunction(resolutionStrategy);
-        CRContext context = new CRContextImpl(conflictingMappedStatements, metadataModel, resolutionStrategy, resolvedStatementFactory);
         // TODO: resolution functions generally assume that the model is spog-sorted; while this works now, it can be easily broken in future
         return resolutionFunction.resolve(conflictClusterToResolve, context);
     }
-
 
     // =======================================================================
     // Auxiliary methods
@@ -335,8 +316,26 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         return SORTED_LIST_MODEL_FACTORY.fromUnorderedIterator(mappingIterator);
     }
 
-    protected ResolutionFunction getResolutionFunction(ResolutionStrategy resolutionStrategy) throws ResolutionFunctionNotRegisteredException {
-        return resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
+    protected ResolutionFunction getResolutionFunction(
+            ResolutionStrategy resolutionStrategy, ConflictClustersMap conflictClustersMap,
+            ResolvedResult totalResult, Set<Resource> resolvedResources, URI canonicalProperty) throws ResolutionFunctionNotRegisteredException {
+        if (resourceDescriptionProperties.contains(canonicalProperty)) {
+            // FIXME: fquality calculator
+            MediatingScatteringFQualityCalculator fQualityCalculator = new MediatingScatteringFQualityCalculator();
+            ResourceDescriptionConflictResolverContext resolverContext = new ResourceDescriptionConflictResolverContext(
+                    conflictClustersMap, totalResult, resolvedResources);
+            return new NestedResourceDescriptionResolution(fQualityCalculator, resolverContext);
+        } else {
+            return resolutionFunctionRegistry.get(resolutionStrategy.getResolutionFunctionName());
+        }
+    }
+
+    private ResolutionStrategy getResolutionStrategy(URI canonicalProperty) {
+        ResolutionStrategy resolutionStrategy = effectiveResolutionPolicy.getPropertyResolutionStrategies().get(canonicalProperty);
+        if (resolutionStrategy == null) {
+            resolutionStrategy = effectiveResolutionPolicy.getDefaultResolutionStrategy();
+        }
+        return resolutionStrategy;
     }
 
     private List<URI> getDependentProperties(URI property) {
@@ -363,16 +362,33 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         }
     }
 
-    private static class StatementBySubjectComparator implements Comparator<Statement> {
-        private static final Comparator<Statement> INSTANCE = new StatementBySubjectComparator();
+    // TODO: extract interface
+    public class ResourceDescriptionConflictResolverContext {
+        private final ConflictClustersMap conflictClustersMap;
+        private final ResolvedResult totalResult;
+        private final Set<Resource> resolvedResources;
 
-        public static Comparator<Statement> getInstance() {
-            return INSTANCE;
+        private ResourceDescriptionConflictResolverContext(
+                ConflictClustersMap conflictClustersMap,
+                ResolvedResult totalResult,
+                Set<Resource> resolvedResources) {
+            this.conflictClustersMap = conflictClustersMap;
+            this.totalResult = totalResult;
+            this.resolvedResources = resolvedResources;
         }
 
-        @Override
-        public int compare(Statement o1, Statement o2) {
-            return CRUtils.compareValues(o1.getSubject(), o2.getSubject());
+        public URI generateUniqueUri() {
+            return ResourceDescriptionConflictResolverImpl.this.generateUniqueUri();
+        }
+
+        public Collection<ResolvedStatement> resolveNestedResource(Set<Resource> nestedResourceSubjects, URI canonicalResource)
+                throws ConflictResolutionException {
+
+            Map<URI, List<Statement>> statementsToResolveByProperty = conflictClustersMap.getUnionStatementsMap(nestedResourceSubjects);
+            Collection<ResolvedStatement> resolvedNestedResource = ResourceDescriptionConflictResolverImpl.this.resolveResource(
+                    statementsToResolveByProperty, canonicalResource, totalResult, conflictClustersMap, resolvedResources);
+            totalResult.addToResult(new SubjectMappingIterator(resolvedNestedResource.iterator(), canonicalResource, resolvedStatementFactory));
+            return resolvedNestedResource;
         }
     }
 }

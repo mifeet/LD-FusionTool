@@ -25,16 +25,6 @@ public class ResourceDescriptionConflictResolverUtils {
         return result;
     }
 
-    static Set<Resource> collectResourceObjects(Collection<Statement> statements) {
-        Set<Resource> result = new HashSet<>(statements.size());
-        for (Statement statement : statements) {
-            if (statement.getObject() instanceof Resource) {
-                result.add((Resource) statement.getObject());
-            }
-        }
-        return result;
-    }
-
     static UriMappingIterable getDependentPropertyMapping(ConflictResolutionPolicy effectiveResolutionPolicy, UriMapping uriMapping) {
         checkNotNull(effectiveResolutionPolicy);
         checkNotNull(uriMapping);
