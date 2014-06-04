@@ -378,11 +378,11 @@ public class ODCSFusionToolExecutorRunner {
      * @return initialized conflict resolver
      */
     protected ResourceDescriptionConflictResolver createConflictResolver(Model metadata, UriMappingIterable uriMapping) {
-        SourceQualityCalculator sourceConfidence = new ODCSSourceQualityCalculator(
+        SourceQualityCalculator sourceQualityCalculator = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(),
                 config.getPublisherScoreWeight());
         ResolutionFunctionRegistry registry = ConflictResolverFactory.createInitializedResolutionFunctionRegistry(
-                sourceConfidence,
+                sourceQualityCalculator,
                 config.getAgreeCoefficient(),
                 new DistanceMeasureImpl());
 
