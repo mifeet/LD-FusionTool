@@ -354,11 +354,6 @@ public class ConfigImpl implements Config {
     }
 
     @Override
-    public Collection<URI> getResourceDescriptionURIs() {
-        return ConfigConstants.RESOURCE_DESCRIPTION_URIS;
-    }
-
-    @Override
     public float getMaxFreeMemoryUsage() {
         return ConfigConstants.MAX_FREE_MEMORY_USAGE;
     }

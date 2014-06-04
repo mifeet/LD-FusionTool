@@ -25,9 +25,21 @@ import java.util.Set;
  * Creates a new unique URI {@code N} for the nested resource, resolves the nested resource description,
  * adds the resolved quads with {@code N} as their subject to {@link #resolverContext}.{#link ResourceDescriptionConflictResolverContext#totalResult},
  * and returns a single result quad whose object is {@code N}.
+ *
+ * TODO: test
  */
-class NestedResourceDescriptionResolution extends ResolutionFunctionBase {
+public class NestedResourceDescriptionResolution extends ResolutionFunctionBase {
     private static final Logger LOG = LoggerFactory.getLogger(NestedResourceDescriptionResolution.class);
+    private  static final String FUNCTION_NAME = "DEPENDENT_RESOURCE";
+
+    /**
+     * Returns a string identifier of this resolution function: {@value #FUNCTION_NAME}.
+     * @return string identifier of this resolution function
+     */
+    public static String getName() {
+        return FUNCTION_NAME;
+    }
+
     private final NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator;
     private final ResourceDescriptionConflictResolverImpl.ResourceDescriptionConflictResolverContext resolverContext;
 

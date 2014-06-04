@@ -16,6 +16,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.RDFWriter;
 import org.openrdf.rio.Rio;
@@ -82,7 +83,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
         Stopwatch executionStopwatch;
         ExternalSortingInputLoader inputLoader = null;
         executionStopwatch = Stopwatch.createStarted();
-        inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(),
+        inputLoader = new ExternalSortingInputLoader(dataSources, Collections.<URI>emptySet(), testDir.getRoot(),
                 ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemorySize, false);
         try {
             inputLoader.initialize(new UriMappingIterableImpl());

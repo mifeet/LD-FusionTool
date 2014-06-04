@@ -16,9 +16,9 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolvedStatementFactoryImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
 import cz.cuni.mff.odcleanstore.conflictresolution.resolution.AllResolution;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.NestedResourceDescriptionQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.NestedResourceDescriptionQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMappingIterable;
@@ -68,7 +68,6 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
     private final ResolutionFunctionRegistry resolutionFunctionRegistry;
     private final NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator;
     private final ResolvedStatementFactoryImpl resolvedStatementFactory;
-    private final Set<URI> resourceDescriptionProperties;
     private final AlternativeUriNavigator dependentPropertyMapping;
 
     /**
@@ -78,8 +77,6 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
      * @param uriMapping mapping of URIs to their canonical URI (based on owl:sameAs links)
      * @param metadata additional metadata for use by resolution functions (e.g. source quality etc.)
      * @param resolvedGraphsURIPrefix prefix of graph names where resolved quads are placed
-     * @param resourceDescriptionProperties resource description properties, i.e. properties whose values are structured attributes
-     * which should be resolved transitively
      */
     public ResourceDescriptionConflictResolverImpl(
             ResolutionFunctionRegistry resolutionFunctionRegistry,
@@ -87,8 +84,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             UriMapping uriMapping,
             Model metadata,
             String resolvedGraphsURIPrefix, // TODO: replace with UriGenerator class generating uris both for contexts and generated dependent resources
-            NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator,
-            Set<URI> resourceDescriptionProperties) {
+            NestedResourceDescriptionQualityCalculator nestedResourceDescriptionQualityCalculator) {
         this.resolutionFunctionRegistry = resolutionFunctionRegistry;
         this.nestedResourceDescriptionQualityCalculator = nestedResourceDescriptionQualityCalculator;
         this.effectiveResolutionPolicy = ResourceDescriptionConflictResolverUtils.getEffectiveResolutionPolicy(conflictResolutionPolicy, uriMapping);
@@ -104,10 +100,6 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         this.resolvedStatementFactory = resolvedGraphsURIPrefix != null
                 ? new ResolvedStatementFactoryImpl(resolvedGraphsURIPrefix)
                 : new ResolvedStatementFactoryImpl(DEFAULT_RESOLVED_GRAPHS_URI_PREFIX);
-        this.resourceDescriptionProperties = new HashSet<>();
-        for (URI property : resourceDescriptionProperties) {
-            this.resourceDescriptionProperties.add((URI) uriMapping.mapResource(property));
-        }
     }
 
     /**
@@ -291,8 +283,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
         }
 
         ResolutionStrategy resolutionStrategy = getResolutionStrategy(canonicalProperty);
-        ResolutionFunction resolutionFunction = getResolutionFunction(
-                resolutionStrategy, conflictClustersMap, totalResult, resolvedResources, canonicalProperty);
+        ResolutionFunction resolutionFunction = getResolutionFunction(resolutionStrategy, conflictClustersMap, totalResult, resolvedResources);
         CRContext context = new CRContextImpl(
                 conflictingMappedStatements, metadataModel, resolutionStrategy, resolvedStatementFactory, canonicalSubject, canonicalProperty);
 
@@ -321,8 +312,10 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
 
     protected ResolutionFunction getResolutionFunction(
             ResolutionStrategy resolutionStrategy, ConflictClustersMap conflictClustersMap,
-            ResolvedResult totalResult, Set<Resource> resolvedResources, URI canonicalProperty) throws ResolutionFunctionNotRegisteredException {
-        if (resourceDescriptionProperties.contains(canonicalProperty)) {
+            ResolvedResult totalResult, Set<Resource> resolvedResources) throws ResolutionFunctionNotRegisteredException {
+
+        if (NestedResourceDescriptionResolution.getName().equals(resolutionStrategy.getResolutionFunctionName())) {
+            // a special case for nested resource resolution, which needs an extra context
             ResourceDescriptionConflictResolverContext resolverContext = new ResourceDescriptionConflictResolverContext(
                     conflictClustersMap, totalResult, resolvedResources);
             return new NestedResourceDescriptionResolution(nestedResourceDescriptionQualityCalculator, resolverContext);

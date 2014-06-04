@@ -3,6 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 import com.google.code.externalsorting.ExternalSort;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
@@ -21,6 +22,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.NestedResourceDescriptionQualityCalculatorImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.NestedResourceDescriptionResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionConflictResolverImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
@@ -179,7 +181,7 @@ public class ODCSFusionToolExecutorRunner {
         long memoryLimit = calculateMemoryLimit();
         if (config.isLocalCopyProcessing()) {
             Collection<AllTriplesLoader> allTriplesLoaders = getAllTriplesLoaders();
-            return new ExternalSortingInputLoader(allTriplesLoaders, config.getTempDirectory(),
+            return new ExternalSortingInputLoader(allTriplesLoaders,  getResourceDescriptionProperties(), config.getTempDirectory(),
                     config.getParserConfig(), memoryLimit, config.getOutputMappedSubjectsOnly());
         } else {
             Collection<DataSource> dataSources = getDataSources();
@@ -191,13 +193,23 @@ public class ODCSFusionToolExecutorRunner {
         }
     }
 
+    private Set<URI> getResourceDescriptionProperties() {
+        HashSet<URI> resourceDescriptionProperties = new HashSet<>();
+        for (Map.Entry<URI,ResolutionStrategy> entry : config.getPropertyResolutionStrategies().entrySet()) {
+            if (NestedResourceDescriptionResolution.getName().equals(entry.getValue().getResolutionFunctionName())) {
+                resourceDescriptionProperties.add(entry.getKey());
+            }
+        }
+        return resourceDescriptionProperties;
+    }
+
     /**
      * Returns an initialized collection of input triple loaders.
      * @return collection of input triple loaders
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
     protected Collection<AllTriplesLoader> getAllTriplesLoaders() throws ODCSFusionToolException {
-        List<AllTriplesLoader> loaders = new ArrayList<AllTriplesLoader>(config.getDataSources().size());
+        List<AllTriplesLoader> loaders = new ArrayList<>(config.getDataSources().size());
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
                 AllTriplesLoader loader;
@@ -223,7 +235,7 @@ public class ODCSFusionToolExecutorRunner {
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException I/O error
      */
     protected Collection<DataSource> getDataSources() throws ODCSFusionToolException {
-        List<DataSource> dataSources = new ArrayList<DataSource>(config.getDataSources().size());
+        List<DataSource> dataSources = new ArrayList<>(config.getDataSources().size());
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
                 DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), repositoryFactory);
@@ -251,7 +263,7 @@ public class ODCSFusionToolExecutorRunner {
      */
     protected Collection<ConstructSource> getConstructSources(List<ConstructSourceConfig> constructSourceConfigs)
             throws ODCSFusionToolException {
-        List<ConstructSource> constructSources = new ArrayList<ConstructSource>();
+        List<ConstructSource> constructSources = new ArrayList<>();
         for (ConstructSourceConfig constructSourceConfig : constructSourceConfigs) {
             try {
                 ConstructSource constructSource =
@@ -302,8 +314,8 @@ public class ODCSFusionToolExecutorRunner {
         UriMappingIterableImpl uriMapping = new UriMappingIterableImpl(preferredURIs);
 
         // TODO: rework
-        List<ConstructSourceConfig> repositorySameAsSourcesConfig = new ArrayList<ConstructSourceConfig>();
-        List<ConstructSourceConfig> fileSameAsSourcesConfig = new ArrayList<ConstructSourceConfig>();
+        List<ConstructSourceConfig> repositorySameAsSourcesConfig = new ArrayList<>();
+        List<ConstructSourceConfig> fileSameAsSourcesConfig = new ArrayList<>();
         for (ConstructSourceConfig sourceConfig : config.getSameAsSources()) {
             if (sourceConfig.getType() == EnumDataSourceType.FILE) {
                 fileSameAsSourcesConfig.add(sourceConfig);
@@ -361,7 +373,7 @@ public class ODCSFusionToolExecutorRunner {
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException configuration error
      */
     protected CloseableRDFWriter createRDFWriter() throws IOException, ODCSFusionToolException {
-        List<CloseableRDFWriter> writers = new ArrayList<CloseableRDFWriter>(config.getOutputs().size());
+        List<CloseableRDFWriter> writers = new ArrayList<>(config.getOutputs().size());
         for (Output output : config.getOutputs()) {
             CloseableRDFWriter writer = rdfWriterFactory.createRDFWriter(output);
             writers.add(writer);
@@ -401,8 +413,8 @@ public class ODCSFusionToolExecutorRunner {
                 uriMapping,
                 metadata,
                 config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX,
-                nestedResourceDescriptionQualityCalculator,
-                ConfigConstants.RESOURCE_DESCRIPTION_URIS);
+                nestedResourceDescriptionQualityCalculator
+        );
     }
 
     /**
@@ -418,7 +430,7 @@ public class ODCSFusionToolExecutorRunner {
             Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
             Collection<String> preferredCanonicalURIs) throws IOException {
 
-        Set<String> preferredURIs = new HashSet<String>(settingsPreferredURIs.size());
+        Set<String> preferredURIs = new HashSet<>(settingsPreferredURIs.size());
         for (URI uri : settingsPreferredURIs) {
             preferredURIs.add(uri.stringValue());
         }
@@ -465,7 +477,7 @@ public class ODCSFusionToolExecutorRunner {
             return;
         }
         if (!outputFile.exists() || outputFile.canWrite()) {
-            Set<String> canonicalUris = new HashSet<String>();
+            Set<String> canonicalUris = new HashSet<>();
             for (String mappedUri : uriMapping) {
                 canonicalUris.add(uriMapping.getCanonicalURI(mappedUri));
             }
@@ -503,7 +515,7 @@ public class ODCSFusionToolExecutorRunner {
             final UriMappingIterable uriMapping, List<Output> outputs,
             Map<String, String> nsPrefixes, final ValueFactory valueFactory) throws IOException, ODCSFusionToolException {
 
-        List<CloseableRDFWriter> writers = new LinkedList<CloseableRDFWriter>();
+        List<CloseableRDFWriter> writers = new LinkedList<>();
         try {
             // Create output writers
             for (Output output : outputs) {

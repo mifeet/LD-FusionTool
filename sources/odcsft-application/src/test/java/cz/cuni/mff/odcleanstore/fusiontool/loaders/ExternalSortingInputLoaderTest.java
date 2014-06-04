@@ -65,7 +65,7 @@ import static org.junit.Assert.fail;
 
 public class ExternalSortingInputLoaderTest {
     // TODO
-    private static final URI resourceDescriptionProperty = ConfigConstants.RESOURCE_DESCRIPTION_URIS.iterator().next();
+    private static final URI resourceDescriptionProperty = createHttpUri("nrd");
 
     private static final ValueFactoryImpl VF = ValueFactoryImpl.getInstance();
     public static final SpogComparator SPOG_COMPARATOR = new SpogComparator();
@@ -328,7 +328,7 @@ public class ExternalSortingInputLoaderTest {
 
             Set<AllTriplesLoader> dataSources = Collections.singleton(
                     (AllTriplesLoader) new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
-            inputLoader = new ExternalSortingInputLoader(dataSources, testDir.getRoot(),
+            inputLoader = new ExternalSortingInputLoader(dataSources, Collections.singleton(resourceDescriptionProperty), testDir.getRoot(),
                     ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE, false);
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
@@ -370,6 +370,7 @@ public class ExternalSortingInputLoaderTest {
         SortedSet<Statement> result = new TreeSet<>(SPOG_COMPARATOR);
         ExternalSortingInputLoader inputLoader = new ExternalSortingInputLoader(
                 createFileAllTriplesLoader(testInput1, testInput2),
+                Collections.singleton(resourceDescriptionProperty),
                 testDir.getRoot(),
                 ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
                 Long.MAX_VALUE, false);
@@ -606,6 +607,7 @@ public class ExternalSortingInputLoaderTest {
     private ExternalSortingInputLoader createExternalSortingInputLoader(Collection<Statement> testInput, boolean outputMappedSubjectsOnly) throws IOException, RDFHandlerException {
         return new ExternalSortingInputLoader(
                 createFileAllTriplesLoader(testInput),
+                Collections.singleton(resourceDescriptionProperty),
                 testDir.getRoot(),
                 ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
                 Long.MAX_VALUE,

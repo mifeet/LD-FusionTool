@@ -90,6 +90,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     private final ParserConfig parserConfig;
     private final ExternalSorter externalSorter;
     private final Set<URI> canonicalResourceDescriptionProperties = new HashSet<>();
+    private final Set<URI> _resourceDescriptionProperties;
 
     private NTuplesParser dataFileIterator;
     private NTuplesParser mergedAttributeFileIterator;
@@ -105,6 +106,7 @@ public class ExternalSortingInputLoader implements InputLoader {
      */
     public ExternalSortingInputLoader(
             Collection<AllTriplesLoader> dataSources,
+            Set<URI> resourceDescriptionProperties,
             File cacheDirectory,
             ParserConfig parserConfig,
             long maxMemoryLimit,
@@ -112,7 +114,9 @@ public class ExternalSortingInputLoader implements InputLoader {
 
         Preconditions.checkNotNull(dataSources);
         Preconditions.checkNotNull(cacheDirectory);
+        Preconditions.checkNotNull(resourceDescriptionProperties);
         this.dataSources = dataSources;
+        this._resourceDescriptionProperties = resourceDescriptionProperties;
         this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         this.maxMemoryLimit = maxMemoryLimit;
         this.cacheDirectory = cacheDirectory;
@@ -123,13 +127,14 @@ public class ExternalSortingInputLoader implements InputLoader {
     @Override
     public void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException {
         Preconditions.checkNotNull(uriMapping);
+
         LOG.info("Initializing input loader");
         if (maxMemoryLimit < Long.MAX_VALUE) {
             LOG.info("  maximum memory limit is {} MB", String.format("%,.2f", maxMemoryLimit / (double) ODCSFusionToolAppUtils.MB_BYTES));
         }
 
         canonicalResourceDescriptionProperties.clear();
-        for (URI resourceDescriptionProperty : ConfigConstants.RESOURCE_DESCRIPTION_URIS) {
+        for (URI resourceDescriptionProperty : _resourceDescriptionProperties) {
             canonicalResourceDescriptionProperties.add((URI) uriMapping.mapResource(resourceDescriptionProperty));
         }
 

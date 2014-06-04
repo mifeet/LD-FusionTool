@@ -141,12 +141,5 @@ public final class ConfigConstants {
         DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, false);
         DEFAULT_FILE_PARSER_CONFIG.addNonFatalError(NTriplesParserSettings.FAIL_ON_NTRIPLES_INVALID_LINES);
     }
-
-    // FIXME: quick constants for vestnik fusion
-    private static final ValueFactory VF = ValueFactoryImpl.getInstance();
-    public static final Set<URI> RESOURCE_DESCRIPTION_URIS = new HashSet<>(Arrays.asList(
-            VF.createURI("http://schema.org/address"),
-            VF.createURI("http://schema.org/contact"),
-            VF.createURI("http://www.w3.org/ns/adms#identifier")));
 }
 

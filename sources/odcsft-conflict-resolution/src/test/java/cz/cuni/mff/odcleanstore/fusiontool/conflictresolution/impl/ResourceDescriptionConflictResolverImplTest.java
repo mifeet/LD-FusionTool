@@ -1,8 +1,19 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import com.google.common.base.Supplier;
-import com.google.common.collect.*;
-import cz.cuni.mff.odcleanstore.conflictresolution.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunction;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ResolutionStrategyImpl;
@@ -11,7 +22,11 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.util.EmptyMetadataModel;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.DummyFQualityCalculator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.*;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.ConflictResolutionPolicyBuilder;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockBestResolutionFunctionWithQuality;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockNoneResolutionFunction;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockNoneResolutionFunctionWithQuality;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.MockResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Pair;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,14 +36,26 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpUri;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ResolvedStatementMatchesSources.resolvedStatementMatchesSources;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ResolvedStatementMatchesStatement.resolvedStatementMatchesStatement;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -252,9 +279,9 @@ public class ResourceDescriptionConflictResolverImplTest {
         ResolutionStrategyImpl p1ResolutionStrategy = new ResolutionStrategyImpl("P1");
 
         conflictResolutionPolicy.setDefaultResolutionStrategy(defaultResolutionStrategy);
-        conflictResolutionPolicy.setPropertyResolutionStrategy(ImmutableMap.of(
+        conflictResolutionPolicy.setPropertyResolutionStrategy(new HashMap<>(ImmutableMap.of(
                 createHttpUri("pb"), pbResolutionStrategy,
-                createHttpUri("p1"), p1ResolutionStrategy));
+                createHttpUri("p1"), p1ResolutionStrategy)));
         ResourceDescriptionConflictResolver resolver = createResolver(conflictResolutionPolicy, new MockNoneResolutionFunction());
         Collection<Statement> testInput = ImmutableList.of(
                 createHttpStatement("s1", "pa", "o1", "g1"),
@@ -661,7 +688,7 @@ public class ResourceDescriptionConflictResolverImplTest {
         assertThat(actualConflictingStatements, containsInAnyOrder(expectedConflictingStatements.toArray()));
     }
 
-    // FIXME: test for non-aggregable nested resource description statements
+    // FIXME: tests for nested resource descriptions, and for non-aggregable nested resource description statements
 
     private ResolvedStatement getFirstStatementWithProperty(Collection<ResolvedStatement> result, URI property) {
         for (ResolvedStatement resolvedStatement : result) {
@@ -673,21 +700,26 @@ public class ResourceDescriptionConflictResolverImplTest {
     }
 
     private ResourceDescriptionConflictResolver createResolver() throws ResolutionFunctionNotRegisteredException {
-        return createResolver(new ConflictResolutionPolicyImpl(), new MockNoneResolutionFunction());
+        ConflictResolutionPolicy policy = new ConflictResolutionPolicyBuilder()
+                .with(RESOURCE_DESCRIPTION_URI, new ResolutionStrategyImpl(NestedResourceDescriptionResolution.getName()))
+                .build();
+        return createResolver(policy, new MockNoneResolutionFunction());
     }
 
     private ResourceDescriptionConflictResolver createResolver(ConflictResolutionPolicy conflictResolutionPolicy, ResolutionFunction resolutionFunction)
             throws ResolutionFunctionNotRegisteredException {
         ResolutionFunctionRegistry resolutionFunctionRegistry = mock(ResolutionFunctionRegistry.class);
         when(resolutionFunctionRegistry.get(anyString())).thenReturn(resolutionFunction);
+        conflictResolutionPolicy.getPropertyResolutionStrategies()
+                .put(RESOURCE_DESCRIPTION_URI, new ResolutionStrategyImpl(NestedResourceDescriptionResolution.getName()));
         return new ResourceDescriptionConflictResolverImpl(
                 resolutionFunctionRegistry,
                 conflictResolutionPolicy,
                 uriMapping,
                 new EmptyMetadataModel(),
                 "http://cr/",
-                new NestedResourceDescriptionQualityCalculatorImpl(new DummyFQualityCalculator()),
-                Collections.singleton(RESOURCE_DESCRIPTION_URI));
+                new NestedResourceDescriptionQualityCalculatorImpl(new DummyFQualityCalculator())
+        );
     }
 
     private Collection<Collection<MockResolvedStatement>> getConflictClusters(Collection<ResolvedStatement> resolvedStatements) {
@@ -703,7 +735,7 @@ public class ResourceDescriptionConflictResolverImplTest {
     }
 
     private ResolutionStrategyImpl resolutionStrategyWithDependsOn(URI dependsOn) {
-        return new ResolutionStrategyImpl("XXX", EnumCardinality.MANYVALUED, EnumAggregationErrorStrategy.IGNORE,
+        return new ResolutionStrategyImpl("XXX123", EnumCardinality.MANYVALUED, EnumAggregationErrorStrategy.IGNORE,
                 Collections.<String, String>emptyMap(), dependsOn);
     }
 }

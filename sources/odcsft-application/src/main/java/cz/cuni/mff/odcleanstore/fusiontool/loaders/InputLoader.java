@@ -5,8 +5,10 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
+import org.openrdf.model.URI;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Loader of input quads to be resolved.

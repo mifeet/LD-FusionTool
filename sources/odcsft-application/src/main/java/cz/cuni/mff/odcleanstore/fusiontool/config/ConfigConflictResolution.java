@@ -36,7 +36,4 @@ public interface ConfigConflictResolution {
      * @return set of 'same as' link property URIs
      */
     Set<URI> getSameAsLinkTypes();
-
- 
-    Collection<URI> getResourceDescriptionURIs();
 }
