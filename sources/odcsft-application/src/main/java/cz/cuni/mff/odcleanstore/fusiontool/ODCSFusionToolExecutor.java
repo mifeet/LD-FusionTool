@@ -6,6 +6,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.ResourceDescriptionFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
@@ -30,9 +32,10 @@ public class ODCSFusionToolExecutor {
     private final Long maxOutputTriples;
     private final ProfilingTimeCounter<EnumFusionCounters> timeProfiler;
     private final MemoryProfiler memoryProfiler;
+    private ResourceDescriptionFilter resourceDescriptionFilter;
 
     public ODCSFusionToolExecutor() {
-        this(false, null, false);
+        this(false, null, false, new NoOpFilter());
     }
 
     /**
@@ -43,8 +46,21 @@ public class ODCSFusionToolExecutor {
      * @param isProfilingOn whether to measure profiling information
      */
     public ODCSFusionToolExecutor(boolean hasVirtuosoSource, Long maxOutputTriples, boolean isProfilingOn) {
+        this(hasVirtuosoSource, maxOutputTriples, isProfilingOn, new NoOpFilter());
+    }
+
+    /**
+     * @param hasVirtuosoSource indicates whether the {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader}
+     *      given to {@code execute()} may contain a source of type
+     *      {@link cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType#VIRTUOSO} (need for Virtuoso bug circumvention).
+     * @param maxOutputTriples maximum number of triples to be processed; null means unlimited
+     * @param isProfilingOn whether to measure profiling information
+     */
+    public ODCSFusionToolExecutor(
+            boolean hasVirtuosoSource, Long maxOutputTriples, boolean isProfilingOn, ResourceDescriptionFilter resourceDescriptionFilter) {
         this.hasVirtuosoSource = hasVirtuosoSource;
         this.maxOutputTriples = maxOutputTriples;
+        this.resourceDescriptionFilter = resourceDescriptionFilter;
         timeProfiler = ProfilingTimeCounter.createInstance(EnumFusionCounters.class, isProfilingOn);
         memoryProfiler = MemoryProfiler.createInstance(isProfilingOn);
     }
@@ -75,6 +91,10 @@ public class ODCSFusionToolExecutor {
             timeProfiler.startCounter(EnumFusionCounters.QUAD_LOADING);
             ResourceDescription resourceDescription = inputLoader.next();
             inputTriples += resourceDescription.getDescribingStatements().size();
+            if (!this.resourceDescriptionFilter.accept(resourceDescription)) {
+                LOG.debug("Resource {} doesn't match filter, skipping", resourceDescription.getResource());
+                continue;
+            }
             timeProfiler.stopAddCounter(EnumFusionCounters.QUAD_LOADING);
 
             // Resolve conflicts
@@ -82,7 +102,7 @@ public class ODCSFusionToolExecutor {
             Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(resourceDescription);
             timeProfiler.stopAddCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
             LOG.debug("Resolved {} quads resulting in {} quads (processed totally {} quads)",
-                    new Object[] {resourceDescription.getDescribingStatements().size(), resolvedQuads.size(), inputTriples});
+                    new Object[]{resourceDescription.getDescribingStatements().size(), resolvedQuads.size(), inputTriples});
 
             // Check if we have reached the limit on output triples
             if (checkMaxOutputTriples && outputTriples + resolvedQuads.size() > maxOutputTriples) {

@@ -1,9 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
-import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -23,20 +20,14 @@ public class ExternalSortingInputLoaderPreprocessor implements RDFHandler {
 
     private final RDFHandler rdfHandler;
     private final ValueFactory valueFactory;
-    private final boolean outputMappedSubjectsOnly;
-    private final AlternativeUriNavigator alternativeUriNavigator;
     private URI defaultContext = null;
     private long statementCounter = 0;
 
     public ExternalSortingInputLoaderPreprocessor(
             RDFHandler rdfHandler,
-            UriMappingIterable uriMapping,
-            ValueFactory valueFactory,
-            boolean outputMappedSubjectsOnly) {
+            ValueFactory valueFactory) {
         this.rdfHandler = rdfHandler;
         this.valueFactory = valueFactory;
-        this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
-        this.alternativeUriNavigator = outputMappedSubjectsOnly ? new AlternativeUriNavigator(uriMapping) : null;
     }
 
     public void setDefaultContext(URI defaultContext) {
@@ -51,13 +42,6 @@ public class ExternalSortingInputLoaderPreprocessor implements RDFHandler {
 
     @Override
     public void handleStatement(Statement statement) throws RDFHandlerException {
-        if (outputMappedSubjectsOnly && alternativeUriNavigator != null) {
-            Resource subject = statement.getSubject();
-            if (!(subject instanceof URI) || !alternativeUriNavigator.hasAlternativeUris(subject.toString())) {
-                return; // skip statement whose subject has no alternative URIs
-            }
-        }
-
         Statement mappedStatement = fillDefaultContext(statement);
         rdfHandler.handleStatement(mappedStatement);
 

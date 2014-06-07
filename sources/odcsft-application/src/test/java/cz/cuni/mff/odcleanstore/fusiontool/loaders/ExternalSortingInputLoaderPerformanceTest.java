@@ -1,11 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.base.Stopwatch;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
@@ -84,7 +80,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
         ExternalSortingInputLoader inputLoader = null;
         executionStopwatch = Stopwatch.createStarted();
         inputLoader = new ExternalSortingInputLoader(dataSources, Collections.<URI>emptySet(), testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemorySize, false);
+                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemorySize);
         try {
             inputLoader.initialize(new UriMappingIterableImpl());
             while (inputLoader.hasNext()) {

@@ -64,7 +64,6 @@ public class ExternalSortingInputLoader implements InputLoader {
     static final int GZIP_BUFFER_SIZE = 2048;
 
     private final Collection<AllTriplesLoader> dataSources;
-    private final boolean outputMappedSubjectsOnly;
     private final File cacheDirectory;
     private final Long maxMemoryLimit;
     private final ParserConfig parserConfig;
@@ -81,23 +80,20 @@ public class ExternalSortingInputLoader implements InputLoader {
      * @param cacheDirectory directory for temporary files
      * @param parserConfig RDF parser configuration
      * @param maxMemoryLimit maximum memory amount to use for large operations;
-     * if the limit is too high, it may cause OutOfMemory exceptions
-     * @param outputMappedSubjectsOnly see {@link cz.cuni.mff.odcleanstore.fusiontool.config.Config#getOutputMappedSubjectsOnly()}
+* if the limit is too high, it may cause OutOfMemory exceptions
      */
     public ExternalSortingInputLoader(
             Collection<AllTriplesLoader> dataSources,
             Set<URI> resourceDescriptionProperties,
             File cacheDirectory,
             ParserConfig parserConfig,
-            long maxMemoryLimit,
-            boolean outputMappedSubjectsOnly) {
+            long maxMemoryLimit) {
 
         Preconditions.checkNotNull(dataSources);
         Preconditions.checkNotNull(cacheDirectory);
         Preconditions.checkNotNull(resourceDescriptionProperties);
         this.dataSources = dataSources;
         this._resourceDescriptionProperties = resourceDescriptionProperties;
-        this.outputMappedSubjectsOnly = outputMappedSubjectsOnly;
         this.maxMemoryLimit = maxMemoryLimit;
         this.cacheDirectory = cacheDirectory;
         this.parserConfig = parserConfig;
@@ -274,7 +270,7 @@ public class ExternalSortingInputLoader implements InputLoader {
                     new AtributeIndexFileNTuplesWriter(attributeIndexFileWriter, canonicalResourceDescriptionProperties, uriMapping));
 
             ExternalSortingInputLoaderPreprocessor inputLoaderPreprocessor = new ExternalSortingInputLoaderPreprocessor(
-                    tempFilesWriteHandler, uriMapping, VF, outputMappedSubjectsOnly);
+                    tempFilesWriteHandler, VF);
 
             tempFilesWriteHandler.startRDF();
             for (AllTriplesLoader dataSource : dataSources) {
