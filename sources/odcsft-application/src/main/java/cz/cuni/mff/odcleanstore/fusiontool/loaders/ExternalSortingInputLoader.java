@@ -222,7 +222,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public void close() throws ODCSFusionToolException {
-        LOG.info("Deleting input loader temporary files");
+        LOG.debug("Deleting input loader temporary files");
         if (dataFileIterator != null) {
             try {
                 dataFileIterator.close();
@@ -324,7 +324,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     private File sortFile(File inputFile) throws ODCSFusionToolException {
         // External sort the temporary file
-        LOG.info("Sorting temporary file");
+        LOG.debug("Sorting temporary file");
         try {
             long startTime = System.currentTimeMillis();
             File sortedFile = createTempFile();

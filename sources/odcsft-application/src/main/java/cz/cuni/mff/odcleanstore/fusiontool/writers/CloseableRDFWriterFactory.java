@@ -120,23 +120,23 @@ public class CloseableRDFWriterFactory {
         switch (format) {
             case RDF_XML:
                 RDFHandler rdfXmlWriter = new RDFXMLPrettyWriterFactory().getWriter(outputWriter);
-                LOG.debug("Created a RDF/XML file output");
+                LOG.info("Created a RDF/XML file output");
                 // RDFHandler rdfXmlWriter = new RDFXMLWriterFactory().getWriter(outputWriter);
                 return new SesameCloseableRDFWriterTriple(rdfXmlWriter, outputWriter);
             case N3:
                 RDFHandler n3Writer = new N3WriterFactory().getWriter(outputWriter);
-                LOG.debug("Created an N3 file output");
+                LOG.info("Created an N3 file output");
                 return new SesameCloseableRDFWriterTriple(n3Writer, outputWriter);
             case TRIG:
                 RDFHandler trigHandler = new TriGWriterFactory().getWriter(outputWriter);
-                LOG.debug("Created a TriG file output");
+                LOG.info("Created a TriG file output");
                 return new SesameCloseableRDFWriterQuad(trigHandler, outputWriter, dataContext, metadataContext);
             case NQUADS:
                 RDFHandler nquadsHandler = new NQuadsWriterFactory().getWriter(outputWriter);
-                LOG.debug("Created a N-Quads file output");
+                LOG.info("Created a N-Quads file output");
                 return new SesameCloseableRDFWriterQuad(nquadsHandler, outputWriter, dataContext, metadataContext);
             case HTML:
-                LOG.debug("Created a HTML file output");
+                LOG.info("Created a HTML file output");
                 return new CloseableHtmlWriter(outputWriter);
             default:
                 throw new IllegalArgumentException("Unknown output format " + format);

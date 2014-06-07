@@ -47,7 +47,7 @@ public class SameAsLinkFileLoader implements SameAsLinkLoader {
             long startTime = System.currentTimeMillis();
             SameAsLinkHandler linkHandler = new SameAsLinkHandler(uriMapping);
             fileLoader.read(linkHandler);
-            LOG.debug(String.format("Loaded & resolved %,d sameAs links from %s in %,d ms",
+            LOG.info(String.format("Loaded & resolved %,d sameAs links from %s in %,d ms",
                     linkHandler.getLoadedCount(), paramReader.getLabel(), System.currentTimeMillis() - startTime));
             return linkHandler.getLoadedCount();
         } catch (RDFHandlerException e) {

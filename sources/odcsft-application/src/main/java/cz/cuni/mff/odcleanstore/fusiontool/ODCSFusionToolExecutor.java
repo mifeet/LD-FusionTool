@@ -66,6 +66,7 @@ public class ODCSFusionToolExecutor {
         boolean checkMaxOutputTriples = maxOutputTriples != null && maxOutputTriples >= 0;
 
         // Load & process input quads
+        LOG.info("Starting conflict resolution");
         timeProfiler.startCounter(EnumFusionCounters.BUFFERING);
         while (inputLoader.hasNext()) {
             timeProfiler.stopAddCounter(EnumFusionCounters.BUFFERING);
@@ -80,7 +81,7 @@ public class ODCSFusionToolExecutor {
             timeProfiler.startCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
             Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(resourceDescription);
             timeProfiler.stopAddCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
-            LOG.info("Resolved {} quads resulting in {} quads (processed totally {} quads)",
+            LOG.debug("Resolved {} quads resulting in {} quads (processed totally {} quads)",
                     new Object[] {resourceDescription.getDescribingStatements().size(), resolvedQuads.size(), inputTriples});
 
             // Check if we have reached the limit on output triples

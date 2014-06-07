@@ -6,19 +6,11 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.DummyFQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.resolution.ResolutionFunctionBase;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.NestedResourceDescriptionQualityCalculator;
-import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
+import org.openrdf.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Resolution function resolving nested resource descriptions.
@@ -75,7 +67,10 @@ public class NestedResourceDescriptionResolution extends ResolutionFunctionBase 
 
         URI canonicalProperty = context.getCanonicalProperty();
         URI newObject = resolverContext.generateUniqueUri();
-        LOG.trace("... resolving values of description property {} (new dependent resource is {})", canonicalProperty, newObject);
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("... resolving values of description property {} of {} (new dependent resource is {})",
+                    new Object[]{canonicalProperty, context.getCanonicalSubject(), newObject});
+        }
         Collection<ResolvedStatement> resolvedStatements = resolverContext.resolveNestedResource(nestedResourceSubjects, newObject);
 
         double aggregateQuality = nestedResourceDescriptionQualityCalculator.aggregateConflictClusterQuality(resolvedStatements);
