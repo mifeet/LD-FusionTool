@@ -96,9 +96,10 @@ public class ODCSFusionToolExecutor {
             // Apply input filters
             timeProfiler.startCounter(EnumFusionCounters.INPUT_FILTERING);
             boolean accept = this.resourceDescriptionFilter.accept(resourceDescription);
-            timeProfiler.startCounter(EnumFusionCounters.INPUT_FILTERING);
+            timeProfiler.stopAddCounter(EnumFusionCounters.INPUT_FILTERING);
             if (!accept) {
                 LOG.debug("Resource {} doesn't match filter, skipping", resourceDescription.getResource());
+                timeProfiler.startCounter(EnumFusionCounters.BUFFERING);
                 continue;
             }
 
