@@ -48,7 +48,7 @@ public class ConfigReaderTest {
         assertThat(config.getPrefixes(), equalTo(Collections.<String, String>emptyMap()));
         assertThat(config.getRequiredClassOfProcessedResources(), nullValue());
         assertThat(config.getPropertyResolutionStrategies(), equalTo(Collections.<URI, ResolutionStrategy>emptyMap()));
-        assertThat(config.isLocalCopyProcessing(), equalTo(false));
+        assertThat(config.isLocalCopyProcessing(), equalTo(true));
 
         assertThat(config.getDataSources().size(), equalTo(1));
         DataSourceConfig dataSourceConfig = config.getDataSources().get(0);

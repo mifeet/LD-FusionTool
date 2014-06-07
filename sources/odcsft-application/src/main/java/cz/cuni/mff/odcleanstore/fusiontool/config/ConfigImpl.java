@@ -30,7 +30,7 @@ public class ConfigImpl implements Config {
     private boolean isProfilingOn = false;
     //private boolean outputConflictsOnly = false;
     private boolean outputMappedSubjectsOnly = false;
-    private boolean isLocalCopyProcessing = false;
+    private boolean isLocalCopyProcessing = true;
     private Long memoryLimit = null;
     private File tempDirectory = ConfigConstants.DEFAULT_TEMP_DIRECTORY;
     private ParserConfig parserConfig = ConfigConstants.DEFAULT_FILE_PARSER_CONFIG;
