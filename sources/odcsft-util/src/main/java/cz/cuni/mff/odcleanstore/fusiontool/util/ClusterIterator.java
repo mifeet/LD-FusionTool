@@ -1,4 +1,4 @@
-package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util;
+package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import java.lang.reflect.Array;
 import java.util.*;

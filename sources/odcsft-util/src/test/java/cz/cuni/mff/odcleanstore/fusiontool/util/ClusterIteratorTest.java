@@ -1,14 +1,13 @@
-package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util;
+package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import com.google.common.collect.ImmutableList;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
 import org.junit.Test;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 
 import java.util.*;
 
-import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
-import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpUri;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
@@ -34,12 +33,12 @@ public class ClusterIteratorTest {
     public void iteratesOverCorrectClustersWithPartialMatch() throws Exception {
         // Arrange
         List<Statement> elements = ImmutableList.of(
-                createHttpStatement("s3", "p", "o1"),
-                createHttpStatement("s1", "p", "o2"),
-                createHttpStatement("s2", "p", "o3"),
-                createHttpStatement("s1", "p", "o4"),
-                createHttpStatement("s2", "p", "o5"),
-                createHttpStatement("s1", "p", "o6"));
+                ODCSFTTestUtils.createHttpStatement("s3", "p", "o1"),
+                ODCSFTTestUtils.createHttpStatement("s1", "p", "o2"),
+                ODCSFTTestUtils.createHttpStatement("s2", "p", "o3"),
+                ODCSFTTestUtils.createHttpStatement("s1", "p", "o4"),
+                ODCSFTTestUtils.createHttpStatement("s2", "p", "o5"),
+                ODCSFTTestUtils.createHttpStatement("s1", "p", "o6"));
         Comparator<Statement> comparator = new Comparator<Statement>() {
             @Override
             public int compare(Statement o1, Statement o2) {
@@ -52,12 +51,12 @@ public class ClusterIteratorTest {
 
         // Assert
         Map<URI, List<Statement>> expectedClusters = new HashMap<>();
-        expectedClusters.put(createHttpUri("s1"), ImmutableList.of(
-                createHttpStatement("s1", "p", "o2"),
-                createHttpStatement("s1", "p", "o4"),
-                createHttpStatement("s1", "p", "o6")));
-        expectedClusters.put(createHttpUri("s2"), ImmutableList.of(createHttpStatement("s2", "p", "o3"), createHttpStatement("s2", "p", "o5")));
-        expectedClusters.put(createHttpUri("s3"), ImmutableList.of(createHttpStatement("s3", "p", "o1")));
+        expectedClusters.put(ODCSFTTestUtils.createHttpUri("s1"), ImmutableList.of(
+                ODCSFTTestUtils.createHttpStatement("s1", "p", "o2"),
+                ODCSFTTestUtils.createHttpStatement("s1", "p", "o4"),
+                ODCSFTTestUtils.createHttpStatement("s1", "p", "o6")));
+        expectedClusters.put(ODCSFTTestUtils.createHttpUri("s2"), ImmutableList.of(ODCSFTTestUtils.createHttpStatement("s2", "p", "o3"), ODCSFTTestUtils.createHttpStatement("s2", "p", "o5")));
+        expectedClusters.put(ODCSFTTestUtils.createHttpUri("s3"), ImmutableList.of(ODCSFTTestUtils.createHttpStatement("s3", "p", "o1")));
 
         for (int i = 0; i < 3; i++) {
             List<Statement> actualCluster = clusterIterator.next();

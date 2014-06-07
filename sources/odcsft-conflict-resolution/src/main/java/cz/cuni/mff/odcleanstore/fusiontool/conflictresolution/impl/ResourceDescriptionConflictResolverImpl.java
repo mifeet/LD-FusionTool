@@ -15,9 +15,9 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ClusterIterator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.StatementMapper;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ClusterIterator;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
