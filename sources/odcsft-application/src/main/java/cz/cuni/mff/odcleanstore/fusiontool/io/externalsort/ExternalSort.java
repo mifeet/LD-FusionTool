@@ -321,7 +321,7 @@ public class ExternalSort {
             boolean distinct, boolean usegzip) throws IOException {
         Collections.sort(tmplist, cmp);
         File newtmpfile = File.createTempFile("sortInBatch",
-                "flatfile", tmpdirectory);
+                "flatfile", tmpdirectory); // TODO: change filenames to match ODCSFT
         newtmpfile.deleteOnExit();
         OutputStream out = new FileOutputStream(newtmpfile);
         int ZIPBUFFERSIZE = 2048;
