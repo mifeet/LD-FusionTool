@@ -5,13 +5,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.model.vocabulary.DC;
-import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
+import org.openrdf.model.vocabulary.*;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.helpers.BasicParserSettings;
 import org.openrdf.rio.helpers.NTriplesParserSettings;
@@ -132,6 +126,11 @@ public final class ConfigConstants {
      * Number of loop iterations to be executed before the status is logged.
      */
     public static final int LOG_LOOP_SIZE = 5000000;
+
+    /**
+     * (RDFS/OWL) class to which resources included in the output must belong.
+     */
+    public static final URI REQUIRED_CLASS_OF_PROCESSED_RESOURCES = null; // TODO: replace by a configuration option
 
     static {
         DEFAULT_FILE_PARSER_CONFIG = new ParserConfig();

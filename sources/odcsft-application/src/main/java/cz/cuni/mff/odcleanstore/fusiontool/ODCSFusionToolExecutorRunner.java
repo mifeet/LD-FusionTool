@@ -30,6 +30,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoad
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.entity.FederatedSeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.MappedResourceFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.RequiredClassFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.ResourceDescriptionFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.metadata.MetadataLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas.SameAsLinkFileLoader;
@@ -168,7 +169,10 @@ public class ODCSFusionToolExecutorRunner {
     }
 
     private ResourceDescriptionFilter getInputFilter(UriMappingIterable uriMapping) {
-        if (config.getOutputMappedSubjectsOnly()) {
+        if (ConfigConstants.REQUIRED_CLASS_OF_PROCESSED_RESOURCES != null) {
+            return new RequiredClassFilter(uriMapping, ConfigConstants.REQUIRED_CLASS_OF_PROCESSED_RESOURCES);
+            // TODO: possibility to combine filters together
+        } if (config.getOutputMappedSubjectsOnly()) {
             return new MappedResourceFilter(new AlternativeUriNavigator(uriMapping));
         } else {
             return new NoOpFilter();

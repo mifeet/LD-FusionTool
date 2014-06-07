@@ -6,13 +6,7 @@ import org.openrdf.model.URI;
 import org.openrdf.rio.ParserConfig;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Container of configuration values.
@@ -356,6 +350,11 @@ public class ConfigImpl implements Config {
     @Override
     public float getMaxFreeMemoryUsage() {
         return ConfigConstants.MAX_FREE_MEMORY_USAGE;
+    }
+
+    @Override
+    public URI getRequiredClassOfProcessedResources() {
+        return ConfigConstants.REQUIRED_CLASS_OF_PROCESSED_RESOURCES;
     }
 }
 

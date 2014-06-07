@@ -1,5 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
+import org.openrdf.model.URI;
 import org.openrdf.rio.ParserConfig;
 
 import java.io.File;
@@ -106,4 +107,11 @@ public interface ConfigIO {
      * @return map of namespace prefixes
      */
     Map<String, String> getPrefixes();
+
+    /**
+     * Returns class to which resources included in the output must belong.
+     * In other words, if this method returns X, only resources R for which a triple {@code R rdf:type X} exists are processed.
+     * @return the required class of processed resources or null if all resources should be processed
+     */
+    URI getRequiredClassOfProcessedResources();
 }
