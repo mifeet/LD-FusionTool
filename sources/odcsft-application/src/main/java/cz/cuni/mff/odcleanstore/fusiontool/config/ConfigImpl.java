@@ -17,7 +17,6 @@ public class ConfigImpl implements Config {
     private List<DataSourceConfig> dataSources = Collections.emptyList();
     private List<ConstructSourceConfig> sameAsSources = Collections.emptyList();
     private List<ConstructSourceConfig> metadataSources = Collections.emptyList();
-    private SeedResourceRestriction seedResourceRestriction;
     private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
     private Map<String, String> prefixes = new HashMap<String, String>();
@@ -35,6 +34,7 @@ public class ConfigImpl implements Config {
     private Long memoryLimit = null;
     private File tempDirectory = ConfigConstants.DEFAULT_TEMP_DIRECTORY;
     private ParserConfig parserConfig = ConfigConstants.DEFAULT_FILE_PARSER_CONFIG;
+    private URI requiredClassOfProcessedResources = null;
 
     @Override
     public List<DataSourceConfig> getDataSources() {
@@ -76,20 +76,6 @@ public class ConfigImpl implements Config {
      */
     public void setMetadataSources(List<ConstructSourceConfig> metadataSources) {
         this.metadataSources = metadataSources;
-    }
-
-    @Override
-    public SeedResourceRestriction getSeedResourceRestriction() {
-        return seedResourceRestriction;
-    }
-
-    /**
-     * Sets value for {@link #getSeedResourceRestriction()}.
-     *
-     * @param restriction SPARQL group graph pattern
-     */
-    public void setSeedResourceRestriction(SeedResourceRestriction restriction) {
-        this.seedResourceRestriction = restriction;
     }
 
     @Override
@@ -300,6 +286,19 @@ public class ConfigImpl implements Config {
     }
 
     @Override
+    public URI getRequiredClassOfProcessedResources() {
+        return requiredClassOfProcessedResources;
+    }
+
+    /**
+     * Sets value for {@link #getRequiredClassOfProcessedResources()}.
+     * @param requiredClassOfProcessedResources see {@link #getRequiredClassOfProcessedResources()}
+     */
+    public void setRequiredClassOfProcessedResources(URI requiredClassOfProcessedResources) {
+        this.requiredClassOfProcessedResources = requiredClassOfProcessedResources;
+    }
+
+    @Override
     public ParserConfig getParserConfig() {
         return parserConfig;
     }
@@ -350,11 +349,6 @@ public class ConfigImpl implements Config {
     @Override
     public float getMaxFreeMemoryUsage() {
         return ConfigConstants.MAX_FREE_MEMORY_USAGE;
-    }
-
-    @Override
-    public URI getRequiredClassOfProcessedResources() {
-        return ConfigConstants.REQUIRED_CLASS_OF_PROCESSED_RESOURCES;
     }
 }
 

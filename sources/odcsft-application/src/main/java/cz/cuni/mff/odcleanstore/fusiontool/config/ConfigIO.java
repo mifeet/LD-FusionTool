@@ -63,14 +63,6 @@ public interface ConfigIO {
      */
     Long getMaxOutputTriples();
 
-    /**
-     * SPARQL restriction on URI resources which are initially loaded and processed.
-     * If given, triples having matching resources and triples reachable from them are processed. All data
-     * from matching input graphs are processed otherwise.
-     * @return SPARQL restriction (group graph pattern) or null
-     */
-    SeedResourceRestriction getSeedResourceRestriction();
-
     ///**
     // * Indicates whether only conflict clusters with an actual conflict should be included in the output.
     // * @return true iff only conflict clusters with an actual conflict should be included in the output

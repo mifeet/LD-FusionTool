@@ -112,15 +112,10 @@
          (optional, defaults to false) -->
     <Param name="localCopyProcessing" value="false" />
 
-    <!-- SPARQL group graph pattern giving seed resources for data fusion;
-         if given, subjects matching the SPARQL variable given in attribute 'var' will be loaded as seed resources
-         and only triples having these seed resources as subject will be processed;
-         if attribute 'transitive' is set (default) to true, also resources transitively reachable from seed resources will be processed;
-         optional (if not given, all triples from source graphs are processed) -->
-    <SeedResourceRestriction var="s" transitive="true">
-      ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
-    </SeedResourceRestriction>
-  </DataProcessing>      
+    <!-- If not empty, only resources of the given (RDFS/OWL) class will be processed;
+         if omitted or empty, all resources in input data will be processed -->
+    <Param name="processResourcesWithClass" value="http://schema.org/PostalAddress" />
+  </DataProcessing>
   
   <!-- Definition of conflict resolution settings (optional) -->
   <ConflictResolution>

@@ -127,11 +127,6 @@ public final class ConfigConstants {
      */
     public static final int LOG_LOOP_SIZE = 5000000;
 
-    /**
-     * (RDFS/OWL) class to which resources included in the output must belong.
-     */
-    public static final URI REQUIRED_CLASS_OF_PROCESSED_RESOURCES = null; // TODO: replace by a configuration option
-
     static {
         DEFAULT_FILE_PARSER_CONFIG = new ParserConfig();
         DEFAULT_FILE_PARSER_CONFIG.set(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES, false);

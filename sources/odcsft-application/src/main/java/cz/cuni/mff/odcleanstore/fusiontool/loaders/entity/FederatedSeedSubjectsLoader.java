@@ -47,7 +47,7 @@ public class FederatedSeedSubjectsLoader {
         /**
          * Returns an element from the collection and moves the iterator by one.
          * @return the current element
-         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolExceptionException error
+         * @throws ODCSFusionToolException error
          */
         @Override
         public String next() throws ODCSFusionToolException {

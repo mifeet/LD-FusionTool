@@ -7,6 +7,7 @@
     <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
     <Prefix id="fb" namespace="http://rdf.freebase.com/ns/" />
+    <Prefix id="pc" namespace="http://purl.org/procurement/public-contracts#" />
   </Prefixes>
   
   <Sources>
@@ -58,10 +59,8 @@
     <Param name="maxOutputTriples" value="999" />
     <Param name="enableFileCache" value="true" />
     <Param name="localCopyProcessing" value="true" />
-    <SeedResourceRestriction var="s" transitive="true">
-      ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
-    </SeedResourceRestriction>
-  </DataProcessing>      
+    <Param name="processResourcesWithClass" value="pc:Contract" />
+  </DataProcessing>
   
   <!-- Definition of conflict resolution settings (optional) -->
   <ConflictResolution>

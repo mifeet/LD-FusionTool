@@ -158,13 +158,6 @@ public final class ODCSFusionToolApplication {
                 throw new InvalidInputException("Invalid namespace prefix definition for URI '" + prefixEntry.getValue() + "'");
             }
         }
-        if (config.getSeedResourceRestriction() != null
-                && !ODCSUtils.isValidSparqlVar(config.getSeedResourceRestriction().getVar())) {
-            throw new InvalidInputException(
-                    "Variable name specified in seed resources restriction must be a valid SPARQL identifier, '"
-                            + config.getSeedResourceRestriction().getVar() + "' given"
-            );
-        }
 
         // Check data Source settings
         if (config.getDataSources() == null || config.getDataSources().isEmpty()) {
@@ -207,16 +200,6 @@ public final class ODCSFusionToolApplication {
                             + dataSourceConfig.getNamedGraphRestriction().getVar()
                             + "' given for data source " + dataSourceConfig
             );
-        }
-
-        if (config.getSeedResourceRestriction() != null
-                && dataSourceConfig.getNamedGraphRestriction().getVar().equals(
-                config.getSeedResourceRestriction().getVar())) {
-            String message = "SPARQL variable used in source named graph restriction (<GraphRestriction var=\"...\" />) "
-                    + "and variable used in seed resource restriction (<SeedResourceRestriction var=\"...\" />)"
-                    + " must be different, but both are set to ?" + config.getSeedResourceRestriction().getVar() + "."
-                    + "\nNote that any other variables used in the two restriction patterns should be also different.";
-            throw new InvalidInputException(message);
         }
     }
 

@@ -23,6 +23,7 @@ public final class ConfigParameters {
     public static final String PROCESSING_ENABLE_FILE_CACHE = "enableFileCache";
     public static final String PROCESSING_MAX_OUTPUT_TRIPLES = "maxOutputTriples";
     public static final String PROCESSING_LOCAL_COPY_PROCESSING = "localCopyProcessing";
+    public static final String PROCESSING_ONLY_RESOURCES_WITH_CLASS = "processResourcesWithClass";
     public static final String OUTPUT_PATH = "path";
     public static final String OUTPUT_FORMAT = "format";
     public static final String OUTPUT_SPLIT_BY_MB = "splitByMb".toLowerCase();

@@ -28,10 +28,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.entity.FederatedSeedSubjectsLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.MappedResourceFilter;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.RequiredClassFilter;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.ResourceDescriptionFilter;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.*;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.metadata.MetadataLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas.SameAsLinkFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas.SameAsLinkRepositoryLoader;
@@ -88,8 +85,7 @@ public class ODCSFusionToolExecutorRunner {
      */
     public ODCSFusionToolExecutorRunner(Config config) {
         this.config = config;
-        isTransitive = config.getSeedResourceRestriction() != null
-                && config.getSeedResourceRestriction().isTransitive();
+        isTransitive = false; // TODO
         repositoryFactory = new RepositoryFactory(config.getParserConfig());
     }
 
@@ -160,7 +156,8 @@ public class ODCSFusionToolExecutorRunner {
                     config.getParserConfig(), memoryLimit);
         } else {
             Collection<DataSource> dataSources = getDataSources();
-            UriCollection seedSubjects = getSeedSubjects(dataSources, config.getSeedResourceRestriction());
+            SparqlRestriction seedResourceDescription = getSeedResourceRestriction();
+            UriCollection seedSubjects = getSeedSubjects(dataSources, seedResourceDescription);
             LargeCollectionFactory largeCollectionFactory = createLargeCollectionFactory();
             return (isTransitive)
                     ? new TransitiveSubjectsSetInputLoader(seedSubjects, dataSources, largeCollectionFactory, config.getOutputMappedSubjectsOnly())
@@ -168,14 +165,31 @@ public class ODCSFusionToolExecutorRunner {
         }
     }
 
-    private ResourceDescriptionFilter getInputFilter(UriMappingIterable uriMapping) {
-        if (ConfigConstants.REQUIRED_CLASS_OF_PROCESSED_RESOURCES != null) {
-            return new RequiredClassFilter(uriMapping, ConfigConstants.REQUIRED_CLASS_OF_PROCESSED_RESOURCES);
-            // TODO: possibility to combine filters together
-        } if (config.getOutputMappedSubjectsOnly()) {
-            return new MappedResourceFilter(new AlternativeUriNavigator(uriMapping));
+    private SparqlRestriction getSeedResourceRestriction() {
+        if (config.getRequiredClassOfProcessedResources() == null) {
+            return null;
         } else {
-            return new NoOpFilter();
+            final String varPrefix = "be3611ab1a_"; // some unique prefix
+            return new SparqlRestrictionImpl(String.format("?%sr rdf:type <%s>", varPrefix, config.getRequiredClassOfProcessedResources().stringValue()), varPrefix + "r");
+        }
+    }
+
+    private ResourceDescriptionFilter getInputFilter(UriMappingIterable uriMapping) {
+        List<ResourceDescriptionFilter> inputFilters = new ArrayList<>();
+        if (config.getRequiredClassOfProcessedResources() != null) {
+            inputFilters.add(new RequiredClassFilter(uriMapping, config.getRequiredClassOfProcessedResources()));
+        }
+        if (config.getOutputMappedSubjectsOnly()) {
+            inputFilters.add(new MappedResourceFilter(new AlternativeUriNavigator(uriMapping)));
+        }
+
+        switch (inputFilters.size()) {
+            case 0:
+                return new NoOpFilter();
+            case 1:
+                return inputFilters.get(0);
+            default:
+                return new FederatedResourceDescriptionFilter(inputFilters.toArray(new ResourceDescriptionFilter[inputFilters.size()]));
         }
     }
 

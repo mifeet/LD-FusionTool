@@ -15,9 +15,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 public class ConfigReaderTest {
@@ -48,7 +46,7 @@ public class ConfigReaderTest {
         assertThat(config.getMetadataSources(), equalTo(Collections.<ConstructSourceConfig>emptyList()));
         assertThat(config.getSameAsSources().size(), equalTo(0));
         assertThat(config.getPrefixes(), equalTo(Collections.<String, String>emptyMap()));
-        assertThat(config.getSeedResourceRestriction(), nullValue());
+        assertThat(config.getRequiredClassOfProcessedResources(), nullValue());
         assertThat(config.getPropertyResolutionStrategies(), equalTo(Collections.<URI, ResolutionStrategy>emptyMap()));
         assertThat(config.isLocalCopyProcessing(), equalTo(false));
 
@@ -104,6 +102,7 @@ public class ConfigReaderTest {
                 .put("owl", "http://www.w3.org/2002/07/owl#")
                 .put("odcs", "http://opendata.cz/infrastructure/odcleanstore/")
                 .put("fb", "http://rdf.freebase.com/ns/")
+                .put("pc", "http://purl.org/procurement/public-contracts#")
                 .build();
         assertThat(config.getPrefixes(), equalTo(expectedPrefixes));
 
@@ -150,9 +149,7 @@ public class ConfigReaderTest {
         assertThat(config.getMaxOutputTriples(), equalTo(999l));
         assertThat(config.getEnableFileCache(), equalTo(true));
         assertThat(config.isLocalCopyProcessing(), equalTo(true));
-        assertThat(config.getSeedResourceRestriction().getVar(), equalTo("s"));
-        assertThat(config.getSeedResourceRestriction().isTransitive(), equalTo(true));
-        assertThat(config.getSeedResourceRestriction().getPattern(), equalTo("?s rdf:type <http://purl.org/procurement/public-contracts#Contract>"));
+        assertThat(config.getRequiredClassOfProcessedResources(), equalTo((URI) new URIImpl("http://purl.org/procurement/public-contracts#Contract")));
 
         assertThat(config.getDefaultResolutionStrategy(), notNullValue());
         assertThat(config.getDefaultResolutionStrategy().getResolutionFunctionName(), equalTo("ALL"));
@@ -228,7 +225,7 @@ public class ConfigReaderTest {
         assertThat(config.getSameAsSources().get(0).getParams().get(ConfigParameters.DATA_SOURCE_SPARQL_ENDPOINT), equalTo("http://localhost:8890/sparql"));
         assertThat(config.getSameAsSources().get(0).getConstructQuery().trim(), equalTo("CONSTRUCT {?s owl:sameAs ?o} WHERE { ?s owl:sameAs ?o }"));
 
-        assertThat(config.getSeedResourceRestriction(), nullValue());
+        assertThat(config.getRequiredClassOfProcessedResources(), nullValue());
 
         assertThat(config.getDefaultResolutionStrategy(), notNullValue());
         assertThat(config.getDefaultResolutionStrategy().getResolutionFunctionName(), equalTo("NONE"));
