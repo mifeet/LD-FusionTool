@@ -1,10 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.testutil;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 
 import java.util.Collection;
@@ -166,6 +163,14 @@ public final class ODCSFTTestUtils {
                 subject,
                 statement.getPredicate(),
                 statement.getObject(),
+                statement.getContext());
+    }
+
+    public static Statement setObject(Statement statement, Value object) {
+        return VALUE_FACTORY.createStatement(
+                statement.getSubject(),
+                statement.getPredicate(),
+                object,
                 statement.getContext());
     }
 }

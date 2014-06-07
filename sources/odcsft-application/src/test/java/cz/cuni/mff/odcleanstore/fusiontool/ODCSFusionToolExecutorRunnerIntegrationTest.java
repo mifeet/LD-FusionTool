@@ -215,13 +215,13 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         Statement[] expectedStatements = expectedOutput.toArray(new Statement[expectedOutput.size()]);
         Resource metadataContext = getMetadataContext(actualOutput);
         if (metadataContext != null) {
-            Map<Statement, Resource> actualStatementsToContext = new HashMap<Statement, Resource>();
+            Map<Statement, Resource> actualStatementsToContext = new HashMap<>();
             for (Statement statement : actualOutput) {
-                actualStatementsToContext.put(ODCSFTTestUtils.setContext(statement, null), statement.getContext());
+                actualStatementsToContext.put(getStatementPattern(statement), statement.getContext());
             }
-            Map<Resource, Resource> contextsMapping = new HashMap<Resource, Resource>();
+            Map<Resource, Resource> contextsMapping = new HashMap<>();
             for (Statement statement : expectedStatements) {
-                Resource matchingActualContext = actualStatementsToContext.get(ODCSFTTestUtils.setContext(statement, null));
+                Resource matchingActualContext = actualStatementsToContext.get(getStatementPattern(statement));
                 if (!metadataContext.equals(statement.getContext()) && matchingActualContext != null) {
                     contextsMapping.put(statement.getContext(), matchingActualContext);
                 }
@@ -247,6 +247,22 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
             result[i] = tryMatchBNodes(result[i], actualOutput[i], bNodeMap);
         }
         return result;
+    }
+
+    private Statement getStatementPattern(Statement statement) {
+        Statement mappedStatement = ODCSFTTestUtils.setContext(statement, null);
+        Resource oldSubjectPattern = statement.getSubject() instanceof BNode ? null : statement.getSubject();
+        Resource oldPredicatePattern = statement.getPredicate();
+        Value oldObjectPattern = statement.getObject() instanceof BNode ? null : statement.getObject();
+        if (mappedStatement.getSubject() instanceof BNode) {
+            BNode newSubjectPattern = VALUE_FACTORY.createBNode(String.format("BNS#%s#%s#%s", oldSubjectPattern, oldPredicatePattern, oldObjectPattern));
+            mappedStatement = ODCSFTTestUtils.setSubject(mappedStatement, newSubjectPattern);
+        }
+        if (mappedStatement.getObject() instanceof BNode) {
+            BNode newObjectPattern = VALUE_FACTORY.createBNode(String.format("BNO#%s#%s#%s", oldSubjectPattern, oldPredicatePattern, oldObjectPattern));
+            mappedStatement = ODCSFTTestUtils.setObject(mappedStatement, newObjectPattern);
+        }
+        return mappedStatement;
     }
 
     private Statement tryMatchBNodes(Statement expectedStatement, Statement actualStatement, BiMap<BNode, BNode> bNodeMap) {
@@ -281,9 +297,8 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
     }
 
     private Set<String> parseCanonicalUris(File file) throws IOException {
-        Set<String> result = new HashSet<String>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new FileInputStream(file), "UTF-8"));
+        Set<String> result = new HashSet<>();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
         String line = reader.readLine();
         while (line != null) {
             result.add(line);

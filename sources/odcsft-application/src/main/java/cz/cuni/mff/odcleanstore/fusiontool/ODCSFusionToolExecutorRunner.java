@@ -412,7 +412,7 @@ public class ODCSFusionToolExecutorRunner {
                 new ConflictResolutionPolicyImpl(config.getDefaultResolutionStrategy(), config.getPropertyResolutionStrategies()),
                 uriMapping,
                 metadata,
-                config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX,
+                config.getResultDataURIPrefix() + ODCSInternal.QUERY_RESULT_GRAPH_URI_INFIX +"/",
                 nestedResourceDescriptionQualityCalculator
         );
     }
