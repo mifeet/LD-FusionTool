@@ -125,18 +125,26 @@ public final class ODCSFusionToolApplication {
         boolean profile = false;
         String configFilePath = null;
         for (String arg : args) {
-            if ("-v".equals(arg)) {
-                verboseLevel = ApplicationArgs.VerboseLevel.VERBOSE;
-            } else if ("-vv".equals(arg) || "--verbose".equals(arg)) {
-                verboseLevel = ApplicationArgs.VerboseLevel.VERY_VERBOSE;
-            } else if ("--profile".equals(arg)) {
-                profile = true;
-            } else if ("--only-conflicts".equals(arg)) {
-                outputConflictsOnly = true;
-            } else if ("--only-mapped".equals(arg)) {
-                outputMappedSubjectsOnly = true;
-            } else {
-                configFilePath = arg;
+            switch (arg) {
+                case "-v":
+                    verboseLevel = ApplicationArgs.VerboseLevel.VERBOSE;
+                    break;
+                case "-vv":
+                case "--verbose":
+                    verboseLevel = ApplicationArgs.VerboseLevel.VERY_VERBOSE;
+                    break;
+                case "--profile":
+                    profile = true;
+                    break;
+                case "--only-conflicts":
+                    outputConflictsOnly = true;
+                    break;
+                case "--only-mapped":
+                    outputMappedSubjectsOnly = true;
+                    break;
+                default:
+                    configFilePath = arg;
+                    break;
             }
         }
         if (configFilePath == null) {
@@ -164,14 +172,14 @@ public final class ODCSFusionToolApplication {
             throw new InvalidInputException("There must be at least one DataSource specified");
         }
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
-            checkDataSourceValidInput(dataSourceConfig, config);
+            checkDataSourceValidInput(dataSourceConfig);
         }
 
         for (ConstructSourceConfig sourceConfig : config.getSameAsSources()) {
-            checkConstructSourceValidInput(sourceConfig, config);
+            checkConstructSourceValidInput(sourceConfig);
         }
         for (ConstructSourceConfig sourceConfig : config.getMetadataSources()) {
-            checkConstructSourceValidInput(sourceConfig, config);
+            checkConstructSourceValidInput(sourceConfig);
         }
 
         // Check output settings
@@ -187,12 +195,12 @@ public final class ODCSFusionToolApplication {
         // intentionally do not check canonical URI files
     }
 
-    private static void checkConstructSourceValidInput(ConstructSourceConfig sourceConfig, Config config) throws InvalidInputException {
-        checkSourceValidInput(sourceConfig, config);
+    private static void checkConstructSourceValidInput(ConstructSourceConfig sourceConfig) throws InvalidInputException {
+        checkSourceValidInput(sourceConfig);
     }
 
-    private static void checkDataSourceValidInput(DataSourceConfig dataSourceConfig, Config config) throws InvalidInputException {
-        checkSourceValidInput(dataSourceConfig, config);
+    private static void checkDataSourceValidInput(DataSourceConfig dataSourceConfig) throws InvalidInputException {
+        checkSourceValidInput(dataSourceConfig);
 
         if (!ODCSUtils.isValidSparqlVar(dataSourceConfig.getNamedGraphRestriction().getVar())) {
             throw new InvalidInputException(
@@ -203,7 +211,7 @@ public final class ODCSFusionToolApplication {
         }
     }
 
-    private static void checkSourceValidInput(SourceConfig sourceConfig, Config config) throws InvalidInputException {
+    private static void checkSourceValidInput(SourceConfig sourceConfig) throws InvalidInputException {
         switch (sourceConfig.getType()) {
             case VIRTUOSO:
                 checkRequiredDataSourceParam(sourceConfig,
