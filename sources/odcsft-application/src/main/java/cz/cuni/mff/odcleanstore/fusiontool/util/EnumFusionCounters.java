@@ -30,5 +30,8 @@ public enum EnumFusionCounters {
     DATA_INITIALIZATION,
 
     /** Time reading metadata and owl:sameAs links. */
-    META_INITIALIZATION
+    META_INITIALIZATION,
+
+    /** Time spent filtering input data. */
+    INPUT_FILTERING
 }

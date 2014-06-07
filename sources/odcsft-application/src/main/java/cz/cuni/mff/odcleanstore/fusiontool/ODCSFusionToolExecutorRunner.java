@@ -585,8 +585,9 @@ public class ODCSFusionToolExecutorRunner {
             System.out.println("Reading metadata & sameAs links:  " + timeProfiler.formatCounter(EnumFusionCounters.META_INITIALIZATION));
             System.out.println("Data sources initialization time: " + timeProfiler.formatCounter(EnumFusionCounters.DATA_INITIALIZATION));
             System.out.println("Quad loading time:                " + timeProfiler.formatCounter(EnumFusionCounters.QUAD_LOADING));
-            System.out.println("Conflict resolution time:         " + timeProfiler.formatCounter(EnumFusionCounters.CONFLICT_RESOLUTION));
+            System.out.println("Input filtering time:             " + timeProfiler.formatCounter(EnumFusionCounters.INPUT_FILTERING));
             System.out.println("Buffering time:                   " + timeProfiler.formatCounter(EnumFusionCounters.BUFFERING));
+            System.out.println("Conflict resolution time:         " + timeProfiler.formatCounter(EnumFusionCounters.CONFLICT_RESOLUTION));
             System.out.println("Output writing time:              " + timeProfiler.formatCounter(EnumFusionCounters.OUTPUT_WRITING));
             System.out.println("Maximum recorded total memory:    " + MemoryProfiler.formatMemoryBytes(memoryProfiler.getMaxTotalMemory()));
             System.out.println("Maximum recorded used memory:     " + MemoryProfiler.formatMemoryBytes(memoryProfiler.getMaxUsedMemory()));

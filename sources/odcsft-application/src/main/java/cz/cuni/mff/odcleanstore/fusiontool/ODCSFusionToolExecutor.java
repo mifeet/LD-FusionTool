@@ -91,11 +91,16 @@ public class ODCSFusionToolExecutor {
             timeProfiler.startCounter(EnumFusionCounters.QUAD_LOADING);
             ResourceDescription resourceDescription = inputLoader.next();
             inputTriples += resourceDescription.getDescribingStatements().size();
-            if (!this.resourceDescriptionFilter.accept(resourceDescription)) {
+            timeProfiler.stopAddCounter(EnumFusionCounters.QUAD_LOADING);
+
+            // Apply input filters
+            timeProfiler.startCounter(EnumFusionCounters.INPUT_FILTERING);
+            boolean accept = this.resourceDescriptionFilter.accept(resourceDescription);
+            timeProfiler.startCounter(EnumFusionCounters.INPUT_FILTERING);
+            if (!accept) {
                 LOG.debug("Resource {} doesn't match filter, skipping", resourceDescription.getResource());
                 continue;
             }
-            timeProfiler.stopAddCounter(EnumFusionCounters.QUAD_LOADING);
 
             // Resolve conflicts
             timeProfiler.startCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
