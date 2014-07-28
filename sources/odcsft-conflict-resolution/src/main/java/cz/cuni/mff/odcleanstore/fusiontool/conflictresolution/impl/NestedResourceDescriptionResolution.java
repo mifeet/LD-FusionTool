@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class NestedResourceDescriptionResolution extends ResolutionFunctionBase {
     private static final Logger LOG = LoggerFactory.getLogger(NestedResourceDescriptionResolution.class);
-    private  static final String FUNCTION_NAME = "DEPENDENT_RESOURCE";
+    private static final String FUNCTION_NAME = "DEPENDENT_RESOURCE";
 
     /**
      * Returns a string identifier of this resolution function: {@value #FUNCTION_NAME}.

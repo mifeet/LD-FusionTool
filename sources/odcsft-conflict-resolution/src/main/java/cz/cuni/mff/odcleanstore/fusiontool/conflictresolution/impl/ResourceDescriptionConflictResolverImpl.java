@@ -194,8 +194,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             if (conflictingStatements == null) {
                 continue;
             }
-            Collection<Statement> mappedConflictingStatements = new StatementMapper(uriMapping,
-                    VF).mapStatements(conflictingStatements); // FIXME: this may contain duplicates!
+            Collection<Statement> mappedConflictingStatements = new StatementMapper(uriMapping, VF).mapStatements(conflictingStatements); // FIXME: this may contain duplicates!
             ClusterIterator<Statement> subjectClusterIterator = new ClusterIterator<>(conflictingStatements, StatementBySubjectComparator.getInstance());
             while (subjectClusterIterator.hasNext()) {
                 List<Statement> statements = subjectClusterIterator.next();

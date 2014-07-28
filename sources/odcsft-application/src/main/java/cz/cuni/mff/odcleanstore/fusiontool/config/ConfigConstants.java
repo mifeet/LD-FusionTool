@@ -103,7 +103,7 @@ public final class ConfigConstants {
      * Maximum number of rows to be requested in any SPARQL query.
      * Use Virtuoso Default
      */
-    public static final int DEFAULT_SPARQL_RESULT_MAX_ROWS = 10000;
+    public static final int DEFAULT_SPARQL_RESULT_MAX_ROWS = 10_000;
 
     /**
      * Max portion of free memory to use.
@@ -125,7 +125,7 @@ public final class ConfigConstants {
     /**
      * Number of loop iterations to be executed before the status is logged.
      */
-    public static final int LOG_LOOP_SIZE = 5000000;
+    public static final int LOG_LOOP_SIZE = 5_000_000;
 
     static {
         DEFAULT_FILE_PARSER_CONFIG = new ParserConfig();
