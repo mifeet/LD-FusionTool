@@ -72,7 +72,7 @@ public class MapdbCollectionFactory implements LargeCollectionFactory {
             db = DBMaker.newFileDB(dbFile)
                     .deleteFilesAfterClose()
                     .closeOnJvmShutdown()
-                    .writeAheadLogDisable()
+                    .transactionDisable()
                     .cacheSoftRefEnable()
                     .compressionEnable()
                     .make();

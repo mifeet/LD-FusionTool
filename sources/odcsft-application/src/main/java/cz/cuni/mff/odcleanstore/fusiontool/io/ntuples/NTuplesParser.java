@@ -84,7 +84,7 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
         }
 
         private int parseTuple(int c) throws IOException, RDFParseException {
-            tuple = new ArrayList<Value>(expectedElements);
+            tuple = new ArrayList<>(expectedElements);
             while (c != -1 && c != '.' && c != '\r' && c != '\n') {
                 c = parseObject(c);
                 tuple.add(object);
