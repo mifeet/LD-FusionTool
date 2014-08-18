@@ -66,6 +66,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     private final DataSource dataSource;
     private final int maxSparqlResultsSize;
     private final OutputParamReader paramReader;
+    private int initialOffset = 0;
 
     /**
      * Creates a new instance.
@@ -89,7 +90,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
             SparqlRestriction restriction = getSparqlRestriction();
             int loadedQuads = Integer.MAX_VALUE;
             boolean isFirst = true;
-            for (int offset = 0; loadedQuads >= maxSparqlResultsSize; offset += maxSparqlResultsSize) {
+            for (int offset = initialOffset; loadedQuads >= maxSparqlResultsSize; offset += maxSparqlResultsSize) {
                 query = formatQuery(LOAD_SPARQL_QUERY, restriction, maxSparqlResultsSize, offset);
                 long startTime = System.currentTimeMillis();
                 loadedQuads = addQuadsFromQuery(query, rdfHandler);
@@ -211,5 +212,9 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
                 connection = null;
             }
         }
+    }
+
+    public void setInitialOffset(int initialOffset) {
+        this.initialOffset = initialOffset;
     }
 }

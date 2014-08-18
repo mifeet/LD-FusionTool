@@ -31,13 +31,14 @@ import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
 public class SparqlDumpDownloader {
-    public static final File OUTPUT_FILE = new File("h:\\skola\\PhD\\proj\\vse-vestnik\\dump\\vestnik-dump-no-invalid-ico.nq.gz");
-    public static final RDFFormat FILE_SERIALIZATION = RDFFormat.BINARY.NQUADS;
-    public static final String SPARQL_ENDPOINT = "http://lod2-dev.vse.cz:8890/sparql";
-    public static final String NAMED_GRAPH_RESTRICTION = "FILTER(?g = <http://linked.opendata.cz/resource/dataset/vestnikverejnychzakazek.cz/no-invalid-ico>)";
+    public static final File OUTPUT_FILE = new File("C:\\file.n3");
+    public static final RDFFormat FILE_SERIALIZATION = RDFFormat.NTRIPLES;
+    public static final String SPARQL_ENDPOINT = "http://example.com/sparql";
+    public static final String NAMED_GRAPH_RESTRICTION = "FILTER(?g = <http://graph>)";
     public static final String NAMED_GRAPH_RESTRICTION_VAR = "g";
     public static final int SPARQL_RESULT_MAX_ROWS = 9000;
-    public static final int SPARQL_MIN_QUERY_INTERVAL = 5000;
+    public static final int SPARQL_MIN_QUERY_INTERVAL = 2000;
+    public static final int INITIAL_OFFSET = 0;
 
     public static void main(String[] args) throws Exception {
         boolean useGZip = OUTPUT_FILE.getName().endsWith(".gz");
@@ -49,6 +50,7 @@ public class SparqlDumpDownloader {
                     Collections.<String, String>emptyMap(),
                     new RepositoryFactory(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
             AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
+            loader.setInitialOffset(INITIAL_OFFSET);
 
             RDFWriter tempRdfWriter = Rio.createWriter(FILE_SERIALIZATION, tempOutputWriter);
             tempRdfWriter.startRDF();
