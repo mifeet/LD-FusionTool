@@ -2,7 +2,16 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.*;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ApplicationArgs;
+import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
@@ -82,14 +91,17 @@ public final class ODCSFusionToolApplication {
             if (e.getCause() != null) {
                 System.err.println("  " + e.getCause().getMessage());
             }
+            e.printStackTrace(System.err);
             return;
         } catch (ConflictResolutionException e) {
             System.err.println("Conflict resolution error:");
             System.err.println("  " + e.getMessage());
+            e.printStackTrace(System.err);
             return;
         } catch (IOException e) {
             System.err.println("Error when writing results:");
             System.err.println("  " + e.getMessage());
+            e.printStackTrace(System.err);
             return;
         }
 
