@@ -66,7 +66,7 @@ public class SortedListModelFactory {
         return newSize;
     }
 
-    private static class ArrayList<E> extends AbstractList<E> implements RandomAccess, java.io.Serializable{
+    private static class ArrayList<E> extends AbstractList<E> implements RandomAccess, java.io.Serializable {
         private static final long serialVersionUID = -1246375464109943164L;
         private final E[] array;
         private final int size;

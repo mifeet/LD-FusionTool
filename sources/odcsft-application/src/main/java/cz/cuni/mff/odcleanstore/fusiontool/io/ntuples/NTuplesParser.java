@@ -68,7 +68,7 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
                     try {
                         c = parseTuple(c);
                     } catch (RDFParseException e) {
-                        throw new IOException("Parse error: " + e.getMessage(), e);
+                        throw new IOException("Parse error: " + e.getMessage() + " at " + readTillEndOfLine(), e);
                     }
                 }
 
@@ -105,6 +105,16 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
                 expectedElements = tuple.size();
             }
             return c;
+        }
+
+        private String readTillEndOfLine() throws IOException {
+            int c = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            while (c != -1 && c != '\r' && c != '\n') {
+                c = reader.read();
+                stringBuilder.append((char)c);
+            }
+            return stringBuilder.toString();
         }
     }
 }
