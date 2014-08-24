@@ -1,11 +1,14 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
+import com.google.common.collect.ImmutableList;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
 import org.junit.Test;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.helpers.BasicParserSettings;
+import org.openrdf.rio.helpers.NTriplesParserSettings;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,8 +18,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 
+@SuppressWarnings("unchecked")
 public class NTuplesParserTest {
     private static final ValueFactory VF = ValueFactoryImpl.getInstance();
 
@@ -33,7 +38,7 @@ public class NTuplesParserTest {
 
         // Act
         NTuplesParser parser = new NTuplesParser(new InputStreamReader(inputStream), parserConfig);
-        List<List<Value>> result = new ArrayList<List<Value>>();
+        List<List<Value>> result = new ArrayList<>();
         try {
             while (parser.hasNext()) {
                 result.add(parser.next());
@@ -52,7 +57,7 @@ public class NTuplesParserTest {
                 (Value) VF.createURI("http://uri2"))));
         assertThat(result.get(2), is(Arrays.asList(
                 (Value) VF.createURI("http://uri3"),
-                (Value) VF.createURI("http://uri4"))));
+                VF.createURI("http://uri4"))));
     }
 
     @Test
@@ -69,7 +74,7 @@ public class NTuplesParserTest {
 
         // Act
         NTuplesParser parser = new NTuplesParser(new InputStreamReader(inputStream), parserConfig);
-        List<List<Value>> result = new ArrayList<List<Value>>();
+        List<List<Value>> result = new ArrayList<>();
         try {
             while (parser.hasNext()) {
                 result.add(parser.next());
@@ -100,4 +105,28 @@ public class NTuplesParserTest {
             parser.close();
         }
     }
+
+    @Test
+    public void skipsErrorWhenFailOnNTriplesInvalidLinesSettingIsNonFatal() throws Exception {
+        // Arrange
+        String inputString = "<http://uri1> _:bnode1 abc.\n<http://uri2> <http://uri3>.\n";
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(inputString.getBytes());
+        ParserConfig parserConfig = new ParserConfig();
+        parserConfig.addNonFatalError(NTriplesParserSettings.FAIL_ON_NTRIPLES_INVALID_LINES);
+
+        // Act
+        NTuplesParser parser = new NTuplesParser(new InputStreamReader(inputStream), parserConfig);
+        List<List<Value>> tuples = new ArrayList<>();
+        try {
+            while (parser.hasNext()) {
+                tuples.add(parser.next());
+            }
+        } finally {
+            parser.close();
+        }
+
+        // Assert
+        assertThat(tuples, contains((List<Value>) ImmutableList.of((Value) ODCSFTTestUtils.createHttpUri("uri2"), ODCSFTTestUtils.createHttpUri("uri3"))));
+    }
+
 }

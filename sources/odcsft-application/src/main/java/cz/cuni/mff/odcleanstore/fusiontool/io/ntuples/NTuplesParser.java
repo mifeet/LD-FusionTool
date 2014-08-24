@@ -5,7 +5,10 @@ import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
 import org.openrdf.model.Value;
 import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.helpers.NTriplesParserSettings;
 import org.openrdf.rio.ntriples.NTriplesParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -16,6 +19,8 @@ import java.util.List;
  * TODO
  */
 public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOException> implements Closeable<IOException> {
+    private static final Logger LOG = LoggerFactory.getLogger(NTuplesParser.class);
+
     private Parser internalParser;
 
     public NTuplesParser(Reader inputReader, ParserConfig parserConfig) throws IOException {
@@ -68,7 +73,16 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
                     try {
                         c = parseTuple(c);
                     } catch (RDFParseException e) {
-                        throw new IOException("Parse error: " + e.getMessage() + " at " + readTillEndOfLine(), e);
+                        String errorMessage = String.format("Parse error: %s before '%s'", e.getMessage(), readTillEndOfLine());
+                        if (getParserConfig().isNonFatalError(NTriplesParserSettings.FAIL_ON_NTRIPLES_INVALID_LINES)) {
+                            tuple = null;
+                            if (getParseErrorListener() != null) {
+                                getParseErrorListener().error(errorMessage, e.getLineNumber(), e.getColumnNumber());
+                            }
+                            LOG.error(errorMessage, e);
+                        } else {
+                            throw new IOException(errorMessage, e);
+                        }
                     }
                 }
 
@@ -108,12 +122,15 @@ public class NTuplesParser extends ThrowingAbstractIterator<List<Value>, IOExcep
         }
 
         private String readTillEndOfLine() throws IOException {
-            int c = 0;
             StringBuilder stringBuilder = new StringBuilder();
-            while (c != -1 && c != '\r' && c != '\n') {
+            if (c != -1 && c != '\r' && c != '\n') {
                 c = reader.read();
-                stringBuilder.append((char)c);
             }
+            while (c != -1 && c != '\r' && c != '\n') {
+                stringBuilder.append((char)c);
+                c = reader.read();
+            }
+            c = skipLine(c);
             return stringBuilder.toString();
         }
     }
