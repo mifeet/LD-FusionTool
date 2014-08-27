@@ -5,6 +5,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
@@ -17,6 +18,8 @@ import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFWriter;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.RDFHandlerBase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,13 +34,17 @@ import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
 public class SparqlDumpDownloader {
+    private static final Logger LOG = LoggerFactory.getLogger(SparqlDumpDownloader.class);
+
     public static final File OUTPUT_FILE = new File("C:\\file.n3");
     public static final RDFFormat FILE_SERIALIZATION = RDFFormat.NTRIPLES;
     public static final String SPARQL_ENDPOINT = "http://example.com/sparql";
     public static final String NAMED_GRAPH_RESTRICTION = "FILTER(?g = <http://graph>)";
     public static final String NAMED_GRAPH_RESTRICTION_VAR = "g";
-    public static final int SPARQL_RESULT_MAX_ROWS = 9000;
-    public static final int SPARQL_MIN_QUERY_INTERVAL = 2000;
+    public static final int SPARQL_RESULT_MAX_ROWS = 9_000;
+    public static final int SPARQL_MIN_QUERY_INTERVAL = 2_000;
+    public static final int ERROR_RETRY_INTERVAL = 20_000;
+    public static final int MAX_RETRY_ATTEMPTS = 1_000;
     public static final int INITIAL_OFFSET = 0;
 
     public static void main(String[] args) throws Exception {
@@ -49,16 +56,30 @@ public class SparqlDumpDownloader {
                     dataSourceConfig,
                     Collections.<String, String>emptyMap(),
                     new RepositoryFactory(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
-            AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
-            loader.setInitialOffset(INITIAL_OFFSET);
-
             RDFWriter tempRdfWriter = Rio.createWriter(FILE_SERIALIZATION, tempOutputWriter);
             tempRdfWriter.startRDF();
-            try {
-                loader.loadAllTriples(new RDFWriterWrapper(tempRdfWriter));
-            } finally {
-                loader.close();
+
+            RDFWriterWrapper rdfHandler = new RDFWriterWrapper(tempRdfWriter);
+
+            long retryAttempts = 0;
+            boolean finished = false;
+            while (!finished) {
+                int offset = (int) rdfHandler.getCounter() + INITIAL_OFFSET;
+                try {
+                    loadQuads(dataSource, offset, rdfHandler);
+                    finished = true;
+                } catch (ODCSFusionToolException e) {
+                    if (retryAttempts < MAX_RETRY_ATTEMPTS) {
+                        retryAttempts++;
+                        LOG.error("Error loading triples: " + e.getMessage(), e);
+                        LOG.info(String.format("An error occurred, retry # %d in %d s", retryAttempts, ERROR_RETRY_INTERVAL / 1_000));
+                        Thread.sleep(ERROR_RETRY_INTERVAL);
+                    } else {
+                        throw e;
+                    }
+                }
             }
+
             tempRdfWriter.endRDF();
         } catch (Exception e) {
             e.printStackTrace();
@@ -66,6 +87,16 @@ public class SparqlDumpDownloader {
             if (tempOutputWriter != null) {
                 tempOutputWriter.close();
             }
+        }
+    }
+
+    private static void loadQuads(DataSource dataSource, int initialOffset, RDFWriterWrapper rdfHandler) throws ODCSFusionToolException {
+        AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
+        loader.setInitialOffset(initialOffset);
+        try {
+            loader.loadAllTriples(rdfHandler);
+        } finally {
+            loader.close();
         }
     }
 
@@ -100,6 +131,10 @@ public class SparqlDumpDownloader {
             this.startTime = System.currentTimeMillis();
         }
 
+        public long getCounter() {
+            return counter;
+        }
+
         @Override
         public void handleNamespace(String prefix, String uri) throws RDFHandlerException {
             this.writer.handleNamespace(prefix, uri);
@@ -111,7 +146,7 @@ public class SparqlDumpDownloader {
             counter++;
             if (counter % 100_000 == 0) {
                 String time = ODCSFusionToolAppUtils.formatProfilingTime(System.currentTimeMillis() - startTime);
-                System.out.printf("Stored %,d quads in %s (last %s)\n", counter, time, st);
+                LOG.info(String.format("Stored %,d quads in %s (last %s)\n", counter, time, st));
             }
         }
     }
