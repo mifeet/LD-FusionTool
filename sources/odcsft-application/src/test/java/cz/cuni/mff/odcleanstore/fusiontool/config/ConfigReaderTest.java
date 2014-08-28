@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class ConfigReaderTest {
@@ -84,6 +85,7 @@ public class ConfigReaderTest {
         assertThat(config.getMaxFreeMemoryUsage(), equalTo(LDFTConfigConstants.MAX_FREE_MEMORY_USAGE));
         assertThat(config.getMemoryLimit(), equalTo(null));
         assertThat(config.getParserConfig(), equalTo(LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+        assertThat(config.getSameAsLinkTypes(), is(LDFTConfigConstants.SAME_AS_LINK_TYPES));
     }
 
     @Test
@@ -199,6 +201,7 @@ public class ConfigReaderTest {
         assertThat(config.getMaxFreeMemoryUsage(), equalTo(LDFTConfigConstants.MAX_FREE_MEMORY_USAGE));
         assertThat(config.getMemoryLimit(), equalTo(null));
         assertThat(config.getParserConfig(), equalTo(LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+        assertThat(config.getSameAsLinkTypes(), is(LDFTConfigConstants.SAME_AS_LINK_TYPES));
     }
 
     @Test

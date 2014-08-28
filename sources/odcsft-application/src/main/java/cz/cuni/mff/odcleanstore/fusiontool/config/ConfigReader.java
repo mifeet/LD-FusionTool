@@ -188,7 +188,7 @@ public final class ConfigReader {
                 }
             } else {
                 throw new InvalidInputException("Unknown parameter " + param.getName()
-                        + " used in conflict resolution parameters");
+                        + " used in data processing parameters");
             }
         }
     }
