@@ -3,7 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 /**
  * Configuration related to quality calculation.
  */
-interface ConfigQuality {
+public interface ConfigQuality {
     /**
      * Coefficient used in quality computation formula. Value N means that (N+1)
      * sources with score 1 that agree on the result will increase the result

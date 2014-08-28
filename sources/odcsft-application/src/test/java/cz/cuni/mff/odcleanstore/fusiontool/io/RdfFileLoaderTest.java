@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
 import com.google.common.collect.ImmutableList;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
@@ -56,7 +56,7 @@ public class RdfFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>();
-        RdfFileLoader loader = new RdfFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        RdfFileLoader loader = new RdfFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.read(new StatementCollector(result));
 
         // Assert
@@ -74,7 +74,7 @@ public class RdfFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>();
-        RdfFileLoader loader = new RdfFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        RdfFileLoader loader = new RdfFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.read(new StatementCollector(result));
 
         // Assert
@@ -92,7 +92,7 @@ public class RdfFileLoaderTest {
         DataSourceConfig dataSource = createFileDataSource(statements, EnumSerializationFormat.RDF_XML);
 
         // Act
-        RdfFileLoader loader = new RdfFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        RdfFileLoader loader = new RdfFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         List<Statement> result = new ArrayList<Statement>(0);
         loader.read(new StatementCollector(result));
 
@@ -110,7 +110,7 @@ public class RdfFileLoaderTest {
         DataSourceConfig dataSource = createFileDataSource(statements, EnumSerializationFormat.RDF_XML);
 
         // Act
-        RdfFileLoader loader = new RdfFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        RdfFileLoader loader = new RdfFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.read((rdfHandler));
 
         // Assert
@@ -124,7 +124,7 @@ public class RdfFileLoaderTest {
         DataSourceConfig dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, "");
 
         // Act
-        RdfFileLoader loader = new RdfFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        RdfFileLoader loader = new RdfFileLoader(dataSourceConfig, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.read(new StatementCollector());
     }
 
@@ -139,7 +139,7 @@ public class RdfFileLoaderTest {
         DataSourceConfig dataSource = createFileDataSource(statements, EnumSerializationFormat.RDF_XML);
 
         // Act
-        RdfFileLoader loader = new RdfFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        RdfFileLoader loader = new RdfFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.read((rdfHandler));
     }
 

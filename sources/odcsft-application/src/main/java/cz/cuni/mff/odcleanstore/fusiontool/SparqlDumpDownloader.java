@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
@@ -55,7 +55,7 @@ public class SparqlDumpDownloader {
             DataSource dataSource = DataSourceImpl.fromConfig(
                     dataSourceConfig,
                     Collections.<String, String>emptyMap(),
-                    new RepositoryFactory(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+                    new RepositoryFactory(LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
             RDFWriter tempRdfWriter = Rio.createWriter(FILE_SERIALIZATION, tempOutputWriter);
             tempRdfWriter.startRDF();
 

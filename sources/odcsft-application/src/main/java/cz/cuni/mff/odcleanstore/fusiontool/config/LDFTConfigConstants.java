@@ -3,6 +3,8 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.config;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.URI;
 import org.openrdf.model.vocabulary.*;
@@ -21,33 +23,27 @@ import java.util.Set;
  * Contains default values and values which cannot be currently set via the configuration file.
  * TODO: utilize Spring?
  */
-public final class ConfigConstants {
+public final class LDFTConfigConstants {
     /** Disable constructor for a utility class. */
-    private ConfigConstants() {
+    private LDFTConfigConstants() {
     }
-
-    /**
-     * SPARQL query variable name referring to a restricted RDF resource in a constraint pattern.
-     * @see SparqlRestriction
-     */
-    static final String DEFAULT_RESTRICTION_RESOURCE_VAR = "s";
 
     /**
      * SPARQL query variable name referring to a restricted named graph in a constraint pattern.
      * @see SparqlRestriction
      */
-    static final String DEFAULT_RESTRICTION_GRAPH_VAR = "g";
+    public static final String DEFAULT_RESTRICTION_GRAPH_VAR = "g";
 
     /**
      * Default timeout for database queries in seconds.
      * Zero means no timeout.
      */
-    static final int DEFAULT_QUERY_TIMEOUT = 1200;
+    public static final int DEFAULT_QUERY_TIMEOUT = 1200;
 
     /**
      * Default prefix of named graphs and URIs where query results and metadata in the output are placed.
      */
-    static final String DEFAULT_RESULT_DATA_URI_PREFIX = ODCS.NAMESPACE + "CR/";
+    public static final String DEFAULT_RESULT_DATA_URI_PREFIX = ODCS.NAMESPACE + "fusiontool/";
 
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
@@ -59,28 +55,28 @@ public final class ConfigConstants {
      * sources with score 1 that agree on the result will increase the result
      * quality to 1.
      */
-    static final double AGREE_COEFFICIENT = 4;
+    public static final double AGREE_COEFFICIENT = 4;
 
     /**
      * Graph score used if none is given in the input.
      */
-    static final double SCORE_IF_UNKNOWN = 0.5;
+    public static final double SCORE_IF_UNKNOWN = 0.5;
 
     /**
      * Weight of the publisher score.
      */
-    static final double PUBLISHER_SCORE_WEIGHT = 0.2;
+    public static final double PUBLISHER_SCORE_WEIGHT = 0.2;
 
     /**
      * Difference between two dates when their distance is equal to MAX_DISTANCE in seconds.
      * 31622400 s ~ 366 days
      */
-    static final long MAX_DATE_DIFFERENCE = 31622400;
+    public static final long MAX_DATE_DIFFERENCE = 31622400;
 
     /**
      * Set of default preferred canonical URIs.
      */
-    static final Collection<String> DEFAULT_PREFERRED_CANONICAL_URIS = Arrays.asList(
+    public static final Collection<String> DEFAULT_PREFERRED_CANONICAL_URIS = ImmutableList.of(
             RDFS.LABEL.stringValue(),
             RDF.TYPE.stringValue(),
             OWL.SAMEAS.stringValue(),
@@ -97,7 +93,7 @@ public final class ConfigConstants {
     /**
      * Default directory for temporary files.
      */
-    static final File DEFAULT_TEMP_DIRECTORY = new File(".");
+    public static final File DEFAULT_TEMP_DIRECTORY = new File(".");
 
     /**
      * Maximum number of rows to be requested in any SPARQL query.
@@ -108,14 +104,14 @@ public final class ConfigConstants {
     /**
      * Max portion of free memory to use.
      */
-    static final float MAX_FREE_MEMORY_USAGE = 0.85f;
+    public static final float MAX_FREE_MEMORY_USAGE = 0.85f;
 
     /**
      * Set of 'same as' link property URIs for the purposes of conflict resolution.
      */
-    static final Set<URI> SAME_AS_LINK_TYPES = new HashSet<URI>(Arrays.asList(
+    public static final Set<URI> SAME_AS_LINK_TYPES = ImmutableSet.of(
            OWL.SAMEAS
-    ));
+    );
 
     /**
      * Default configuration for Sesame file parsers.

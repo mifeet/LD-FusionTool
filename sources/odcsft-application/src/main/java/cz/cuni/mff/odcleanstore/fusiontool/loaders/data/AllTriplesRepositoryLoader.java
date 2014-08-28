@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.data;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
@@ -78,7 +78,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
         paramReader = new OutputParamReader(dataSource);
         this.maxSparqlResultsSize = paramReader.getIntValue(
                 ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS,
-                ConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS);
+                LDFTConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS);
     }
 
     @Override

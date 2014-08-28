@@ -308,9 +308,9 @@ public class ExternalSortingInputLoaderTest {
             inputFileWriter.close();
 
             Set<AllTriplesLoader> dataSources = Collections.singleton(
-                    (AllTriplesLoader) new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+                    (AllTriplesLoader) new AllTriplesFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
             inputLoader = new ExternalSortingInputLoader(dataSources, Collections.singleton(resourceDescriptionProperty), testDir.getRoot(),
-                    ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE);
+                    LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG, Long.MAX_VALUE);
             inputLoader.initialize(uriMapping);
             if (inputLoader.hasNext()) {
                 // call only once
@@ -353,7 +353,7 @@ public class ExternalSortingInputLoaderTest {
                 createFileAllTriplesLoader(testInput1, testInput2),
                 Collections.singleton(resourceDescriptionProperty),
                 testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
+                LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
                 Long.MAX_VALUE);
         try {
             collectResult(inputLoader, result);
@@ -591,7 +591,7 @@ public class ExternalSortingInputLoaderTest {
                 createFileAllTriplesLoader(testInput),
                 Collections.singleton(resourceDescriptionProperty),
                 testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
+                LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG,
                 Long.MAX_VALUE
         );
     }
@@ -599,12 +599,12 @@ public class ExternalSortingInputLoaderTest {
     private Collection<AllTriplesLoader> createFileAllTriplesLoader(Collection<Statement>... sourceStatements) throws IOException, RDFHandlerException {
         if (sourceStatements.length == 1) {
             DataSourceConfig dataSourceConfig = createFileDataSource(sourceStatements[0]);
-            return Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+            return Collections.singleton((AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
         }
         ArrayList<AllTriplesLoader> result = new ArrayList<>();
         for (Collection<Statement> statements : sourceStatements) {
             DataSourceConfig dataSourceConfig = createFileDataSource(statements);
-            result.add(new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+            result.add(new AllTriplesFileLoader(dataSourceConfig, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
         }
         return result;
     }

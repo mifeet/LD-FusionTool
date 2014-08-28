@@ -3,7 +3,7 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.Source;
@@ -24,7 +24,7 @@ public abstract class RepositoryLoaderBase {
     /**
      * Maximum number of values in a generated argument for the "?var IN (...)" SPARQL construct .
      */
-    protected static final int MAX_QUERY_LIST_LENGTH = ConfigConstants.MAX_QUERY_LIST_LENGTH;
+    protected static final int MAX_QUERY_LIST_LENGTH = LDFTConfigConstants.MAX_QUERY_LIST_LENGTH;
 
     /**
      * A random prefix for variables used in SPARQL queries so that they don't conflict

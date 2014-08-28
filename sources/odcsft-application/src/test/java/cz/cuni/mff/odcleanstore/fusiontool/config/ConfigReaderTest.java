@@ -70,20 +70,20 @@ public class ConfigReaderTest {
         assertThat(output.getParams().get(ConfigParameters.DATA_SOURCE_FILE_PATH), equalTo("out.n3"));
         assertThat(output.getParams().get(ConfigParameters.DATA_SOURCE_FILE_FORMAT), equalTo("ntriples"));
 
-        assertThat(config.getMaxDateDifference(), equalTo(ConfigConstants.MAX_DATE_DIFFERENCE));
+        assertThat(config.getMaxDateDifference(), equalTo(LDFTConfigConstants.MAX_DATE_DIFFERENCE));
         //assertThat(config.getOutputConflictsOnly(), equalTo(false));
         assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
-        assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
-        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.DEFAULT_TEMP_DIRECTORY));
+        assertThat(config.getPreferredCanonicalURIs(), equalTo(LDFTConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
+        assertThat(config.getTempDirectory(), equalTo(LDFTConfigConstants.DEFAULT_TEMP_DIRECTORY));
         assertThat(config.getResultDataURIPrefix(), notNullValue());
-        assertThat(config.getPublisherScoreWeight(), equalTo(ConfigConstants.PUBLISHER_SCORE_WEIGHT));
-        assertThat(config.getAgreeCoefficient(), equalTo(ConfigConstants.AGREE_COEFFICIENT));
-        assertThat(config.getQueryTimeout(), equalTo(ConfigConstants.DEFAULT_QUERY_TIMEOUT));
-        assertThat(config.getScoreIfUnknown(), equalTo(ConfigConstants.SCORE_IF_UNKNOWN));
+        assertThat(config.getPublisherScoreWeight(), equalTo(LDFTConfigConstants.PUBLISHER_SCORE_WEIGHT));
+        assertThat(config.getAgreeCoefficient(), equalTo(LDFTConfigConstants.AGREE_COEFFICIENT));
+        assertThat(config.getQueryTimeout(), equalTo(LDFTConfigConstants.DEFAULT_QUERY_TIMEOUT));
+        assertThat(config.getScoreIfUnknown(), equalTo(LDFTConfigConstants.SCORE_IF_UNKNOWN));
         assertThat(config.isProfilingOn(), equalTo(false));
-        assertThat(config.getMaxFreeMemoryUsage(), equalTo(ConfigConstants.MAX_FREE_MEMORY_USAGE));
+        assertThat(config.getMaxFreeMemoryUsage(), equalTo(LDFTConfigConstants.MAX_FREE_MEMORY_USAGE));
         assertThat(config.getMemoryLimit(), equalTo(null));
-        assertThat(config.getParserConfig(), equalTo(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+        assertThat(config.getParserConfig(), equalTo(LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
     }
 
     @Test
@@ -185,20 +185,20 @@ public class ConfigReaderTest {
         assertThat(config.getOutputs().get(2).getDataContext(), equalTo((URI) new URIImpl("http://opendata.cz/infrastructure/odcleanstore/result")));
         assertThat(config.getOutputs().get(2).getParams().size(), equalTo(4));
 
-        assertThat(config.getMaxDateDifference(), equalTo(ConfigConstants.MAX_DATE_DIFFERENCE));
+        assertThat(config.getMaxDateDifference(), equalTo(LDFTConfigConstants.MAX_DATE_DIFFERENCE));
         //assertThat(config.getOutputConflictsOnly(), equalTo(false));
         assertThat(config.getOutputMappedSubjectsOnly(), equalTo(false));
-        assertThat(config.getPreferredCanonicalURIs(), equalTo(ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
-        assertThat(config.getTempDirectory(), equalTo(ConfigConstants.DEFAULT_TEMP_DIRECTORY));
+        assertThat(config.getPreferredCanonicalURIs(), equalTo(LDFTConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS));
+        assertThat(config.getTempDirectory(), equalTo(LDFTConfigConstants.DEFAULT_TEMP_DIRECTORY));
         assertThat(config.getResultDataURIPrefix(), notNullValue());
-        assertThat(config.getPublisherScoreWeight(), equalTo(ConfigConstants.PUBLISHER_SCORE_WEIGHT));
-        assertThat(config.getAgreeCoefficient(), equalTo(ConfigConstants.AGREE_COEFFICIENT));
-        assertThat(config.getQueryTimeout(), equalTo(ConfigConstants.DEFAULT_QUERY_TIMEOUT));
-        assertThat(config.getScoreIfUnknown(), equalTo(ConfigConstants.SCORE_IF_UNKNOWN));
+        assertThat(config.getPublisherScoreWeight(), equalTo(LDFTConfigConstants.PUBLISHER_SCORE_WEIGHT));
+        assertThat(config.getAgreeCoefficient(), equalTo(LDFTConfigConstants.AGREE_COEFFICIENT));
+        assertThat(config.getQueryTimeout(), equalTo(LDFTConfigConstants.DEFAULT_QUERY_TIMEOUT));
+        assertThat(config.getScoreIfUnknown(), equalTo(LDFTConfigConstants.SCORE_IF_UNKNOWN));
         assertThat(config.isProfilingOn(), equalTo(false));
-        assertThat(config.getMaxFreeMemoryUsage(), equalTo(ConfigConstants.MAX_FREE_MEMORY_USAGE));
+        assertThat(config.getMaxFreeMemoryUsage(), equalTo(LDFTConfigConstants.MAX_FREE_MEMORY_USAGE));
         assertThat(config.getMemoryLimit(), equalTo(null));
-        assertThat(config.getParserConfig(), equalTo(ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+        assertThat(config.getParserConfig(), equalTo(LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
     }
 
     @Test

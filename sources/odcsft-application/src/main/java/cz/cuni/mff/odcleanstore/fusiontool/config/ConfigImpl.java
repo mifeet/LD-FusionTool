@@ -17,11 +17,11 @@ public class ConfigImpl implements Config {
     private List<DataSourceConfig> dataSources = Collections.emptyList();
     private List<ConstructSourceConfig> sameAsSources = Collections.emptyList();
     private List<ConstructSourceConfig> metadataSources = Collections.emptyList();
-    private String resultDataURIPrefix = ConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
+    private String resultDataURIPrefix = LDFTConfigConstants.DEFAULT_RESULT_DATA_URI_PREFIX;
     private List<Output> outputs = new LinkedList<Output>();
     private Map<String, String> prefixes = new HashMap<String, String>();
     private ResolutionStrategy defaultResolutionStrategy = new ResolutionStrategyImpl();
-    private Map<URI, ResolutionStrategy> propertyResolutionStrategies = new HashMap<URI, ResolutionStrategy>();
+    private Map<URI, ResolutionStrategy> propertyResolutionStrategies = new HashMap<>();
 
     private File canonicalURIsOutputFile = null;
     private File canonicalURIsInputFile;
@@ -32,8 +32,8 @@ public class ConfigImpl implements Config {
     private boolean outputMappedSubjectsOnly = false;
     private boolean isLocalCopyProcessing = true;
     private Long memoryLimit = null;
-    private File tempDirectory = ConfigConstants.DEFAULT_TEMP_DIRECTORY;
-    private ParserConfig parserConfig = ConfigConstants.DEFAULT_FILE_PARSER_CONFIG;
+    private File tempDirectory = LDFTConfigConstants.DEFAULT_TEMP_DIRECTORY;
+    private ParserConfig parserConfig = LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG;
     private URI requiredClassOfProcessedResources = null;
 
     @Override
@@ -313,42 +313,42 @@ public class ConfigImpl implements Config {
 
     @Override
     public Integer getQueryTimeout() {
-        return ConfigConstants.DEFAULT_QUERY_TIMEOUT;
+        return LDFTConfigConstants.DEFAULT_QUERY_TIMEOUT;
     }
 
     @Override
     public Double getAgreeCoefficient() {
-        return ConfigConstants.AGREE_COEFFICIENT;
+        return LDFTConfigConstants.AGREE_COEFFICIENT;
     }
 
     @Override
     public Double getScoreIfUnknown() {
-        return ConfigConstants.SCORE_IF_UNKNOWN;
+        return LDFTConfigConstants.SCORE_IF_UNKNOWN;
     }
 
     @Override
     public Double getPublisherScoreWeight() {
-        return ConfigConstants.PUBLISHER_SCORE_WEIGHT;
+        return LDFTConfigConstants.PUBLISHER_SCORE_WEIGHT;
     }
 
     @Override
     public Long getMaxDateDifference() {
-        return ConfigConstants.MAX_DATE_DIFFERENCE;
+        return LDFTConfigConstants.MAX_DATE_DIFFERENCE;
     }
 
     @Override
     public Collection<String> getPreferredCanonicalURIs() {
-        return ConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS;
+        return LDFTConfigConstants.DEFAULT_PREFERRED_CANONICAL_URIS;
     }
 
     @Override
     public Set<URI> getSameAsLinkTypes() {
-        return ConfigConstants.SAME_AS_LINK_TYPES;
+        return LDFTConfigConstants.SAME_AS_LINK_TYPES;
     }
 
     @Override
     public float getMaxFreeMemoryUsage() {
-        return ConfigConstants.MAX_FREE_MEMORY_USAGE;
+        return LDFTConfigConstants.MAX_FREE_MEMORY_USAGE;
     }
 }
 

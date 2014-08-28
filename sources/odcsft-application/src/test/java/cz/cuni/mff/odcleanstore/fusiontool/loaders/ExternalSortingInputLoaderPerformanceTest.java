@@ -69,7 +69,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
         dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_FORMAT, format.name());
         initStopwatch.stop();
         Set<AllTriplesLoader> dataSources = Collections.singleton(
-                (AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
+                (AllTriplesLoader) new AllTriplesFileLoader(dataSourceConfig, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG));
 
         System.out.printf("Initialized with %,d triples in %s\n", tripleCount, initStopwatch);
         System.out.printf("Using GZIP compression: %s (block size %d)\n", ExternalSortingInputLoader.USE_GZIP ? "yes" : "no", ExternalSortingInputLoader.GZIP_BUFFER_SIZE);
@@ -80,7 +80,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
         ExternalSortingInputLoader inputLoader = null;
         executionStopwatch = Stopwatch.createStarted();
         inputLoader = new ExternalSortingInputLoader(dataSources, Collections.<URI>emptySet(), testDir.getRoot(),
-                ConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemorySize);
+                LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG, maxMemorySize);
         try {
             inputLoader.initialize(new UriMappingIterableImpl());
             while (inputLoader.hasNext()) {

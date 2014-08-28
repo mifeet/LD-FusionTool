@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -46,7 +46,7 @@ public class ExternalSortingInputLoaderPreprocessor implements RDFHandler {
         rdfHandler.handleStatement(mappedStatement);
 
         statementCounter++;
-        if (statementCounter % ConfigConstants.LOG_LOOP_SIZE == 0) {
+        if (statementCounter % LDFTConfigConstants.LOG_LOOP_SIZE == 0) {
             LOG.debug("... written {} quads to temporary location", statementCounter);
         }
     }

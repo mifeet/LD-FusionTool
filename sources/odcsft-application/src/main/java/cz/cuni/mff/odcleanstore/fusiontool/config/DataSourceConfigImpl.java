@@ -10,7 +10,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
  */
 public class DataSourceConfigImpl extends SourceConfigImpl implements DataSourceConfig {
     private SparqlRestriction namedGraphRestriction = 
-            new SparqlRestrictionImpl("", ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
+            new SparqlRestrictionImpl("", LDFTConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
     
     /**
      * @param type data source type

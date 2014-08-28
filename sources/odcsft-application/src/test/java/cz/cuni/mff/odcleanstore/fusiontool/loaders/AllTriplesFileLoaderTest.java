@@ -52,7 +52,7 @@ public class AllTriplesFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>();
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -71,7 +71,7 @@ public class AllTriplesFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>();
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -91,7 +91,7 @@ public class AllTriplesFileLoaderTest {
 
         // Act
         List<Statement> result = new ArrayList<Statement>(0);
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
@@ -109,7 +109,7 @@ public class AllTriplesFileLoaderTest {
         DataSourceConfig dataSource = createFileDataSource(statements, EnumSerializationFormat.RDF_XML);
 
         // Act
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         loader.loadAllTriples((rdfHandler));
         loader.close();
 
@@ -126,7 +126,7 @@ public class AllTriplesFileLoaderTest {
         dataSource.getParams().remove(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
 
         // Act
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSource, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         URI defaultContext = loader.getDefaultContext();
 
         // Assert
@@ -147,7 +147,7 @@ public class AllTriplesFileLoaderTest {
         dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_FORMAT, EnumSerializationFormat.RDF_XML.name());
 
         // Act
-        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSourceConfig, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        AllTriplesFileLoader loader = new AllTriplesFileLoader(dataSourceConfig, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         URI defaultContext = loader.getDefaultContext();
 
         // Assert

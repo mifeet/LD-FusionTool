@@ -315,7 +315,7 @@ public final class ConfigReader {
     }
 
     private SparqlRestriction extractGraphRestriction(RestrictionXml restrictionXml) {
-        return extractRestriction(restrictionXml, ConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
+        return extractRestriction(restrictionXml, LDFTConfigConstants.DEFAULT_RESTRICTION_GRAPH_VAR);
     }
 
     private SparqlRestriction extractRestriction(RestrictionXml restrictionXml, String defaultVarName) {

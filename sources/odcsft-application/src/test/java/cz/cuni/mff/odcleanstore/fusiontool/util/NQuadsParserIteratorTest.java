@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.io.NQuadsParserIterator;
 import org.junit.Test;
 import org.openrdf.model.Statement;
@@ -36,7 +36,7 @@ public class NQuadsParserIteratorTest {
 
         // Act
         Reader inputReader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
-        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         ArrayList<Statement> result = new ArrayList<Statement>();
         while (parserIterator.hasNext()) {
             result.add(parserIterator.next());
@@ -65,7 +65,7 @@ public class NQuadsParserIteratorTest {
 
         // Act
         Reader inputReader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
-        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         ArrayList<Statement> result = new ArrayList<Statement>();
         while (parserIterator.hasNext()) {
             result.add(parserIterator.next());
@@ -90,7 +90,7 @@ public class NQuadsParserIteratorTest {
 
         // Act
         Reader inputReader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
-        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         while (parserIterator.hasNext()) {
             parserIterator.next();
         }
@@ -102,7 +102,7 @@ public class NQuadsParserIteratorTest {
         Reader inputReader = mock(Reader.class);
 
         // Act
-        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, ConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
+        NQuadsParserIterator parserIterator = new NQuadsParserIterator(inputReader, LDFTConfigConstants.DEFAULT_FILE_PARSER_CONFIG);
         parserIterator.close();
 
         // Assert
