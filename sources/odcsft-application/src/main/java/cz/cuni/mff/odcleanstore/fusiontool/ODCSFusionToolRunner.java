@@ -406,43 +406,6 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
     }
 
     /**
-     * Returns set of URIs preferred for canonical URIs.
-     * The URIs are loaded from canonicalURIsInputFile if given and URIs present in settingsPreferredURIs are added.
-     * @param settingsPreferredURIs URIs occurring on fusion tool configuration
-     * @param canonicalURIsInputFile file with canonical URIs to be loaded; can be null
-     * @param preferredCanonicalURIs default set of preferred canonical URIs
-     * @return set of URIs preferred for canonical URIs
-     * @throws java.io.IOException error reading canonical URIs from file
-     */
-    protected Set<String> getPreferredURIs(
-            Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
-            Collection<String> preferredCanonicalURIs) throws IOException {
-
-        Set<String> preferredURIs = new HashSet<>(settingsPreferredURIs.size());
-        for (URI uri : settingsPreferredURIs) {
-            preferredURIs.add(uri.stringValue());
-        }
-        if (canonicalURIsInputFile != null) {
-            if (canonicalURIsInputFile.isFile() && canonicalURIsInputFile.canRead()) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(
-                        new FileInputStream(canonicalURIsInputFile), "UTF-8"));
-                String line = reader.readLine();
-                while (line != null) {
-                    preferredURIs.add(line);
-                    line = reader.readLine();
-                }
-                reader.close();
-            } else {
-                LOG.warn("Cannot read canonical URIs from '{}'. The file may have not been created yet.",
-                        canonicalURIsInputFile.getPath());
-            }
-        }
-        preferredURIs.addAll(preferredCanonicalURIs);
-
-        return preferredURIs;
-    }
-
-    /**
      * Writes namespace declarations to the given output writer.
      * @param writer output writer
      * @param nsPrefixes map of namespace prefixes
@@ -461,30 +424,11 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      */
     @Override
     protected void writeCanonicalURIs(UriMappingIterable uriMapping) throws IOException {
-        File outputFile = config.getCanonicalURIsOutputFile();
-        if (outputFile == null) {
-            return;
+        Set<String> canonicalUris = new HashSet<>();
+        for (String mappedUri : uriMapping) {
+            canonicalUris.add(uriMapping.getCanonicalURI(mappedUri));
         }
-        if (!outputFile.exists() || outputFile.canWrite()) {
-            Set<String> canonicalUris = new HashSet<>();
-            for (String mappedUri : uriMapping) {
-                canonicalUris.add(uriMapping.getCanonicalURI(mappedUri));
-            }
-
-            ODCSFusionToolAppUtils.ensureParentsExists(outputFile);
-            CountingOutputStream outputStream = new CountingOutputStream(new FileOutputStream(outputFile));
-            try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"))) {
-                for (String uri : canonicalUris) {
-                    writer.println(uri);
-                }
-            }
-            LOG.info(String.format("Written %,d canonical URIs (total size %s)",
-                    canonicalUris.size(),
-                    ODCSFusionToolAppUtils.humanReadableSize(outputStream.getByteCount())));
-        } else {
-            LOG.error("Cannot write canonical URIs to '{}'", outputFile.getPath());
-            // Intentionally do not throw an exception
-        }
+        canonicalUriFileReader.writeCanonicalUris(config.getCanonicalURIsOutputFile(), canonicalUris);
     }
 
     /**

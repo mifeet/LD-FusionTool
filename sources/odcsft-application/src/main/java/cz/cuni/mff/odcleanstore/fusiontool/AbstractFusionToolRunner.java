@@ -5,13 +5,21 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.CanonicalUriFileReader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import org.openrdf.model.Model;
+import org.openrdf.model.URI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Loads and prepares all inputs for data fusion executor, executes data fusion and outputs additional metadata
@@ -22,9 +30,11 @@ import java.io.IOException;
  * @see ODCSFusionToolExecutor
  */
 public abstract class AbstractFusionToolRunner {
-    //private static final Logger LOG = LoggerFactory.getLogger(AbstractFusionToolRunner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFusionToolRunner.class);
 
-    boolean isProfilingOn;
+    protected boolean isProfilingOn;
+
+    protected final CanonicalUriFileReader canonicalUriFileReader = new CanonicalUriFileReader();
 
     public AbstractFusionToolRunner(boolean isProfilingOn) {
         this.isProfilingOn = isProfilingOn;
@@ -99,6 +109,31 @@ public abstract class AbstractFusionToolRunner {
     protected abstract void writeCanonicalURIs(UriMappingIterable uriMapping) throws IOException;
 
     protected abstract void writeSameAsLinks(UriMappingIterable uriMapping) throws IOException, ODCSFusionToolException;
+
+    /**
+     * Returns set of URIs preferred for canonical URIs.
+     * The URIs are loaded from canonicalURIsInputFile if given and URIs present in settingsPreferredURIs are added.
+     * @param settingsPreferredURIs URIs occurring on fusion tool configuration
+     * @param canonicalURIsInputFile file with canonical URIs to be loaded; can be null
+     * @param preferredCanonicalURIs default set of preferred canonical URIs
+     * @return set of URIs preferred for canonical URIs
+     * @throws java.io.IOException error reading canonical URIs from file
+     */
+    protected Set<String> getPreferredURIs(
+            Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
+            Collection<String> preferredCanonicalURIs) throws IOException {
+
+        Set<String> preferredURIs = new HashSet<>(settingsPreferredURIs.size());
+        for (URI uri : settingsPreferredURIs) {
+            preferredURIs.add(uri.stringValue());
+        }
+        if (canonicalURIsInputFile != null) {
+            canonicalUriFileReader.readCanonicalUris(canonicalURIsInputFile, preferredURIs);
+        }
+        preferredURIs.addAll(preferredCanonicalURIs);
+
+        return preferredURIs;
+    }
 
     /**
      * Prints profiling information from the given profiling time counter.
