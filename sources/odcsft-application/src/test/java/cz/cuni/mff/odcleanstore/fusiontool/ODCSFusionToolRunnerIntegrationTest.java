@@ -30,7 +30,7 @@ import java.util.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ODCSFusionToolExecutorRunnerIntegrationTest {
+public class ODCSFusionToolRunnerIntegrationTest {
     public static final ValueFactoryImpl VALUE_FACTORY = ValueFactoryImpl.getInstance();
 
     @Rule
@@ -162,7 +162,7 @@ public class ODCSFusionToolExecutorRunnerIntegrationTest {
         outputParams.put(ConfigParameters.OUTPUT_SAME_AS_FILE, sameAsFile.getAbsolutePath());
 
         // Act
-        ODCSFusionToolExecutorRunner runner = new ODCSFusionToolExecutorRunner(config);
+        ODCSFusionToolRunner runner = new ODCSFusionToolRunner(config);
         runner.runFusionTool();
 
         // Assert - canonical URIs

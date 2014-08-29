@@ -117,4 +117,14 @@ public final class ODCSFusionToolAppUtils {
         LOG.debug("Creating temporary file {} in the working directory", file.getName());
         return file;
     }
+
+    public static <E extends Exception> void closeQuietly(Closeable<E> resource) {
+        if (resource != null) {
+            try {
+                resource.close();
+            } catch (Exception ignore) {
+                // ignore
+            }
+        }
+    }
 }

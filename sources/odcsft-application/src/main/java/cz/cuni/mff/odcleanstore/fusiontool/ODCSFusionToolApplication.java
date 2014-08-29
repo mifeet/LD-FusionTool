@@ -83,8 +83,8 @@ public final class ODCSFusionToolApplication {
         System.out.println("Starting conflict resolution, this may take a while... \n");
 
         try {
-            ODCSFusionToolExecutorRunner odcsFusionToolExecutorRunner = new ODCSFusionToolExecutorRunner(config);
-            odcsFusionToolExecutorRunner.runFusionTool();
+            ODCSFusionToolRunner odcsFusionToolRunner = new ODCSFusionToolRunner(config);
+            odcsFusionToolRunner.runFusionTool();
         } catch (ODCSFusionToolException e) {
             System.err.println("Error:");
             System.err.println("  " + e.getMessage());

@@ -35,9 +35,6 @@ import java.io.*;
 public class CloseableRDFWriterFactory {
     private static final Logger LOG = LoggerFactory.getLogger(CloseableRDFWriterFactory.class);
 
-    // here we don't mind using default parser config instead of one from configuration because there is no parsing
-    private static final RepositoryFactory REPOSITORY_FACTORY = new RepositoryFactory(new ParserConfig());
-
     /**
      * Creates a new {@link CloseableRDFWriter} according to settings given in output configuration.
      * @param output output configuration
