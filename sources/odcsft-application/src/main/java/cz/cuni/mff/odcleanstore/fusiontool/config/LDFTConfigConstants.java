@@ -121,7 +121,7 @@ public final class LDFTConfigConstants {
     /**
      * Number of loop iterations to be executed before the status is logged.
      */
-    public static final int LOG_LOOP_SIZE = 5_000_000;
+    public static final int LOG_LOOP_SIZE = 2_000_000;
 
     static {
         DEFAULT_FILE_PARSER_CONFIG = new ParserConfig();
