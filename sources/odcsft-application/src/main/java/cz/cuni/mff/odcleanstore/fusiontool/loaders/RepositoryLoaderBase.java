@@ -7,8 +7,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.Source;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,7 +59,7 @@ public abstract class RepositoryLoaderBase {
      */
     protected String getPrefixDecl() {
         if (cachedPrefixDecl == null) {
-            cachedPrefixDecl = buildPrefixDecl(source.getPrefixes());
+            cachedPrefixDecl = ODCSFusionToolAppUtils.buildPrefixDecl(source.getPrefixes());
         }
         return cachedPrefixDecl;
     }
@@ -80,25 +80,5 @@ public abstract class RepositoryLoaderBase {
         } else {
             return prefixDecl + query;
         }
-    }
-
-    /**
-     * Creates SPARQL snippet with prefix declarations for the given namespace prefixes.
-     * @param prefixes namespace prefixes
-     * @return SPARQL query snippet
-     */
-    private static String buildPrefixDecl(Map<String, String> prefixes) {
-        if (prefixes == null) {
-            return "";
-        }
-        StringBuilder result = new StringBuilder("");
-        for (Map.Entry<String, String> entry: prefixes.entrySet()) {
-            result.append("\n PREFIX ")
-                .append(entry.getKey())
-                .append(": <")
-                .append(entry.getValue())
-                .append("> ");
-        }
-        return result.toString();
     }
 }

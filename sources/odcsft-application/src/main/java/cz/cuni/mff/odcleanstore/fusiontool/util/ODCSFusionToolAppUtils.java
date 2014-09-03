@@ -1,7 +1,11 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
+import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigConflictResolution;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.NestedResourceDescriptionResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
+import org.openrdf.model.URI;
 import org.openrdf.rio.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +15,10 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 /**
@@ -126,5 +133,35 @@ public final class ODCSFusionToolAppUtils {
                 // ignore
             }
         }
+    }
+
+    public static Set<URI> getResourceDescriptionProperties(ConfigConflictResolution config) {
+        HashSet<URI> resourceDescriptionProperties = new HashSet<>();
+        for (Map.Entry<URI, ResolutionStrategy> entry : config.getPropertyResolutionStrategies().entrySet()) {
+            if (NestedResourceDescriptionResolution.getName().equals(entry.getValue().getResolutionFunctionName())) {
+                resourceDescriptionProperties.add(entry.getKey());
+            }
+        }
+        return resourceDescriptionProperties;
+    }
+
+    /**
+     * Creates SPARQL snippet with prefix declarations for the given namespace prefixes.
+     * @param prefixes namespace prefixes
+     * @return SPARQL query snippet
+     */
+    public static String buildPrefixDecl(Map<String, String> prefixes) {
+        if (prefixes == null) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder("\n");
+        for (Map.Entry<String, String> entry: prefixes.entrySet()) {
+            result.append(" PREFIX ")
+                .append(entry.getKey())
+                .append(": <")
+                .append(entry.getValue())
+                .append("> \n");
+        }
+        return result.toString();
     }
 }

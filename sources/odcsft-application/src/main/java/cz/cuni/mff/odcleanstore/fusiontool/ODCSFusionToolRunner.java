@@ -3,7 +3,6 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 import com.google.code.externalsorting.ExternalSort;
 import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolverFactory;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.ConflictResolutionPolicyImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
@@ -21,13 +20,11 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.NestedResourceDescriptionQualityCalculatorImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.NestedResourceDescriptionResolution;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionConflictResolverImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
@@ -42,7 +39,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoad
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.entity.FederatedSeedSubjectsLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.FederatedResourceDescriptionFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.MappedResourceFilter;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.RequiredClassFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.ResourceDescriptionFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.metadata.MetadataLoader;
@@ -61,7 +57,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.writers.FederatedRDFWriter;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
 import org.openrdf.model.impl.TreeModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.OWL;
@@ -69,14 +64,7 @@ import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -134,7 +122,9 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
         long memoryLimit = calculateMemoryLimit();
         if (config.isLocalCopyProcessing()) {
             Collection<AllTriplesLoader> allTriplesLoaders = getAllTriplesLoaders();
-            return new ExternalSortingInputLoader(allTriplesLoaders, getResourceDescriptionProperties(), config.getTempDirectory(),
+            return new ExternalSortingInputLoader(allTriplesLoaders,
+                    ODCSFusionToolAppUtils.getResourceDescriptionProperties(config),
+                    config.getTempDirectory(),
                     config.getParserConfig(), memoryLimit);
         } else {
             Collection<DataSource> dataSources = getDataSources();
@@ -166,24 +156,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
             inputFilters.add(new MappedResourceFilter(new AlternativeUriNavigator(uriMapping)));
         }
 
-        switch (inputFilters.size()) {
-        case 0:
-            return new NoOpFilter();
-        case 1:
-            return inputFilters.get(0);
-        default:
-            return new FederatedResourceDescriptionFilter(inputFilters.toArray(new ResourceDescriptionFilter[inputFilters.size()]));
-        }
-    }
-
-    private Set<URI> getResourceDescriptionProperties() {
-        HashSet<URI> resourceDescriptionProperties = new HashSet<>();
-        for (Map.Entry<URI, ResolutionStrategy> entry : config.getPropertyResolutionStrategies().entrySet()) {
-            if (NestedResourceDescriptionResolution.getName().equals(entry.getValue().getResolutionFunctionName())) {
-                resourceDescriptionProperties.add(entry.getKey());
-            }
-        }
-        return resourceDescriptionProperties;
+        return FederatedResourceDescriptionFilter.fromList(inputFilters);
     }
 
     /**
