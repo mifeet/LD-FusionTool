@@ -5,6 +5,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.config;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.openrdf.model.URI;
 import org.openrdf.model.vocabulary.*;
@@ -17,6 +18,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import static cz.cuni.mff.odcleanstore.core.ODCSUtils.TIME_UNIT_60;
+import static cz.cuni.mff.odcleanstore.core.ODCSUtils.TIME_UNIT_60_INT;
 
 /**
  * Global configuration constants.
@@ -122,6 +126,17 @@ public final class LDFTConfigConstants {
      * Number of loop iterations to be executed before the status is logged.
      */
     public static final int LOG_LOOP_SIZE = 2_000_000;
+
+    /**
+     * Time between repository query retry attempts in milliseconds.
+     */
+    public static final int REPOSITORY_RETRY_INTERVAL = 20_000;
+
+    /**
+     * Number of retry attempts when querying a repository fails.
+     * (3 hours or retry attempts by default)
+     */
+    public static final int REPOSITORY_RETRY_ATTEMPTS = 3 * TIME_UNIT_60_INT * TIME_UNIT_60_INT * (int) ODCSUtils.MILLISECONDS / REPOSITORY_RETRY_INTERVAL;
 
     static {
         DEFAULT_FILE_PARSER_CONFIG = new ParserConfig();

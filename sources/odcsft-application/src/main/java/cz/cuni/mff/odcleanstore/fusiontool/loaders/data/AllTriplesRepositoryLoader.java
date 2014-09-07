@@ -1,15 +1,16 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.data;
 
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Resource;
@@ -29,9 +30,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Locale;
 import java.util.UUID;
 
+import static cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants.LOG_LOOP_SIZE;
+import static cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants.REPOSITORY_RETRY_ATTEMPTS;
+import static cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants.REPOSITORY_RETRY_INTERVAL;
+
 /**
  * Loader of all triples from  graphs matching the given named graph constraint pattern from an RDF repository.
- * TODO: integration test
  */
 public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements AllTriplesLoader {
     private static final Logger LOG = LoggerFactory.getLogger(AllTriplesRepositoryLoader.class);
@@ -64,9 +68,11 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     private RepositoryConnection connection;
 
     private final DataSource dataSource;
+
+    private final URI defaultContext;
     private final int maxSparqlResultsSize;
-    private final OutputParamReader paramReader;
     private int initialOffset = 0;
+    private int retryAttempts = 0;
 
     /**
      * Creates a new instance.
@@ -75,7 +81,8 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     public AllTriplesRepositoryLoader(DataSource dataSource) {
         super(dataSource);
         this.dataSource = dataSource;
-        paramReader = new OutputParamReader(dataSource);
+        OutputParamReader paramReader = new OutputParamReader(dataSource);
+        this.defaultContext = computeDefaultContext(paramReader);
         this.maxSparqlResultsSize = paramReader.getIntValue(
                 ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS,
                 LDFTConfigConstants.DEFAULT_SPARQL_RESULT_MAX_ROWS);
@@ -88,32 +95,46 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
         try {
             rdfHandler.startRDF();
             SparqlRestriction restriction = getSparqlRestriction();
-            int loadedQuads = Integer.MAX_VALUE;
-            boolean isFirst = true;
-            for (int offset = initialOffset; loadedQuads >= maxSparqlResultsSize; offset += maxSparqlResultsSize) {
+            long totalStartTime = System.currentTimeMillis();
+            int totalLoadedQuads = 0;
+            int lastLoadedQuads = Integer.MAX_VALUE;
+            for (int offset = initialOffset; lastLoadedQuads >= maxSparqlResultsSize; offset = initialOffset + totalLoadedQuads) {
                 query = formatQuery(LOAD_SPARQL_QUERY, restriction, maxSparqlResultsSize, offset);
-                long startTime = System.currentTimeMillis();
-                loadedQuads = addQuadsFromQuery(query, rdfHandler);
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("ODCS-FusionTool: Loaded {} quads from source {} in {} ms",
-                            new Object[]{loadedQuads, source, System.currentTimeMillis() - startTime});
-                }
-                if (isFirst && loadedQuads < maxSparqlResultsSize) {
-                    LOG.warn("Only one page of results with {} quads in total was loaded from query with limit {}."
-                            + "\n       If you expect more data, the SPARQL endpoint may have a lower limit of rows returned from a SPARQL query."
-                            + "\n       Try setting parameter {} to a value lower than {}.",
-                            new Object[] { loadedQuads, maxSparqlResultsSize, ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS, loadedQuads});
-                }
-                isFirst = false;
+                long lastStartTime = System.currentTimeMillis();
+                lastLoadedQuads = addQuadsFromQueryWithRetry(query, rdfHandler);
+                totalLoadedQuads += lastLoadedQuads;
+                logProgress(lastLoadedQuads, totalLoadedQuads, lastStartTime, totalStartTime);
             }
             rdfHandler.endRDF();
-        } catch (OpenRDFException e) {
+        } catch (OpenRDFException | InterruptedException e) {
             throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.ALL_TRIPLES_QUERY_QUADS, query, source.getName(), e);
+        }
+    }
+
+    private void logProgress(int lastLoadedQuads, int totalLoadedQuads, long lastStartTime, long totalStartTime) {
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("ODCS-FusionTool: Loaded {} quads from source {} in {} ms",
+                    new Object[] {lastLoadedQuads, source, System.currentTimeMillis() - lastStartTime});
+        }
+        if (totalLoadedQuads == lastLoadedQuads && lastLoadedQuads < maxSparqlResultsSize) {
+            LOG.warn("Only one page of results with {} quads in total was loaded from query with limit {}."
+                            + "\n       If you expect more data, the SPARQL endpoint may have a lower limit of rows returned from a SPARQL query."
+                            + "\n       Try setting parameter {} to a value lower than {}.",
+                    new Object[] {lastLoadedQuads, maxSparqlResultsSize, ConfigParameters.DATA_SOURCE_SPARQL_RESULT_MAX_ROWS, lastLoadedQuads});
+        }
+        if ((totalLoadedQuads - lastLoadedQuads) / LOG_LOOP_SIZE != totalLoadedQuads / LOG_LOOP_SIZE) {
+            // show the log when the number of required quads was exceeded somewhere within the newly loaded quads
+            LOG.info(String.format("ODCS-FusionTool: Loaded totally %,d quads from source %s so far in %s\n",
+                    totalLoadedQuads, source, ODCSFusionToolAppUtils.formatProfilingTime(System.currentTimeMillis() - totalStartTime)));
         }
     }
 
     @Override
     public URI getDefaultContext() {
+        return defaultContext;
+    }
+
+    private static URI computeDefaultContext(OutputParamReader paramReader) {
         String uri = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
         if (uri != null && ODCSUtils.isValidIRI(uri)) {
             return VALUE_FACTORY.createURI(uri);
@@ -154,24 +175,44 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
         return restriction;
     }
 
+
+    private int addQuadsFromQueryWithRetry(String sparqlQuery, RDFHandler rdfHandler) throws OpenRDFException, InterruptedException {
+        while (true) { // TODO: move constants to Configuration
+            try {
+                return addQuadsFromQuery(sparqlQuery, rdfHandler);
+            } catch (OpenRDFException e) {
+                retryAttempts++;
+                if (retryAttempts <= REPOSITORY_RETRY_ATTEMPTS) {
+                    String message = String.format("Query to repository %s failed, retry %d of %d in %d s",
+                            source,
+                            retryAttempts,
+                            REPOSITORY_RETRY_ATTEMPTS,
+                            REPOSITORY_RETRY_INTERVAL / ODCSUtils.MILLISECONDS);
+                    LOG.warn(message, e);
+                    Thread.sleep(REPOSITORY_RETRY_INTERVAL);
+                } else {
+                    String message = String.format("Query to repository %s failed, maximum number of retries of %d exceeded", source, REPOSITORY_RETRY_ATTEMPTS);
+                    LOG.error(message, e);
+                    throw e;
+                }
+            }
+        }
+    }
+
     /**
      * Execute the given SPARQL SELECT and constructs a collection of quads from the result.
      * The query must contain four variables in the result, exactly in this order: named graph, subject,
      * property, object
      * @param sparqlQuery a SPARQL SELECT query with four variables in the result: named graph, subject,
-     *        property, object (exactly in this order).
+     * property, object (exactly in this order).
      * @param rdfHandler handler to which retrieved quads are passed
      * @return number of retrieved quads
-     * @throws org.openrdf.OpenRDFException repository error
      */
     private int addQuadsFromQuery(String sparqlQuery, RDFHandler rdfHandler) throws OpenRDFException {
-        long startTime = System.currentTimeMillis();
         int quadCount = 0;
         RepositoryConnection connection = getConnection();
         TupleQueryResult resultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery).evaluate();
         try {
-            LOG.trace("ODCS-FusionTool: Quads query took {} ms", System.currentTimeMillis() - startTime);
-
             ValueFactory valueFactory = source.getRepository().getValueFactory();
             while (resultSet.hasNext()) {
                 BindingSet bindings = resultSet.next();

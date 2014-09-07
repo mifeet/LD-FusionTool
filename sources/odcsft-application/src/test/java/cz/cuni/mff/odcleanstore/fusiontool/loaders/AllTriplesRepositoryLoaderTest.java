@@ -2,19 +2,27 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
+import org.hamcrest.Matchers;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
+import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQuery;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -23,14 +31,23 @@ import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.openrdf.sail.memory.MemoryStore;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class AllTriplesRepositoryLoaderTest {
     public static final SparqlRestrictionImpl EMPTY_SPARQL_RESTRICTION = new SparqlRestrictionImpl("", "338ae1bdf9_x");
@@ -38,7 +55,7 @@ public class AllTriplesRepositoryLoaderTest {
     @Test
     public void loadsAllTriplesWhenNumberOfStatementsIsNotDivisibleByMaxResultSize() throws Exception {
         // Arrange
-        Collection<Statement> statements = ImmutableList.of(
+        Collection<Statement> statements = ImmutableSet.of(
                 createHttpStatement("s1", "p", "o", "g1"),
                 createHttpStatement("s2", "p", "o", "g2"),
                 createHttpStatement("s3", "p", "o", "g3"),
@@ -48,20 +65,20 @@ public class AllTriplesRepositoryLoaderTest {
         DataSource dataSource = createDataSource(statements, 2);
 
         // Act
-        Collection<Statement> result = new HashSet<Statement>();
+        Collection<Statement> result = new HashSet<>();
         AllTriplesLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
         // Assert
-        assertThat(result.size(), equalTo(statements.size()));
+        assertThat(result, is(statements));
         dataSource.getRepository().shutDown();
     }
 
     @Test
     public void loadsAllTriplesWhenNumberOfStatementsIsDivisibleByMaxResultSize() throws Exception {
         // Arrange
-        Collection<Statement> statements = ImmutableList.of(
+        Collection<Statement> statements = ImmutableSet.of(
                 createHttpStatement("s1", "p", "o", "g1"),
                 createHttpStatement("s2", "p", "o", "g2"),
                 createHttpStatement("s3", "p", "o", "g3"),
@@ -70,13 +87,13 @@ public class AllTriplesRepositoryLoaderTest {
         DataSource dataSource = createDataSource(statements, 2);
 
         // Act
-        Collection<Statement> result = new HashSet<Statement>();
+        Collection<Statement> result = new HashSet<>();
         AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
 
         // Assert
-        assertThat(result.size(), equalTo(statements.size()));
+        assertThat(result, is(statements));
         dataSource.getRepository().shutDown();
     }
 
@@ -87,7 +104,7 @@ public class AllTriplesRepositoryLoaderTest {
         DataSource dataSource = createDataSource(statements, 2);
 
         // Act
-        Collection<Statement> result = new HashSet<Statement>();
+        Collection<Statement> result = new HashSet<>();
         AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
@@ -110,7 +127,7 @@ public class AllTriplesRepositoryLoaderTest {
         DataSource dataSource = createDataSource(statements, namedGraphRestriction, new HashMap<String, String>(), 100, "test");
 
         // Act
-        Collection<Statement> result = new HashSet<Statement>();
+        Collection<Statement> result = new HashSet<>();
         AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
@@ -124,7 +141,7 @@ public class AllTriplesRepositoryLoaderTest {
     @Test
     public void callsStartRDFAndEndRDFOnGivenHandler() throws Exception {
         // Arrange
-        RDFHandler rdfHandler = Mockito.mock(RDFHandler.class);
+        RDFHandler rdfHandler = mock(RDFHandler.class);
         Collection<Statement> statements = ImmutableList.of(
                 createHttpStatement("s1", "p", "o", "g1")
         );
@@ -148,13 +165,13 @@ public class AllTriplesRepositoryLoaderTest {
         List<Statement> statements = ImmutableList.of(statement1, statement2);
 
         SparqlRestriction namedGraphRestriction = new SparqlRestrictionImpl("FILTER(?gg = ex1:g1)", "gg");
-        HashMap<String, String> prefixes = new HashMap<String, String>();
+        HashMap<String, String> prefixes = new HashMap<>();
         prefixes.put("ex1", "http://example1.com/");
         prefixes.put("ex2", "http://example2.com/");
         DataSource dataSource = createDataSource(statements, namedGraphRestriction, prefixes, 100, "test");
 
         // Act
-        Collection<Statement> result = new HashSet<Statement>();
+        Collection<Statement> result = new HashSet<>();
         AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.loadAllTriples(new StatementCollector(result));
         loader.close();
@@ -181,6 +198,57 @@ public class AllTriplesRepositoryLoaderTest {
         assertTrue(ODCSUtils.isValidIRI(defaultContext.stringValue()));
     }
 
+    @Ignore("Until retry timout is given in Configuration, ignore so that the tests aren't too slow")
+    @Test
+    public void retriesQueryOnError() throws Exception {
+        // Arrange
+        Collection<Statement> statements = ImmutableSet.of(
+                createHttpStatement("s1", "p", "o", "g1"),
+                createHttpStatement("s2", "p", "o", "g2"),
+                createHttpStatement("s3", "p", "o", "g3"),
+                createHttpStatement("s4", "p", "o", "g4"),
+                createHttpStatement("s5", "p", "o", "g5")
+        );
+        DataSource dataSource = createDataSource(statements, 2);
+        final SailRepository repository = (SailRepository) dataSource.getRepository();
+        RepositoryConnection mockRepositoryConnection = mock(RepositoryConnection.class);
+        Answer<TupleQuery> answer = new Answer<TupleQuery>() {
+            @Override
+            public TupleQuery answer(InvocationOnMock invocation) throws Throwable {
+                Object[] arguments = invocation.getArguments();
+                return repository.getConnection().prepareTupleQuery((QueryLanguage) arguments[0], (String) arguments[1]);
+            }
+        };
+        when(mockRepositoryConnection.prepareTupleQuery(any(QueryLanguage.class), anyString()))
+                .thenAnswer(answer)
+                .thenThrow(new RepositoryException())
+                .thenThrow(new RepositoryException())
+                .thenAnswer(answer);
+        Repository mockRepository = mock(Repository.class);
+        when(mockRepository.getValueFactory()).thenReturn(repository.getValueFactory());
+        when(mockRepository.getConnection()).thenReturn(mockRepositoryConnection);
+        DataSource mockDataSource = new DataSourceImpl(
+                mockRepository,
+                dataSource.getPrefixes(),
+                dataSource.getName(),
+                dataSource.getType(),
+                dataSource.getParams(),
+                dataSource.getNamedGraphRestriction());
+
+        // Act
+        Collection<Statement> result = new HashSet<>();
+        AllTriplesLoader loader = new AllTriplesRepositoryLoader(mockDataSource);
+        long startTime = System.currentTimeMillis();
+        loader.loadAllTriples(new StatementCollector(result));
+        long endTime = System.currentTimeMillis();
+        loader.close();
+
+        // Assert
+        assertThat(result, is(statements));
+        assertThat(endTime - startTime, Matchers.greaterThanOrEqualTo(2L * LDFTConfigConstants.REPOSITORY_RETRY_INTERVAL));
+        dataSource.getRepository().shutDown();
+    }
+
     private DataSource createDataSource(Collection<Statement> statements, int maxSparqlResultRows) throws RepositoryException {
         return createDataSource(
                 statements,
@@ -190,7 +258,8 @@ public class AllTriplesRepositoryLoaderTest {
                 "test");
     }
 
-    private DataSource createDataSource(Collection<Statement> statements,
+    private DataSource createDataSource(
+            Collection<Statement> statements,
             SparqlRestriction namedGraphRestriction,
             Map<String, String> prefixes,
             int maxSparqlResultRows,
