@@ -70,17 +70,113 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.6.4</version>
-        </dependency>
-    </dependencies>
-
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>cz.cuni.mff.odcleanstore</groupId>
+                <artifactId>odcs-conflictresolution</artifactId>
+                <version>${odcs-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
+            <dependency>
+                <groupId>cz.cuni.mff.odcleanstore</groupId>
+                <artifactId>odcs-core</artifactId>
+                <version>${odcs-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>17.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.openlinksw</groupId>
+                <artifactId>virtuoso-sesame</artifactId>
+                <version>7.0.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-model</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-rio-rdfxml</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-rio-n3</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-rio-trig</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-rio-nquads</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-repository-sparql</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-repository-sail</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-sail-memory</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-sail-nativerdf</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-queryparser-sparql</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.11</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>1.9.5</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-library</artifactId>
+                <version>1.3</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
