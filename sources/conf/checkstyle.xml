@@ -96,18 +96,20 @@
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
         <module name="JavadocType">
-        	<property name="scope" value="private" />
-        	<property name="allowUnknownTags" value="true" />
-        	<!-- <property name="authorFormat" value="\S"/> -->
+            <property name="scope" value="public" />
+            <property name="allowUnknownTags" value="true" />
+            <!--<property name="authorFormat" value="\S"/>-->
         </module>
         <module name="JavadocMethod">
-        	<property name="scope" value="package"/>
-        	<property name="allowMissingParamTags" value="true"/>
-        	<property name="allowMissingReturnTag" value="true"/>
-        	<property name="allowMissingThrowsTags" value="true"/>
+            <property name="scope" value="public"/>
+            <property name="allowMissingThrowsTags" value="true"/>
+            <property name="allowMissingParamTags" value="true" />
+            <property name="allowMissingReturnTag" value="true" />
+            <property name="allowMissingPropertyJavadoc" value="true" />
+            <property name="allowUndeclaredRTE" value="true" />
         </module>
         <module name="JavadocVariable">
-        	<property name="scope" value="public"/>
+            <property name="scope" value="public"/>
         </module>
         <module name="JavadocStyle"/>
         

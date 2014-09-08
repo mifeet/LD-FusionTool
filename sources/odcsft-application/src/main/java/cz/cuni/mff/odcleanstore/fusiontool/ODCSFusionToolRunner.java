@@ -125,7 +125,8 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
             return new ExternalSortingInputLoader(allTriplesLoaders,
                     ODCSFusionToolAppUtils.getResourceDescriptionProperties(config),
                     config.getTempDirectory(),
-                    config.getParserConfig(), memoryLimit);
+                    config.getParserConfig(),
+                    memoryLimit);
         } else {
             Collection<DataSource> dataSources = getDataSources();
             SparqlRestriction seedResourceDescription = getSeedResourceRestriction();

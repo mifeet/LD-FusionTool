@@ -30,6 +30,9 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
     private final OutputParamReader paramReader;
     private final RdfFileLoader fileLoader;
 
+    /**
+     * Creates a new instance.
+     */
     public AllTriplesFileLoader(DataSourceConfig dataSourceConfig, ParserConfig parserConfig) {
         Preconditions.checkNotNull(dataSourceConfig);
         Preconditions.checkNotNull(parserConfig);
@@ -43,7 +46,10 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
         try {
             this.fileLoader.read(rdfHandler);
         } catch (RDFHandlerException e) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS, "Error processing quads from " + paramReader.getLabel(), e);
+            throw new ODCSFusionToolApplicationException(
+                    ODCSFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS,
+                    "Error processing quads from " + paramReader.getLabel(),
+                    e);
         }
     }
 
