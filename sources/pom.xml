@@ -135,6 +135,11 @@
             </dependency>
             <dependency>
                 <groupId>org.openrdf.sesame</groupId>
+                <artifactId>sesame-repository-api</artifactId>
+                <version>${sesame-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openrdf.sesame</groupId>
                 <artifactId>sesame-repository-sparql</artifactId>
                 <version>${sesame-version}</version>
             </dependency>
