@@ -20,14 +20,14 @@ import java.util.Map;
  * Implementation of {@link CloseableRDFWriter} writing to a formatted HTML document.
  * @author Jan Michelfeit
  */
-public class CloseableHtmlWriter implements CloseableRDFWriter {
+public class CloseableHtmlWriter extends CloseableRDFWriterBase {
     private static final String ENCODING = "UTF-8";
     private static final int MAX_LENGTH = 110;
     private static final double MID_QUALITY = 0.25d;
     private static final double MAX_QUALITY = 1d;
     
     /** Namespace prefix mappings. */
-    private final Map<String, String> namespaceMapping = new HashMap<String, String>();
+    private final Map<String, String> namespaceMapping = new HashMap<>();
     
     private final Writer writer;
     private int statementCounter = 0;
@@ -61,13 +61,6 @@ public class CloseableHtmlWriter implements CloseableRDFWriter {
     @Override
     public void write(Statement quad) throws IOException {
         // ignore
-    }
-
-    @Override
-    public void writeResolvedStatements(Iterable<ResolvedStatement> resolvedStatements) throws IOException {
-        for (ResolvedStatement resolvedQuad : resolvedStatements) {
-            write(resolvedQuad);
-        }
     }
 
     @Override

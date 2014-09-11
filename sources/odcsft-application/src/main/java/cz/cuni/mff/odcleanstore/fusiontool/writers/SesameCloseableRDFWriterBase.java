@@ -17,7 +17,7 @@ import java.util.Iterator;
  * Implementation of {@link CloseableRDFWriter} writing to a given Sesame {@link RDFHandler}.
  * @author Jan Michelfeit
  */
-public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter {
+public abstract class SesameCloseableRDFWriterBase extends CloseableRDFWriterBase implements CloseableRDFWriter {
     private final RDFHandler rdfWriter;
     private final Closeable underlyingResource;
     
@@ -46,20 +46,6 @@ public abstract class SesameCloseableRDFWriterBase implements CloseableRDFWriter
         }
     }
     
-    @Override
-    public final void writeResolvedStatements(Iterable<ResolvedStatement> resolvedStatements) throws IOException {
-        for (ResolvedStatement resolvedStatement : resolvedStatements) {
-            write(resolvedStatement);
-        }
-    }
-    
-    @Override
-    public final void writeQuads(Iterator<Statement> quads) throws IOException {
-        while (quads.hasNext()) {
-            write(quads.next());
-        } 
-    }
-
     @Override
     public final void write(Statement statement) throws IOException {
         try {
