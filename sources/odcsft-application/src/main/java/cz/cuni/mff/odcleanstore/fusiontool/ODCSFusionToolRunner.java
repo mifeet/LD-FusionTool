@@ -8,16 +8,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.impl.DistanceMeasureImpl;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.SourceQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.DecidingConflictFQualityCalculator;
 import cz.cuni.mff.odcleanstore.conflictresolution.quality.impl.ODCSSourceQualityCalculator;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
-import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.NestedResourceDescriptionQualityCalculatorImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionConflictResolverImpl;
@@ -50,29 +41,16 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
-import cz.cuni.mff.odcleanstore.fusiontool.util.UriToSameAsIterator;
-import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
-import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory;
-import cz.cuni.mff.odcleanstore.fusiontool.writers.FederatedRDFWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.writers.*;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import org.openrdf.model.Model;
-import org.openrdf.model.Statement;
 import org.openrdf.model.impl.TreeModel;
-import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Loads and prepares all inputs for data fusion executor, executes data fusion and outputs additional metadata
@@ -85,8 +63,7 @@ import java.util.Set;
 public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
     private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolRunner.class);
 
-    /** An instance of {@link cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriterFactory}. */
-    protected final CloseableRDFWriterFactory rdfWriterFactory = new CloseableRDFWriterFactory();
+    private static final CloseableRDFWriterFactory rdfWriterFactory = new CloseableRDFWriterFactory();
 
     /** An instance of {@link cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory}. */
     protected final RepositoryFactory repositoryFactory;
@@ -109,7 +86,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
     }
 
     @Override
-    protected ODCSFusionToolExecutor createExecutor(UriMappingIterable uriMapping) {
+    protected ODCSFusionToolExecutor getExecutor(UriMappingIterable uriMapping) {
         return new ODCSFusionToolExecutor(
                 hasVirtuosoSource(config.getDataSources()),
                 config.getMaxOutputTriples(),
@@ -332,7 +309,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException configuration error
      */
     @Override
-    protected CloseableRDFWriter createRDFWriter() throws IOException, ODCSFusionToolException {
+    protected CloseableRDFWriter getRDFWriter() throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new ArrayList<>(config.getOutputs().size());
         for (Output output : config.getOutputs()) {
             CloseableRDFWriter writer = rdfWriterFactory.createRDFWriter(output);
@@ -347,13 +324,25 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
 
 
     /**
+     * Writes namespace declarations to the given output writer.
+     * @param writer output writer
+     * @param nsPrefixes map of namespace prefixes
+     * @throws java.io.IOException I/O error
+     */
+    protected void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
+        for (Map.Entry<String, String> entry : nsPrefixes.entrySet()) {
+            writer.addNamespace(entry.getKey(), entry.getValue());
+        }
+    }
+
+    /**
      * Creates conflict resolver initialized according to given configuration.
      * @param metadata metadata for conflict resolution
      * @param uriMapping mapping of URIs to their canonical URI
      * @return initialized conflict resolver
      */
     @Override
-    protected ResourceDescriptionConflictResolver createConflictResolver(Model metadata, UriMappingIterable uriMapping) {
+    protected ResourceDescriptionConflictResolver getConflictResolver(Model metadata, UriMappingIterable uriMapping) {
         DistanceMeasureImpl distanceMeasure = new DistanceMeasureImpl();
         SourceQualityCalculator sourceQualityCalculator = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(),
@@ -379,79 +368,18 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
         );
     }
 
-    /**
-     * Writes namespace declarations to the given output writer.
-     * @param writer output writer
-     * @param nsPrefixes map of namespace prefixes
-     * @throws java.io.IOException I/O error
-     */
-    protected void writeNamespaceDeclarations(CloseableRDFWriter writer, Map<String, String> nsPrefixes) throws IOException {
-        for (Map.Entry<String, String> entry : nsPrefixes.entrySet()) {
-            writer.addNamespace(entry.getKey(), entry.getValue());
-        }
+    @Override
+    protected CanonicalUriFileWriter getCanonicalUriWriter(UriMappingIterable uriMapping) throws IOException {
+        return new CanonicalUriFileWriter(config.getCanonicalURIsOutputFile());
     }
 
     /**
-     * Write the given set of canonical URIs to a file, one URI per line.
-     * @param uriMapping canonical URI mappings
-     * @throws java.io.IOException writing error
-     */
-    @Override
-    protected void writeCanonicalURIs(UriMappingIterable uriMapping) throws IOException {
-        Set<String> canonicalUris = new HashSet<>();
-        for (String mappedUri : uriMapping) {
-            canonicalUris.add(uriMapping.getCanonicalURI(mappedUri));
-        }
-        canonicalUriFileReader.writeCanonicalUris(config.getCanonicalURIsOutputFile(), canonicalUris);
-    }
-
-    /**
-     * Writes owl:sameAs links according to the given URI mapping to given outputs.
-     * owl:sameAs links between URIs and their canonical equivalent are written.
-     * @param uriMapping uri mapping defining the links to write
+     * Returns writer for owl:sameAs links according to the given URI mapping to given outputs.
      * @throws java.io.IOException I/O error
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error when creating output
      */
     @Override
-    protected void writeSameAsLinks(UriMappingIterable uriMapping) throws IOException, ODCSFusionToolException {
-
-        List<CloseableRDFWriter> writers = new LinkedList<>();
-        try {
-            // Create output writers
-            for (Output output : config.getOutputs()) {
-                if (output.getType() != EnumOutputType.FILE || output.getParams().get(ConfigParameters.OUTPUT_SAME_AS_FILE) == null) {
-                    continue;
-                }
-
-                OutputImpl sameAsOutput = new OutputImpl(EnumOutputType.FILE, output.toString() + "-sameAs");
-                sameAsOutput.getParams().put(ConfigParameters.OUTPUT_PATH, output.getParams().get(ConfigParameters.OUTPUT_SAME_AS_FILE));
-                sameAsOutput.getParams().put(ConfigParameters.OUTPUT_FORMAT, output.getParams().get(ConfigParameters.OUTPUT_FORMAT));
-                sameAsOutput.getParams().put(ConfigParameters.OUTPUT_SPLIT_BY_MB, output.getParams().get(ConfigParameters.OUTPUT_SPLIT_BY_MB));
-                CloseableRDFWriter writer = rdfWriterFactory.createRDFWriter(sameAsOutput);
-                writers.add(writer);
-                writer.addNamespace("owl", OWL.NAMESPACE);
-                writeNamespaceDeclarations(writer, config.getPrefixes());
-            }
-            if (writers.isEmpty()) {
-                return;
-            }
-
-            for (CloseableRDFWriter writer : writers) {
-                final Iterator<String> uriIterator = uriMapping.iterator();
-                Iterator<Statement> sameAsTripleIterator = new UriToSameAsIterator(uriIterator, uriMapping, ValueFactoryImpl.getInstance());
-                writer.writeQuads(sameAsTripleIterator);
-            }
-
-            int linkCounter = 0;
-            for (String ignored : uriMapping) {
-                linkCounter++;
-            }
-            LOG.info("Written {} owl:sameAs links", linkCounter);
-        } finally {
-            for (CloseableRDFWriter writer : writers) {
-                writer.close();
-            }
-        }
+    protected SameAsLinkWriter getSameAsLinksWriter() throws IOException {
+        return new SameAsLinkWriter(config.getOutputs(), config.getPrefixes());
     }
 
     /**

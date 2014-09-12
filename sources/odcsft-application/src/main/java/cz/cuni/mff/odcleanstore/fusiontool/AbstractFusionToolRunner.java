@@ -5,11 +5,13 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CanonicalUriFileReader;
+import cz.cuni.mff.odcleanstore.fusiontool.util.CanonicalUriFileHelper;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
+import cz.cuni.mff.odcleanstore.fusiontool.writers.CanonicalUriFileWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.writers.SameAsLinkWriter;
 import org.openrdf.model.Model;
 import org.openrdf.model.URI;
 import org.slf4j.Logger;
@@ -33,8 +35,6 @@ public abstract class AbstractFusionToolRunner {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractFusionToolRunner.class);
 
     protected boolean isProfilingOn;
-
-    protected final CanonicalUriFileReader canonicalUriFileReader = new CanonicalUriFileReader();
 
     public AbstractFusionToolRunner(boolean isProfilingOn) {
         this.isProfilingOn = isProfilingOn;
@@ -67,9 +67,9 @@ public abstract class AbstractFusionToolRunner {
 
             // Initialize executor
             timeProfiler.startCounter(EnumFusionCounters.INITIALIZATION);
-            ResourceDescriptionConflictResolver conflictResolver = createConflictResolver(metadata, uriMapping);
-            rdfWriter = createRDFWriter();
-            ODCSFusionToolExecutor executor = createExecutor(uriMapping);
+            ResourceDescriptionConflictResolver conflictResolver = getConflictResolver(metadata, uriMapping);
+            rdfWriter = getRDFWriter();
+            ODCSFusionToolExecutor executor = getExecutor(uriMapping);
             timeProfiler.stopAddCounter(EnumFusionCounters.INITIALIZATION);
 
             // Do the actual work
@@ -77,8 +77,8 @@ public abstract class AbstractFusionToolRunner {
 
             // Write metadata
             timeProfiler.startCounter(EnumFusionCounters.META_OUTPUT_WRITING);
-            writeCanonicalURIs(uriMapping);
-            writeSameAsLinks(uriMapping);
+            getCanonicalUriWriter(uriMapping).write(uriMapping);
+            getSameAsLinksWriter().write(uriMapping);
             timeProfiler.stopAddCounter(EnumFusionCounters.META_OUTPUT_WRITING);
 
             // Print profiling information
@@ -96,19 +96,24 @@ public abstract class AbstractFusionToolRunner {
 
     protected abstract InputLoader getInputLoader() throws IOException, ODCSFusionToolException;
 
-    protected abstract CloseableRDFWriter createRDFWriter() throws IOException, ODCSFusionToolException;
+    protected abstract CloseableRDFWriter getRDFWriter() throws IOException, ODCSFusionToolException;
 
     protected abstract Model getMetadata() throws ODCSFusionToolException;
 
     protected abstract UriMappingIterable getUriMapping() throws ODCSFusionToolException, IOException;
 
-    protected abstract ResourceDescriptionConflictResolver createConflictResolver(Model metadata, UriMappingIterable uriMapping);
+    protected abstract ResourceDescriptionConflictResolver getConflictResolver(Model metadata, UriMappingIterable uriMapping);
 
-    protected abstract ODCSFusionToolExecutor createExecutor(UriMappingIterable uriMapping);
+    protected abstract ODCSFusionToolExecutor getExecutor(UriMappingIterable uriMapping);
 
-    protected abstract void writeCanonicalURIs(UriMappingIterable uriMapping) throws IOException;
+    /**
+     * Returns writer for canonical URIs.
+     * @param uriMapping canonical URI mappings
+     * @throws java.io.IOException writing error
+     */
+    protected abstract CanonicalUriFileWriter getCanonicalUriWriter(UriMappingIterable uriMapping) throws IOException;
 
-    protected abstract void writeSameAsLinks(UriMappingIterable uriMapping) throws IOException, ODCSFusionToolException;
+    protected abstract SameAsLinkWriter getSameAsLinksWriter() throws IOException;
 
     /**
      * Returns set of URIs preferred for canonical URIs.
@@ -128,7 +133,7 @@ public abstract class AbstractFusionToolRunner {
             preferredURIs.add(uri.stringValue());
         }
         if (canonicalURIsInputFile != null) {
-            canonicalUriFileReader.readCanonicalUris(canonicalURIsInputFile, preferredURIs);
+            new CanonicalUriFileHelper().readCanonicalUris(canonicalURIsInputFile, preferredURIs);
         }
         preferredURIs.addAll(preferredCanonicalURIs);
 

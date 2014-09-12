@@ -1,24 +1,13 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.Set;
-
 import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Set;
 
 /**
  * Reader and writer of files containing canonical URIs.
@@ -28,8 +17,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * and therefore to loss of some canonical URIs.
  * @author Jan Michelfeit
  */
-public class CanonicalUriFileReader {
-    private static final Logger LOG = LoggerFactory.getLogger(CanonicalUriFileReader.class);
+public class CanonicalUriFileHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(CanonicalUriFileHelper.class);
 
     /**
      * Read canonical URIs from a file with the given name and add them to the given Set.
