@@ -36,9 +36,7 @@ public class ContextAwareStatementIsEqual extends BaseMatcher<Statement> {
             return false;
         }
 
-        return expectedStatement.getContext() == null
-                ? true
-                : expectedStatement.getContext().equals(actualStatement.getContext());
+        return expectedStatement.getContext() == null || expectedStatement.getContext().equals(actualStatement.getContext());
     }
 
     @Override
