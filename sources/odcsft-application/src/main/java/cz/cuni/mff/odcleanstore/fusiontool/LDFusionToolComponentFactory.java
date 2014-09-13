@@ -39,9 +39,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CanonicalUriFileHelper;
-import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
+import cz.cuni.mff.odcleanstore.fusiontool.util.*;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.*;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import org.openrdf.model.Model;
@@ -77,6 +75,10 @@ public class LDFusionToolComponentFactory implements FusionComponentFactory {
     /** Indicates if resources to process should be discovered transitively. */
     protected final boolean isTransitive;
 
+    private ProfilingTimeCounter<EnumFusionCounters> executorTimeProfiler;
+
+    private MemoryProfiler executorMemoryProfiler;
+
     /**
      * Creates new instance.
      * @param config global configuration
@@ -85,6 +87,8 @@ public class LDFusionToolComponentFactory implements FusionComponentFactory {
         this.config = config;
         isTransitive = false; // TODO
         repositoryFactory = new RepositoryFactory(config.getParserConfig());
+        executorTimeProfiler = ProfilingTimeCounter.createInstance(EnumFusionCounters.class, config.isProfilingOn());
+        executorMemoryProfiler = MemoryProfiler.createInstance(config.isProfilingOn());
     }
 
     @Override
@@ -92,8 +96,10 @@ public class LDFusionToolComponentFactory implements FusionComponentFactory {
         return new LDFusionToolExecutor(
                 hasVirtuosoSource(config.getDataSources()),
                 config.getMaxOutputTriples(),
-                config.isProfilingOn(),
-                getInputFilter(uriMapping));
+                getInputFilter(uriMapping),
+                executorTimeProfiler,
+                executorMemoryProfiler
+        );
     }
 
     @Override
@@ -433,5 +439,13 @@ public class LDFusionToolComponentFactory implements FusionComponentFactory {
         return Math.min(
                 config.getMemoryLimit() != null ? config.getMemoryLimit() : Long.MAX_VALUE,
                 (long) (ExternalSort.estimateAvailableMemory() * config.getMaxFreeMemoryUsage()));
+    }
+
+    public ProfilingTimeCounter<EnumFusionCounters> getExecutorTimeProfiler() {
+        return executorTimeProfiler;
+    }
+
+    public MemoryProfiler getExecutorMemoryProfiler() {
+        return executorMemoryProfiler;
     }
 }

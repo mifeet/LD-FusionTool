@@ -4,9 +4,6 @@ import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolution
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
-import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 
 import java.io.IOException;
@@ -18,8 +15,4 @@ import java.io.IOException;
 public interface FusionExecutor {
     void fuse(ResourceDescriptionConflictResolver conflictResolver, InputLoader inputLoader, CloseableRDFWriter rdfWriter)
             throws LDFusionToolException, ConflictResolutionException, IOException;
-
-    MemoryProfiler getMemoryProfiler();
-
-    ProfilingTimeCounter<EnumFusionCounters> getTimeProfiler();
 }

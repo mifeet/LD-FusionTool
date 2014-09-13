@@ -6,7 +6,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.ResourceDescriptionFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
@@ -34,43 +33,25 @@ public class LDFusionToolExecutor implements FusionExecutor {
     private final MemoryProfiler memoryProfiler;
     private ResourceDescriptionFilter resourceDescriptionFilter;
 
-    public LDFusionToolExecutor() {
-        this(false, null, false, new NoOpFilter());
-    }
-
     /**
      * @param hasVirtuosoSource indicates whether the {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader}
      *      given to {@code fuse()} may contain a source of type
      *      {@link cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType#VIRTUOSO} (need for Virtuoso bug circumvention).
      * @param maxOutputTriples maximum number of triples to be processed; null means unlimited
-     * @param isProfilingOn whether to measure profiling information
-     */
-    public LDFusionToolExecutor(boolean hasVirtuosoSource, Long maxOutputTriples, boolean isProfilingOn) {
-        this(hasVirtuosoSource, maxOutputTriples, isProfilingOn, new NoOpFilter());
-    }
-
-    /**
-     * @param hasVirtuosoSource indicates whether the {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader}
-     *      given to {@code fuse()} may contain a source of type
-     *      {@link cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType#VIRTUOSO} (need for Virtuoso bug circumvention).
-     * @param maxOutputTriples maximum number of triples to be processed; null means unlimited
-     * @param isProfilingOn whether to measure profiling information
+     * @param timeProfiler time profiler
+     * @param memoryProfiler memory profiler
      */
     public LDFusionToolExecutor(
-            boolean hasVirtuosoSource, Long maxOutputTriples, boolean isProfilingOn, ResourceDescriptionFilter resourceDescriptionFilter) {
+            boolean hasVirtuosoSource,
+            Long maxOutputTriples,
+            ResourceDescriptionFilter resourceDescriptionFilter,
+            ProfilingTimeCounter<EnumFusionCounters> timeProfiler,
+            MemoryProfiler memoryProfiler) {
         this.hasVirtuosoSource = hasVirtuosoSource;
         this.maxOutputTriples = maxOutputTriples;
         this.resourceDescriptionFilter = resourceDescriptionFilter;
-        timeProfiler = ProfilingTimeCounter.createInstance(EnumFusionCounters.class, isProfilingOn);
-        memoryProfiler = MemoryProfiler.createInstance(isProfilingOn);
-    }
-
-    public ProfilingTimeCounter<EnumFusionCounters> getTimeProfiler() {
-        return timeProfiler;
-    }
-
-    public MemoryProfiler getMemoryProfiler() {
-        return memoryProfiler;
+        this.timeProfiler = timeProfiler;
+        this.memoryProfiler = memoryProfiler;
     }
 
     @Override

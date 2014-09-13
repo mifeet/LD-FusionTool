@@ -2,9 +2,13 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 
 import com.google.common.collect.ImmutableList;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.TestConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.TestInputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.TestRDFWriter;
+import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
+import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
+import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,7 +27,7 @@ public class LDFusionToolExecutorTest {
     @Test
     public void processesAllInputStatements() throws Exception {
         // Arrange
-        FusionExecutor executor = new LDFusionToolExecutor();
+        FusionExecutor executor = getLDFusionToolExecutor(Long.MAX_VALUE, false);
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
                 //(Collection<Statement>) ImmutableList.<Statement>of(),
                 (Collection<Statement>) ImmutableList.of(
@@ -52,7 +56,7 @@ public class LDFusionToolExecutorTest {
     public void respectsMaxOutputTriples() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        FusionExecutor executor = new LDFusionToolExecutor(false, maxOutputTriples, false);
+        FusionExecutor executor = getLDFusionToolExecutor(maxOutputTriples, false);
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -81,7 +85,7 @@ public class LDFusionToolExecutorTest {
     public void suppliesAllQuadsInClusterToConflictResolver() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        FusionExecutor executor = new LDFusionToolExecutor(false, maxOutputTriples, false);
+        FusionExecutor executor = getLDFusionToolExecutor(maxOutputTriples, false);
         ImmutableList<Collection<Statement>> inputStatements = ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -113,7 +117,7 @@ public class LDFusionToolExecutorTest {
     public void updatesInputLoaderWithResolvedStatements() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        FusionExecutor executor = new LDFusionToolExecutor(false, maxOutputTriples, false);
+        FusionExecutor executor = getLDFusionToolExecutor(maxOutputTriples, false);
         ImmutableList<Collection<Statement>> inputStatements = ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -141,7 +145,7 @@ public class LDFusionToolExecutorTest {
     @Test
     public void processesAllInputStatementsWhenHasVirtuosoSource() throws Exception {
         // Arrange
-        FusionExecutor executor = new LDFusionToolExecutor(true, Long.MAX_VALUE, true);
+        FusionExecutor executor = getLDFusionToolExecutor(Long.MAX_VALUE, true);
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
                 (Collection<Statement>) ImmutableList.<Statement>of(),
 
@@ -165,5 +169,14 @@ public class LDFusionToolExecutorTest {
         assertThat(resolvedStatements.get(1).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s1", "p1", "o1", "g2")));
         assertThat(resolvedStatements.get(2).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s2", "p2", "o1", "g3")));
         assertThat(resolvedStatements.get(3).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s2", "p2", "o2", "g3")));
+    }
+
+    private LDFusionToolExecutor getLDFusionToolExecutor(long maxOutputTriples, boolean hasVirtuosoSource) {
+        return new LDFusionToolExecutor(
+                hasVirtuosoSource,
+                maxOutputTriples,
+                new NoOpFilter(),
+                ProfilingTimeCounter.createInstance(EnumFusionCounters.class, false),
+                MemoryProfiler.createInstance(false));
     }
 }

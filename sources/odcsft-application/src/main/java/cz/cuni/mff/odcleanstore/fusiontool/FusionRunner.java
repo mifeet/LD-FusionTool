@@ -6,7 +6,6 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMapp
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
-import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import org.openrdf.model.Model;
@@ -24,6 +23,7 @@ import java.io.IOException;
 public class FusionRunner {
     protected boolean isProfilingOn = false;
     protected final FusionComponentFactory componentFactory;
+    private ProfilingTimeCounter<EnumFusionCounters> timeProfiler;
 
     public FusionRunner(FusionComponentFactory componentFactory) {
         this.componentFactory = componentFactory;
@@ -31,6 +31,15 @@ public class FusionRunner {
 
     public void setProfilingOn(boolean isProfilingOn) {
         this.isProfilingOn = isProfilingOn;
+    }
+
+    /**
+     * Returns profiling information about the last execution of {@link #runFusionTool()}.
+     * The profiling information will contain meaningful values only if profiling is turned on with {@link #setProfilingOn(boolean)}.
+     * @return profiling info
+     */
+    public ProfilingTimeCounter<EnumFusionCounters> getTimeProfiler() {
+        return timeProfiler;
     }
 
     /**
@@ -42,7 +51,7 @@ public class FusionRunner {
     public void runFusionTool() throws LDFusionToolException, IOException, ConflictResolutionException {
         InputLoader inputLoader = null;
         CloseableRDFWriter rdfWriter = null;
-        ProfilingTimeCounter<EnumFusionCounters> timeProfiler = ProfilingTimeCounter.createInstance(EnumFusionCounters.class, isProfilingOn);
+        timeProfiler = ProfilingTimeCounter.createInstance(EnumFusionCounters.class, isProfilingOn);
         try {
             // Load source named graphs metadata
             timeProfiler.startCounter(EnumFusionCounters.META_INITIALIZATION);
@@ -73,10 +82,6 @@ public class FusionRunner {
             componentFactory.getCanonicalUriWriter(uriMapping).write(uriMapping);
             componentFactory.getSameAsLinksWriter().write(uriMapping);
             timeProfiler.stopAddCounter(EnumFusionCounters.META_OUTPUT_WRITING);
-
-            // Print profiling information
-            timeProfiler.addProfilingTimeCounter(executor.getTimeProfiler());
-            printProfilingInformation(timeProfiler, executor.getMemoryProfiler());
         } finally {
             if (rdfWriter != null) {
                 rdfWriter.close();
@@ -84,31 +89,6 @@ public class FusionRunner {
             if (inputLoader != null) {
                 inputLoader.close();
             }
-        }
-    }
-
-    /**
-     * Prints profiling information from the given profiling time counter.
-     * @param timeProfiler profiling time counter
-     * @param memoryProfiler memory profiler
-     */
-    protected void printProfilingInformation(
-            ProfilingTimeCounter<EnumFusionCounters> timeProfiler,
-            MemoryProfiler memoryProfiler) {
-
-        if (isProfilingOn) {
-            System.out.println("-- Profiling information --------");
-            System.out.println("Initialization time:              " + timeProfiler.formatCounter(EnumFusionCounters.INITIALIZATION));
-            System.out.println("Reading metadata & sameAs links:  " + timeProfiler.formatCounter(EnumFusionCounters.META_INITIALIZATION));
-            System.out.println("Data sources initialization time: " + timeProfiler.formatCounter(EnumFusionCounters.DATA_INITIALIZATION));
-            System.out.println("Quad loading time:                " + timeProfiler.formatCounter(EnumFusionCounters.QUAD_LOADING));
-            System.out.println("Input filtering time:             " + timeProfiler.formatCounter(EnumFusionCounters.INPUT_FILTERING));
-            System.out.println("Buffering time:                   " + timeProfiler.formatCounter(EnumFusionCounters.BUFFERING));
-            System.out.println("Conflict resolution time:         " + timeProfiler.formatCounter(EnumFusionCounters.CONFLICT_RESOLUTION));
-            System.out.println("Output writing time:              " + timeProfiler.formatCounter(EnumFusionCounters.OUTPUT_WRITING));
-            System.out.println("Maximum recorded total memory:    " + MemoryProfiler.formatMemoryBytes(memoryProfiler.getMaxTotalMemory()));
-            System.out.println("Maximum recorded used memory:     " + MemoryProfiler.formatMemoryBytes(memoryProfiler.getMaxUsedMemory()));
-            System.out.println("Minimum recorded free memory:     " + MemoryProfiler.formatMemoryBytes(memoryProfiler.getMinFreeMemory()));
         }
     }
 
