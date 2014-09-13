@@ -13,7 +13,7 @@ public class CloseableRepositoryConnection implements AutoCloseable {
         this.connection = connection;
     }
 
-    public RepositoryConnection getConnection() {
+    public RepositoryConnection get() {
         return connection;
     }
 
