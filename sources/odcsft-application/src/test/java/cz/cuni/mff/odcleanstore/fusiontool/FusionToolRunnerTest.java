@@ -43,7 +43,8 @@ public class FusionToolRunnerTest {
         UriMappingWriter sameAsWriter = mock(UriMappingWriter.class);
         when(componentFactory.getSameAsLinksWriter()).thenReturn(sameAsWriter);
 
-        FusionToolRunner runner = new FusionToolRunner(componentFactory, true);
+        FusionToolRunner runner = new FusionToolRunner(componentFactory);
+        runner.setProfilingOn(true);
         runner.runFusionTool();
 
         verify(inputLoader).initialize(uriMapping);

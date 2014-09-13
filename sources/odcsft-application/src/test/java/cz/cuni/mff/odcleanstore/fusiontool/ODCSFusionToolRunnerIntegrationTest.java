@@ -164,7 +164,7 @@ public class ODCSFusionToolRunnerIntegrationTest {
         // Act
 
         ODCSFusionToolComponentFactory componentFactory = new ODCSFusionToolComponentFactory(config);
-        FusionToolRunner fusionToolRunner = new FusionToolRunner(componentFactory, false);
+        FusionToolRunner fusionToolRunner = new FusionToolRunner(componentFactory);
         fusionToolRunner.runFusionTool();
 
         // Assert - canonical URIs

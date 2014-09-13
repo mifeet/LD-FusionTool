@@ -22,12 +22,15 @@ import java.io.IOException;
  * @see ODCSFusionToolExecutor
  */
 public class FusionToolRunner {
-    protected final boolean isProfilingOn;
+    protected boolean isProfilingOn = false;
     protected final FusionToolComponentFactory componentFactory;
 
-    public FusionToolRunner(FusionToolComponentFactory componentFactory, boolean isProfilingOn) {
-        this.isProfilingOn = isProfilingOn;
+    public FusionToolRunner(FusionToolComponentFactory componentFactory) {
         this.componentFactory = componentFactory;
+    }
+
+    public void setProfilingOn(boolean isProfilingOn) {
+        this.isProfilingOn = isProfilingOn;
     }
 
     /**

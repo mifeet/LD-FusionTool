@@ -76,7 +76,8 @@ public final class ODCSFusionToolApplication {
         try {
 
             FusionToolComponentFactory componentFactory = new ODCSFusionToolComponentFactory(config);
-            FusionToolRunner runner = new FusionToolRunner(componentFactory, config.isProfilingOn());
+            FusionToolRunner runner = new FusionToolRunner(componentFactory);
+            runner.setProfilingOn(config.isProfilingOn());
             runner.runFusionTool();
 
         } catch (ODCSFusionToolException e) {
