@@ -62,10 +62,10 @@ public final class LDFusionToolUtils {
      * @param timeInMs time in milliseconds
      * @return formatted string
      */
-    public static String formatProfilingTime(long timeInMs) {
+    public static String formatTime(long timeInMs) {
         DateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
         timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return String.format(Locale.ROOT, "%d:%s (%d ms)",
+        return String.format(Locale.ROOT, "%d:%s",
                 timeInMs / HOUR_MS,
                 timeFormat.format(new Date(timeInMs)),
                 timeInMs);

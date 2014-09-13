@@ -123,7 +123,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
         if ((totalLoadedQuads - lastLoadedQuads) / LOG_LOOP_SIZE != totalLoadedQuads / LOG_LOOP_SIZE) {
             // show the log when the number of required quads was exceeded somewhere within the newly loaded quads
             LOG.info(String.format("ODCS-FusionTool: Loaded totally %,d quads from source %s so far in %s\n",
-                    totalLoadedQuads, source, LDFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - totalStartTime)));
+                    totalLoadedQuads, source, LDFusionToolUtils.formatTime(System.currentTimeMillis() - totalStartTime)));
         }
     }
 

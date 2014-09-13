@@ -77,7 +77,7 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
      */
     public String formatCounter(E counterId) {
         long timeInMs = lengths[counterId.ordinal()];
-        return LDFusionToolUtils.formatProfilingTime(timeInMs);
+        return LDFusionToolUtils.formatTime(timeInMs);
     }
 
     /**
@@ -89,7 +89,7 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
             this.lengths[counterId.ordinal()] += otherCounter.lengths[counterId.ordinal()];
         }
     }
-    
+
     /**
      * Child class which doesn't perform any measurements for use when profiling is turned off.
      * @param <E> see {@link ProfilingTimeCounter}

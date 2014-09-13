@@ -131,7 +131,7 @@ public class SparqlDumpDownloader {
             this.writer.handleStatement(st);
             counter++;
             if (counter % 100_000 == 0) {
-                String time = LDFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime);
+                String time = LDFusionToolUtils.formatTime(System.currentTimeMillis() - startTime);
                 LOG.info(String.format("Stored %,d quads in %s (last %s)\n", counter, time, st));
             }
         }

@@ -328,7 +328,7 @@ public class ExternalSortingInputLoader implements InputLoader {
             BufferedWriter writer = createTempFileWriter(sortedFile);
 
             externalSorter.sort(reader, inputFile.length(), writer);
-            LOG.debug("Sorting finished in {}", LDFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
+            LOG.debug("Sorting finished in {}", LDFusionToolUtils.formatTime(System.currentTimeMillis() - startTime));
             return sortedFile;
         } catch (IOException e) {
             throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_SORT,
