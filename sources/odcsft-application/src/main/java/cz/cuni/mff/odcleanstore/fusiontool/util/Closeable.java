@@ -10,7 +10,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.util;
  * @param <X> type of exception thrown by interface methods
  * @author Jan Michelfeit
  */
-public interface Closeable<X extends Exception> {
+public interface Closeable<X extends Exception> extends AutoCloseable {
     /**
      * Releases any resources associated with this object.
      * If the object is already closed then invoking this method has no effect.
