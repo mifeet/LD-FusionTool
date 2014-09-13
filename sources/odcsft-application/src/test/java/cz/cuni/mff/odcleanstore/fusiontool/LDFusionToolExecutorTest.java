@@ -15,15 +15,15 @@ import java.util.Collection;
 import java.util.List;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
-import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpStatement;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils.createHttpStatement;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ODCSFusionToolExecutorTest {
+public class LDFusionToolExecutorTest {
     @Test
     public void processesAllInputStatements() throws Exception {
         // Arrange
-        FusionToolExecutor executor = new ODCSFusionToolExecutor();
+        FusionExecutor executor = new LDFusionToolExecutor();
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
                 //(Collection<Statement>) ImmutableList.<Statement>of(),
                 (Collection<Statement>) ImmutableList.of(
@@ -52,7 +52,7 @@ public class ODCSFusionToolExecutorTest {
     public void respectsMaxOutputTriples() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        FusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
+        FusionExecutor executor = new LDFusionToolExecutor(false, maxOutputTriples, false);
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -81,7 +81,7 @@ public class ODCSFusionToolExecutorTest {
     public void suppliesAllQuadsInClusterToConflictResolver() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        FusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
+        FusionExecutor executor = new LDFusionToolExecutor(false, maxOutputTriples, false);
         ImmutableList<Collection<Statement>> inputStatements = ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -113,7 +113,7 @@ public class ODCSFusionToolExecutorTest {
     public void updatesInputLoaderWithResolvedStatements() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        FusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
+        FusionExecutor executor = new LDFusionToolExecutor(false, maxOutputTriples, false);
         ImmutableList<Collection<Statement>> inputStatements = ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -141,7 +141,7 @@ public class ODCSFusionToolExecutorTest {
     @Test
     public void processesAllInputStatementsWhenHasVirtuosoSource() throws Exception {
         // Arrange
-        FusionToolExecutor executor = new ODCSFusionToolExecutor(true, Long.MAX_VALUE, true);
+        FusionExecutor executor = new LDFusionToolExecutor(true, Long.MAX_VALUE, true);
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
                 (Collection<Statement>) ImmutableList.<Statement>of(),
 

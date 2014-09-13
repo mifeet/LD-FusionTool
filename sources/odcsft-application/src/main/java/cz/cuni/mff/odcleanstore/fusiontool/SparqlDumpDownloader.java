@@ -1,33 +1,19 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import org.openrdf.model.Statement;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFWriter;
-import org.openrdf.rio.Rio;
+import org.openrdf.rio.*;
 import org.openrdf.rio.helpers.RDFHandlerBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.zip.Deflater;
@@ -68,7 +54,7 @@ public class SparqlDumpDownloader {
                 try {
                     loadQuads(dataSource, offset, rdfHandler);
                     finished = true;
-                } catch (ODCSFusionToolException e) {
+                } catch (LDFusionToolException e) {
                     if (retryAttempts < MAX_RETRY_ATTEMPTS) {
                         retryAttempts++;
                         LOG.error("Error loading triples: " + e.getMessage(), e);
@@ -90,7 +76,7 @@ public class SparqlDumpDownloader {
         }
     }
 
-    private static void loadQuads(DataSource dataSource, int initialOffset, RDFWriterWrapper rdfHandler) throws ODCSFusionToolException {
+    private static void loadQuads(DataSource dataSource, int initialOffset, RDFWriterWrapper rdfHandler) throws LDFusionToolException {
         AllTriplesRepositoryLoader loader = new AllTriplesRepositoryLoader(dataSource);
         loader.setInitialOffset(initialOffset);
         try {
@@ -145,7 +131,7 @@ public class SparqlDumpDownloader {
             this.writer.handleStatement(st);
             counter++;
             if (counter % 100_000 == 0) {
-                String time = ODCSFusionToolAppUtils.formatProfilingTime(System.currentTimeMillis() - startTime);
+                String time = LDFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime);
                 LOG.info(String.format("Stored %,d quads in %s (last %s)\n", counter, time, st));
             }
         }

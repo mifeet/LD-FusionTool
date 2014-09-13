@@ -15,7 +15,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescr
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MapdbCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.io.MemoryCollectionFactory;
@@ -40,7 +40,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.CanonicalUriFileHelper;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.*;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
@@ -61,10 +61,10 @@ import java.util.*;
  * See sample configuration files (sample-config-full.xml) for overview of all processing options.
  * <p/>
  * This class is not thread-safe.
- * @see ODCSFusionToolExecutor
+ * @see LDFusionToolExecutor
  */
-public class ODCSFusionToolComponentFactory implements FusionToolComponentFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolComponentFactory.class);
+public class LDFusionToolComponentFactory implements FusionComponentFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(LDFusionToolComponentFactory.class);
 
     private static final CloseableRDFWriterFactory rdfWriterFactory = new CloseableRDFWriterFactory();
 
@@ -81,15 +81,15 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
      * Creates new instance.
      * @param config global configuration
      */
-    public ODCSFusionToolComponentFactory(Config config) {
+    public LDFusionToolComponentFactory(Config config) {
         this.config = config;
         isTransitive = false; // TODO
         repositoryFactory = new RepositoryFactory(config.getParserConfig());
     }
 
     @Override
-    public ODCSFusionToolExecutor getExecutor(UriMappingIterable uriMapping) {
-        return new ODCSFusionToolExecutor(
+    public LDFusionToolExecutor getExecutor(UriMappingIterable uriMapping) {
+        return new LDFusionToolExecutor(
                 hasVirtuosoSource(config.getDataSources()),
                 config.getMaxOutputTriples(),
                 config.isProfilingOn(),
@@ -97,12 +97,12 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
     }
 
     @Override
-    public InputLoader getInputLoader() throws IOException, ODCSFusionToolException {
+    public InputLoader getInputLoader() throws IOException, LDFusionToolException {
         long memoryLimit = calculateMemoryLimit();
         if (config.isLocalCopyProcessing()) {
             Collection<AllTriplesLoader> allTriplesLoaders = getAllTriplesLoaders();
             return new ExternalSortingInputLoader(allTriplesLoaders,
-                    ODCSFusionToolAppUtils.getResourceDescriptionProperties(config),
+                    LDFusionToolUtils.getResourceDescriptionProperties(config),
                     config.getTempDirectory(),
                     config.getParserConfig(),
                     memoryLimit);
@@ -142,9 +142,9 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
     /**
      * Returns an initialized collection of input triple loaders.
      * @return collection of input triple loaders
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
-    protected Collection<AllTriplesLoader> getAllTriplesLoaders() throws ODCSFusionToolException {
+    protected Collection<AllTriplesLoader> getAllTriplesLoaders() throws LDFusionToolException {
         List<AllTriplesLoader> loaders = new ArrayList<>(config.getDataSources().size());
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
@@ -156,10 +156,10 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
                     loader = new AllTriplesRepositoryLoader(dataSource);
                 }
                 loaders.add(loader);
-            } catch (ODCSFusionToolException e) {
+            } catch (LDFusionToolException e) {
                 // clean up already initialized loaders
                 for (AllTriplesLoader loader : loaders) {
-                    ODCSFusionToolAppUtils.closeQuietly(loader);
+                    LDFusionToolUtils.closeQuietly(loader);
                 }
                 throw e;
             }
@@ -170,15 +170,15 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
     /**
      * Initializes data sources from configuration.
      * @return initialized data sources
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException I/O error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException I/O error
      */
-    protected Collection<DataSource> getDataSources() throws ODCSFusionToolException {
+    protected Collection<DataSource> getDataSources() throws LDFusionToolException {
         List<DataSource> dataSources = new ArrayList<>(config.getDataSources().size());
         for (DataSourceConfig dataSourceConfig : config.getDataSources()) {
             try {
                 DataSource dataSource = DataSourceImpl.fromConfig(dataSourceConfig, config.getPrefixes(), repositoryFactory);
                 dataSources.add(dataSource);
-            } catch (ODCSFusionToolException e) {
+            } catch (LDFusionToolException e) {
                 // clean up already initialized repositories
                 for (DataSource initializedDataSource : dataSources) {
                     try {
@@ -197,17 +197,17 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
      * Initializes construct sources from configuration.
      * @param constructSourceConfigs configuration for data sources
      * @return initialized construct sources
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException I/O error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException I/O error
      */
     protected Collection<ConstructSource> getConstructSources(List<ConstructSourceConfig> constructSourceConfigs)
-            throws ODCSFusionToolException {
+            throws LDFusionToolException {
         List<ConstructSource> constructSources = new ArrayList<>();
         for (ConstructSourceConfig constructSourceConfig : constructSourceConfigs) {
             try {
                 ConstructSource constructSource =
                         ConstructSourceImpl.fromConfig(constructSourceConfig, config.getPrefixes(), repositoryFactory);
                 constructSources.add(constructSource);
-            } catch (ODCSFusionToolException e) {
+            } catch (LDFusionToolException e) {
                 // clean up already initialized repositories
                 for (ConstructSource initializedDataSource : constructSources) {
                     try {
@@ -225,10 +225,10 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
     /**
      * Returns metadata for conflict resolution.
      * @return metadata for conflict resolution
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
     @Override
-    public Model getMetadata() throws ODCSFusionToolException {
+    public Model getMetadata() throws LDFusionToolException {
         Collection<ConstructSource> metadataSources = getConstructSources(config.getMetadataSources());
         Model metadata = new TreeModel();
         for (ConstructSource source : metadataSources) {
@@ -241,11 +241,11 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
     /**
      * Reads and resolves sameAs links and returns the result canonical URI mapping.
      * @return canonical URI mapping
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      * @throws java.io.IOException I/O error
      */
     @Override
-    public UriMappingIterable getUriMapping() throws ODCSFusionToolException, IOException {
+    public UriMappingIterable getUriMapping() throws LDFusionToolException, IOException {
         // FIXME: preference of prefixes from configuration
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(),
@@ -309,10 +309,10 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      * or null to iterate all subjects
      * @return collection of seed subject URIs
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException query error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException query error
      */
     protected UriCollection getSeedSubjects(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
-            throws ODCSFusionToolException {
+            throws LDFusionToolException {
         FederatedSeedSubjectsLoader loader = new FederatedSeedSubjectsLoader(dataSources);
         return loader.getTripleSubjectsCollection(seedResourceRestriction);
     }
@@ -335,10 +335,10 @@ public class ODCSFusionToolComponentFactory implements FusionToolComponentFactor
      * Creates and initializes output writer (which can be composed of multiple writers if multiple outputs are defined).
      * @return output writer
      * @throws java.io.IOException I/O error
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException configuration error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException configuration error
      */
     @Override
-    public CloseableRDFWriter getRDFWriter() throws IOException, ODCSFusionToolException {
+    public CloseableRDFWriter getRDFWriter() throws IOException, LDFusionToolException {
         List<CloseableRDFWriter> writers = new ArrayList<>(config.getOutputs().size());
         for (Output output : config.getOutputs()) {
             CloseableRDFWriter writer = rdfWriterFactory.createRDFWriter(output);

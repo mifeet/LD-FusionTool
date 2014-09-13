@@ -5,12 +5,12 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Resource;
@@ -30,9 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Locale;
 import java.util.UUID;
 
-import static cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants.LOG_LOOP_SIZE;
-import static cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants.REPOSITORY_RETRY_ATTEMPTS;
-import static cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants.REPOSITORY_RETRY_INTERVAL;
+import static cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants.*;
 
 /**
  * Loader of all triples from  graphs matching the given named graph constraint pattern from an RDF repository.
@@ -89,7 +87,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     }
 
     @Override
-    public void loadAllTriples(RDFHandler rdfHandler) throws ODCSFusionToolException {
+    public void loadAllTriples(RDFHandler rdfHandler) throws LDFusionToolException {
         LOG.info("Parsing all quads from data source {}", source);
         String query = "";
         try {
@@ -107,7 +105,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
             }
             rdfHandler.endRDF();
         } catch (OpenRDFException | InterruptedException e) {
-            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.ALL_TRIPLES_QUERY_QUADS, query, source.getName(), e);
+            throw new LDFusionToolQueryException(LDFusionToolErrorCodes.ALL_TRIPLES_QUERY_QUADS, query, source.getName(), e);
         }
     }
 
@@ -125,7 +123,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
         if ((totalLoadedQuads - lastLoadedQuads) / LOG_LOOP_SIZE != totalLoadedQuads / LOG_LOOP_SIZE) {
             // show the log when the number of required quads was exceeded somewhere within the newly loaded quads
             LOG.info(String.format("ODCS-FusionTool: Loaded totally %,d quads from source %s so far in %s\n",
-                    totalLoadedQuads, source, ODCSFusionToolAppUtils.formatProfilingTime(System.currentTimeMillis() - totalStartTime)));
+                    totalLoadedQuads, source, LDFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - totalStartTime)));
         }
     }
 
@@ -147,7 +145,7 @@ public class AllTriplesRepositoryLoader extends RepositoryLoaderBase implements 
     }
 
     @Override
-    public void close() throws ODCSFusionToolException {
+    public void close() throws LDFusionToolException {
         try {
             closeConnection();
         } catch (RepositoryException e) {

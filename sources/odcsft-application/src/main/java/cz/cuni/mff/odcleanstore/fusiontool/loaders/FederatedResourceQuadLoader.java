@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import org.openrdf.model.Statement;
 
@@ -34,10 +34,10 @@ public class FederatedResourceQuadLoader implements ResourceQuadLoader {
      * Returns quads having the given uri or one of its owl:sameAs alternatives as their subject.
      * @param uri searched subject URI
      * @return quads having the given uri or one of its owl:sameAs alternatives as their subject.
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      * @see #getQuadsForURI(String)
      */
-    public Collection<Statement> getQuadsForURI(String uri) throws ODCSFusionToolException {
+    public Collection<Statement> getQuadsForURI(String uri) throws LDFusionToolException {
         Collection<Statement> quads = new ArrayList<Statement>();
         loadQuadsForURI(uri, quads);
         return quads;
@@ -45,19 +45,19 @@ public class FederatedResourceQuadLoader implements ResourceQuadLoader {
     
 
     @Override
-    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException {
+    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws LDFusionToolException {
         for (ResourceQuadLoader loader : resourceQuadLoaders) {
             loader.loadQuadsForURI(uri, quadCollection);
         }
     }
 
     @Override
-    public void close() throws ODCSFusionToolException {
-        ODCSFusionToolException exception = null;
+    public void close() throws LDFusionToolException {
+        LDFusionToolException exception = null;
         for (ResourceQuadLoader loader : resourceQuadLoaders) {
             try {
                 loader.close();
-            } catch (ODCSFusionToolException e) {
+            } catch (LDFusionToolException e) {
                 exception = e;
             }
         }

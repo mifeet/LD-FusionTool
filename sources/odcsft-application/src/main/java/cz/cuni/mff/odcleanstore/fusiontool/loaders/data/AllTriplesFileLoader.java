@@ -4,9 +4,9 @@ import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolApplicationException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RdfFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.OutputParamReader;
 import org.openrdf.model.URI;
@@ -41,20 +41,20 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
     }
 
     @Override
-    public void loadAllTriples(RDFHandler rdfHandler) throws ODCSFusionToolException {
+    public void loadAllTriples(RDFHandler rdfHandler) throws LDFusionToolException {
         LOG.info("Parsing all quads from {}", paramReader.getLabel());
         try {
             this.fileLoader.read(rdfHandler);
         } catch (RDFHandlerException e) {
-            throw new ODCSFusionToolApplicationException(
-                    ODCSFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS,
+            throw new LDFusionToolApplicationException(
+                    LDFusionToolErrorCodes.INPUT_LOADER_BUFFER_QUADS,
                     "Error processing quads from " + paramReader.getLabel(),
                     e);
         }
     }
 
     @Override
-    public URI getDefaultContext() throws ODCSFusionToolException {
+    public URI getDefaultContext() throws LDFusionToolException {
         String baseURI = paramReader.getStringValue(ConfigParameters.DATA_SOURCE_FILE_BASE_URI);
         if (baseURI == null || !ODCSUtils.isValidIRI(baseURI)) {
             String path = paramReader.getRequiredStringValue(ConfigParameters.DATA_SOURCE_FILE_PATH);
@@ -65,7 +65,7 @@ public class AllTriplesFileLoader implements AllTriplesLoader {
     }
 
     @Override
-    public void close() throws ODCSFusionToolException {
+    public void close() throws LDFusionToolException {
         // do nothing
     }
 }

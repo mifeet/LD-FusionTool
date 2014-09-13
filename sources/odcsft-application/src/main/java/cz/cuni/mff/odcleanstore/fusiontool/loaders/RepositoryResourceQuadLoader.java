@@ -3,10 +3,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolApplicationException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.shared.util.LimitedURIListBuilder;
 import org.openrdf.OpenRDFException;
@@ -103,11 +103,11 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
      * be loaded.
      * @param uri searched subject URI
      * @param quadCollection collection to which the result will be added
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      * @see DataSource#getNamedGraphRestriction()
      */
     @Override
-    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws ODCSFusionToolException {
+    public void loadQuadsForURI(String uri, Collection<Statement> quadCollection) throws LDFusionToolException {
         long startTime = System.currentTimeMillis();
         uri = uri.trim(); // issue #2 fix
         
@@ -124,7 +124,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
             try {
                 addQuadsFromQuery(query, quadCollection);
             } catch (OpenRDFException e) {
-                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, source.getName(), e);
+                throw new LDFusionToolQueryException(LDFusionToolErrorCodes.QUERY_QUADS, query, source.getName(), e);
             }
         } else {
             Iterable<CharSequence> limitedURIListBuilder = new LimitedURIListBuilder(alternativeURIs, MAX_QUERY_LIST_LENGTH);
@@ -133,7 +133,7 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
                 try {
                     addQuadsFromQuery(query, quadCollection);
                 } catch (OpenRDFException e) {
-                    throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_QUADS, query, source.getName(), e);
+                    throw new LDFusionToolQueryException(LDFusionToolErrorCodes.QUERY_QUADS, query, source.getName(), e);
                 }
             }
         }
@@ -209,11 +209,11 @@ public class RepositoryResourceQuadLoader extends RepositoryLoaderBase implement
     }
 
     @Override
-    public void close() throws ODCSFusionToolException {
+    public void close() throws LDFusionToolException {
         try {
             closeConnection();
         } catch (RepositoryException e) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.REPOSITORY_CLOSE, "Error closing repository connection");
         }
     }
 }

@@ -6,7 +6,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.source;
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import org.openrdf.repository.Repository;
 
@@ -42,10 +42,10 @@ public final class DataSourceImpl extends SourceImpl implements DataSource {
      * @param prefixes namespace prefixes for use in queries (specially in restriction patterns)
      * @param repositoryFactory repository factory
      * @return RDF data source
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException invalid configuration
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException invalid configuration
      */
     public static DataSource fromConfig(DataSourceConfig config, Map<String, String> prefixes,
-            RepositoryFactory repositoryFactory) throws ODCSFusionToolException {
+            RepositoryFactory repositoryFactory) throws LDFusionToolException {
         Repository repository = repositoryFactory.createRepository(config);
         String label = config.getName() != null ? config.getName() : config.getType().toString();
         return new DataSourceImpl(

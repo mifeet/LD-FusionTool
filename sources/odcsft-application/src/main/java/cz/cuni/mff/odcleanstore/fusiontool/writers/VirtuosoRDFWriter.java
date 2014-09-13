@@ -5,10 +5,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.writers;
 
 import cz.cuni.mff.odcleanstore.connection.EnumLogLevel;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolApplicationException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import org.openrdf.model.*;
 import org.openrdf.query.parser.sparql.SPARQLUtil;
 import org.openrdf.rio.RDFHandler;
@@ -43,10 +43,10 @@ public class VirtuosoRDFWriter extends RDFHandlerBase implements RDFHandler, Clo
      * @param port connection port
      * @param username connection username
      * @param password connection password
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException connection error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException connection error
      */
     public VirtuosoRDFWriter(String name, String host, String port, String username, String password)
-            throws ODCSFusionToolException {
+            throws LDFusionToolException {
         this.connection = createConnection(host, port, username, password);
         this.name = name;
     }
@@ -61,17 +61,17 @@ public class VirtuosoRDFWriter extends RDFHandlerBase implements RDFHandler, Clo
     }
 
     private Connection createConnection(String host, String port, String username, String password)
-            throws ODCSFusionToolException {
+            throws LDFusionToolException {
 
         try {
             Class.forName(ODCSUtils.JDBC_DRIVER);
         } catch (ClassNotFoundException e) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_VIRTUOSO_JDBC,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.REPOSITORY_INIT_VIRTUOSO_JDBC,
                     "Couldn't load Virtuoso JDBC driver", e);
         }
         Connection connection;
         try {
-            String connectionString = ODCSFusionToolAppUtils.getVirtuosoConnectionString(host, port);
+            String connectionString = LDFusionToolUtils.getVirtuosoConnectionString(host, port);
             connection = DriverManager.getConnection(connectionString, username, password);
 
             // disable log by default in order to prevent log size problems; transactions don't work much with SPARQL anyway
@@ -80,7 +80,7 @@ public class VirtuosoRDFWriter extends RDFHandlerBase implements RDFHandler, Clo
             statement.execute();
             connection.setAutoCommit(EnumLogLevel.AUTOCOMMIT.getAutocommit());
         } catch (SQLException e) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.REPOSITORY_INIT_VIRTUOSO_JDBC,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.REPOSITORY_INIT_VIRTUOSO_JDBC,
                     "Couldn't connect to Virtuoso via JDBC", e);
         }
         return connection;

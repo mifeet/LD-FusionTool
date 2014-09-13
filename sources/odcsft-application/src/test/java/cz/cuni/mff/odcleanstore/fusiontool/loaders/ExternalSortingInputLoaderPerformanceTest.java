@@ -6,7 +6,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMapp
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
 
-import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.createHttpUri;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils.createHttpUri;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -38,7 +38,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
     @Ignore
     @Test
     public void performanceTest() throws Exception {
-        final long maxMemorySize = 2400 * ODCSFusionToolAppUtils.MB_BYTES;
+        final long maxMemorySize = 2400 * LDFusionToolUtils.MB_BYTES;
         final int tripleCount = 1000000;
 
         // Arrange
@@ -62,7 +62,7 @@ public class ExternalSortingInputLoaderPerformanceTest {
 
         rdfWriter.endRDF();
         outputStream.close();
-        double inputFileSizeMB = inputFile.length() / (double) ODCSFusionToolAppUtils.MB_BYTES;
+        double inputFileSizeMB = inputFile.length() / (double) LDFusionToolUtils.MB_BYTES;
 
         DataSourceConfig dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.FILE, "test-perf-file.nq");
         dataSourceConfig.getParams().put(ConfigParameters.DATA_SOURCE_FILE_PATH, inputFile.getAbsolutePath());

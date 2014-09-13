@@ -5,7 +5,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ThrowingAbstractIterator;
@@ -67,7 +67,7 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     @Override
-    public void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException {
+    public void initialize(UriMappingIterable uriMapping) throws LDFusionToolException {
         this.uriMapping = uriMapping;
         alternativeUriNavigator = new AlternativeUriNavigator(uriMapping);
         this.resourceQuadLoader = createResourceQuadLoader(dataSources, alternativeUriNavigator);
@@ -76,7 +76,7 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     @Override
-    public ResourceDescription next() throws ODCSFusionToolException {
+    public ResourceDescription next() throws LDFusionToolException {
         if (subjectsQueue == null) {
             throw new IllegalStateException("Must be initialized with initialize() first");
         }
@@ -94,7 +94,7 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     @Override
-    public boolean hasNext() throws ODCSFusionToolException {
+    public boolean hasNext() throws LDFusionToolException {
         if (subjectsQueue == null) {
             throw new IllegalStateException("Must be initialized with initialize() first");
         }
@@ -110,12 +110,12 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     @Override
-    public void close() throws ODCSFusionToolException {
+    public void close() throws LDFusionToolException {
         try {
             if (resourceQuadLoader != null) {
                 resourceQuadLoader.close();
             }
-        } catch (ODCSFusionToolException e) {
+        } catch (LDFusionToolException e) {
             LOG.error("Error closing subject queue in InputLoader", e);
         }
         try {
@@ -158,9 +158,9 @@ public class SubjectsSetInputLoader implements InputLoader {
      * Create a queue of subjects to be processed.
      * @param initialSubjects initial subjects to be processed
      * @return return queue of subjects to be processed
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
-    protected UriCollection createSubjectsQueue(UriCollection initialSubjects) throws ODCSFusionToolException {
+    protected UriCollection createSubjectsQueue(UriCollection initialSubjects) throws LDFusionToolException {
         return initialSubjects;
     }
 
@@ -189,9 +189,9 @@ public class SubjectsSetInputLoader implements InputLoader {
     }
 
     /** Iterator over canonical URIs to be resolved. */
-    protected class CanonicalSubjectsIterator extends ThrowingAbstractIterator<String, ODCSFusionToolException> {
+    protected class CanonicalSubjectsIterator extends ThrowingAbstractIterator<String, LDFusionToolException> {
         @Override
-        protected String computeNext() throws ODCSFusionToolException {
+        protected String computeNext() throws LDFusionToolException {
             while (subjectsQueue.hasNext()) {
                 String nextSubject = subjectsQueue.next();
                 String canonicalURI = uriMapping.getCanonicalURI(nextSubject);

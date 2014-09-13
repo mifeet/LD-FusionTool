@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.entity;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 
@@ -29,7 +29,7 @@ public class FederatedSeedSubjectsLoader {
         private String next = null;
 
         protected FederatedUriCollection(Collection<DataSource> dataSources, SparqlRestriction seedResourceRestriction)
-                throws ODCSFusionToolException {
+                throws LDFusionToolException {
             this.dataSourceIt = dataSources.iterator();
             this.seedResourceRestriction = seedResourceRestriction;
             this.next = getNextResult();
@@ -47,10 +47,10 @@ public class FederatedSeedSubjectsLoader {
         /**
          * Returns an element from the collection and moves the iterator by one.
          * @return the current element
-         * @throws ODCSFusionToolException error
+         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
          */
         @Override
-        public String next() throws ODCSFusionToolException {
+        public String next() throws LDFusionToolException {
             if (next == null) {
                 throw new NoSuchElementException();
             }
@@ -59,7 +59,7 @@ public class FederatedSeedSubjectsLoader {
             return result;
         }
         
-        private String getNextResult() throws ODCSFusionToolException {
+        private String getNextResult() throws LDFusionToolException {
             if (currentCollection != null && currentCollection.hasNext()) {
                 return currentCollection.next();
             }
@@ -71,7 +71,7 @@ public class FederatedSeedSubjectsLoader {
             return getNextResult();
         }
         
-        private UriCollection getNextCollection() throws ODCSFusionToolException {
+        private UriCollection getNextCollection() throws LDFusionToolException {
             if (dataSourceIt == null) {
                 throw new NoSuchElementException();
             }
@@ -117,9 +117,9 @@ public class FederatedSeedSubjectsLoader {
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      *      or null to iterate all subjects
      * @return collection of subjects of relevant triples
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException query error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException query error
      */
-    public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
+    public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws LDFusionToolException {
         return new FederatedUriCollection(dataSources, seedResourceRestriction);
     }
 }

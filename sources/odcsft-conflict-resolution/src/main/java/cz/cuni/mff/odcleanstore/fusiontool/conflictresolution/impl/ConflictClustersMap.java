@@ -3,7 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.LDFusionToolCRUtils;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -31,7 +31,7 @@ public class ConflictClustersMap {
     private static ListMultimap<URI, Statement> getOrCreateSubjectMultimap(Resource canonicalSubject, Map<Resource, ListMultimap<URI, Statement>> map) {
         ListMultimap<URI, Statement> subjectMultimap = map.get(canonicalSubject);
         if (subjectMultimap == null) {
-            subjectMultimap = ODCSFusionToolCRUtils.newStatementMultimap();
+            subjectMultimap = LDFusionToolCRUtils.newStatementMultimap();
             map.put(canonicalSubject, subjectMultimap);
         }
         return subjectMultimap;
@@ -50,7 +50,7 @@ public class ConflictClustersMap {
     }
 
     public Map<URI, List<Statement>> getUnionStatementsMap(Set<Resource> canonicalSubjects) {
-        ListMultimap<URI, Statement> result = ODCSFusionToolCRUtils.newStatementMultimap();
+        ListMultimap<URI, Statement> result = LDFusionToolCRUtils.newStatementMultimap();
         for (Resource canonicalSubject : canonicalSubjects) {
             ListMultimap<URI, Statement> subjectSubMap = canonicalSubjectPropertyMap.get(canonicalSubject);
             if (subjectSubMap == null) {

@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public class ParamReader {
         return objectLabel;
     }
 
-    public String getRequiredStringValue(String paramName) throws ODCSFusionToolException {
+    public String getRequiredStringValue(String paramName) throws LDFusionToolException {
         return getRequiredValue(paramName);
     }
 
@@ -37,12 +37,12 @@ public class ParamReader {
         return value != null ? value : defaultValue;
     }
 
-    public Integer getRequiredIntValue(String paramName) throws ODCSFusionToolException {
+    public Integer getRequiredIntValue(String paramName) throws LDFusionToolException {
         String value = getRequiredValue(paramName);
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new ODCSFusionToolException(getNumberFormatErrorMessage(paramName, value));
+            throw new LDFusionToolException(getNumberFormatErrorMessage(paramName, value));
         }
     }
 
@@ -65,12 +65,12 @@ public class ParamReader {
         return value != null ? value : defaultValue;
     }
 
-    public Long getRequiredLongValue(String paramName) throws ODCSFusionToolException {
+    public Long getRequiredLongValue(String paramName) throws LDFusionToolException {
         String value = getRequiredValue(paramName);
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
-            throw new ODCSFusionToolException(getNumberFormatErrorMessage(paramName, value));
+            throw new LDFusionToolException(getNumberFormatErrorMessage(paramName, value));
         }
     }
 
@@ -93,10 +93,10 @@ public class ParamReader {
         return value != null ? value : defaultValue;
     }
 
-    private String getRequiredValue(String paramName) throws ODCSFusionToolException {
+    private String getRequiredValue(String paramName) throws LDFusionToolException {
         String value = params.get(paramName);
         if (value == null || value.length() == 0) {
-            throw new ODCSFusionToolException(String.format(Locale.ROOT, "Missing required parameter %s for %s", paramName, objectLabel));
+            throw new LDFusionToolException(String.format(Locale.ROOT, "Missing required parameter %s for %s", paramName, objectLabel));
         }
         return value;
     }

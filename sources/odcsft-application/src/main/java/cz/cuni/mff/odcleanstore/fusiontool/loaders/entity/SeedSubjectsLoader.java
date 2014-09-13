@@ -3,10 +3,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders.entity;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolApplicationException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
@@ -85,10 +85,10 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
      * @param seedResourceRestriction SPARQL restriction on URI resources which are initially loaded and processed
      *      or null to iterate all subjects
      * @return collection of subjects of relevant triples
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException query error or when seed resource restriction variable and named graph
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException query error or when seed resource restriction variable and named graph
      *      restriction variable are the same
      */
-    public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws ODCSFusionToolException {
+    public UriCollection getTripleSubjectsCollection(SparqlRestriction seedResourceRestriction) throws LDFusionToolException {
         long startTime = System.currentTimeMillis();
 
         SparqlRestriction graphRestriction = dataSource.getNamedGraphRestriction() != null
@@ -99,8 +99,8 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 : EMPTY_SEED_RESTRICTION;
 
         if (graphRestriction.getVar().equals(seedRestriction.getVar())) {
-            throw new ODCSFusionToolApplicationException(
-                    ODCSFusionToolErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
+            throw new LDFusionToolApplicationException(
+                    LDFusionToolErrorCodes.SEED_AND_SOURCE_VARIABLE_CONFLICT,
                     "Source named graph restriction and seed resource restrictions need to use different"
                             + " variables in SPARQL patterns, both using ?" + seedRestriction.getVar());
         }
@@ -129,21 +129,21 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
          * @param query query that retrieves subjects from the database; the query must return
          *        the subjects as the first variable in the results
          * @param dataSource RDF data source
-         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
          */
-        protected UriCollectionImpl(String query, DataSource dataSource) throws ODCSFusionToolException {
+        protected UriCollectionImpl(String query, DataSource dataSource) throws LDFusionToolException {
             try {
                 this.connection = dataSource.getRepository().getConnection();
                 this.subjectsResultSet = connection.prepareTupleQuery(QueryLanguage.SPARQL, query).evaluate();
             } catch (OpenRDFException e) {
                 close();
-                throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
+                throw new LDFusionToolQueryException(LDFusionToolErrorCodes.QUERY_TRIPLE_SUBJECTS, query, dataSource.getName(), e);
             }
 
             next = getNextResult();
         }
         
-        private String getNextResult() throws ODCSFusionToolException {
+        private String getNextResult() throws LDFusionToolException {
             try {
                 String subjectVar = subjectsResultSet.getBindingNames().get(0);
                 while (subjectsResultSet.hasNext()) {
@@ -159,7 +159,7 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
                 return null;
             } catch (OpenRDFException e) {
                 close();
-                throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.TRIPLE_SUBJECT_ITERATION,
+                throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.TRIPLE_SUBJECT_ITERATION,
                         "Database error while iterating over triple subjects.", e);
             }
         }
@@ -176,10 +176,10 @@ public class SeedSubjectsLoader extends RepositoryLoaderBase {
         /**
          * Returns an element from the collection and removes it from the collection.
          * @return the removed element
-         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+         * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
          */
         @Override
-        public String next() throws ODCSFusionToolException {
+        public String next() throws LDFusionToolException {
             if (subjectsResultSet == null) {
                 throw new IllegalStateException("The collection is empty");
             }

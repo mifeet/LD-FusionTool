@@ -10,12 +10,12 @@ import org.openrdf.model.impl.ValueFactoryImpl;
 /**
  * Utility methods for JUnit tests.
  */
-public final class ODCSFTTestUtils {
+public final class LDFusionToolTestUtils {
     private static final ValueFactory VALUE_FACTORY = ValueFactoryImpl.getInstance();
 
 
     /** Hide constructor for a utility class. */
-    private ODCSFTTestUtils() {
+    private LDFusionToolTestUtils() {
     }
 
     private static volatile long uriCounter = 0;

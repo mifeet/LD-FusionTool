@@ -10,8 +10,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
 import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -30,7 +30,7 @@ import java.util.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ODCSFusionToolRunnerIntegrationTest {
+public class LDFusionToolDirectorIntegrationTest {
     public static final ValueFactoryImpl VALUE_FACTORY = ValueFactoryImpl.getInstance();
 
     @Rule
@@ -140,7 +140,7 @@ public class ODCSFusionToolRunnerIntegrationTest {
     }
 
     private void runTestWithConfig(ConfigImpl config, File expectedCanonicalUriFile, File expectedSameAsFile, File expectedOutputFile)
-            throws ODCSFusionToolException, IOException, ConflictResolutionException, RDFParseException {
+            throws LDFusionToolException, IOException, ConflictResolutionException, RDFParseException {
         File tempDirectory = new File(testDir.getRoot(), "temp");
         tempDirectory.getAbsoluteFile().mkdirs();
         config.setTempDirectory(tempDirectory);
@@ -163,9 +163,9 @@ public class ODCSFusionToolRunnerIntegrationTest {
 
         // Act
 
-        ODCSFusionToolComponentFactory componentFactory = new ODCSFusionToolComponentFactory(config);
-        FusionToolRunner fusionToolRunner = new FusionToolRunner(componentFactory);
-        fusionToolRunner.runFusionTool();
+        LDFusionToolComponentFactory componentFactory = new LDFusionToolComponentFactory(config);
+        FusionRunner fusionRunner = new FusionRunner(componentFactory);
+        fusionRunner.runFusionTool();
 
         // Assert - canonical URIs
         Set<String> canonicalUris = parseCanonicalUris(canonicalUrisOutputFile);
@@ -230,9 +230,9 @@ public class ODCSFusionToolRunnerIntegrationTest {
             }
             for (int i = 0; i < expectedStatements.length; i++) {
                 if (contextsMapping.containsKey(expectedStatements[i].getContext())) {
-                    expectedStatements[i] = ODCSFTTestUtils.setContext(expectedStatements[i], contextsMapping.get(expectedStatements[i].getContext()));
+                    expectedStatements[i] = LDFusionToolTestUtils.setContext(expectedStatements[i], contextsMapping.get(expectedStatements[i].getContext()));
                 } else if (contextsMapping.containsKey(expectedStatements[i].getSubject())) {
-                    expectedStatements[i] = ODCSFTTestUtils.setSubject(expectedStatements[i], contextsMapping.get(expectedStatements[i].getSubject()));
+                    expectedStatements[i] = LDFusionToolTestUtils.setSubject(expectedStatements[i], contextsMapping.get(expectedStatements[i].getSubject()));
                 }
             }
         }
@@ -252,17 +252,17 @@ public class ODCSFusionToolRunnerIntegrationTest {
     }
 
     private Statement getStatementPattern(Statement statement) {
-        Statement mappedStatement = ODCSFTTestUtils.setContext(statement, null);
+        Statement mappedStatement = LDFusionToolTestUtils.setContext(statement, null);
         Resource oldSubjectPattern = statement.getSubject() instanceof BNode ? null : statement.getSubject();
         Resource oldPredicatePattern = statement.getPredicate();
         Value oldObjectPattern = statement.getObject() instanceof BNode ? null : statement.getObject();
         if (mappedStatement.getSubject() instanceof BNode) {
             BNode newSubjectPattern = VALUE_FACTORY.createBNode(String.format("BNS#%s#%s#%s", oldSubjectPattern, oldPredicatePattern, oldObjectPattern));
-            mappedStatement = ODCSFTTestUtils.setSubject(mappedStatement, newSubjectPattern);
+            mappedStatement = LDFusionToolTestUtils.setSubject(mappedStatement, newSubjectPattern);
         }
         if (mappedStatement.getObject() instanceof BNode) {
             BNode newObjectPattern = VALUE_FACTORY.createBNode(String.format("BNO#%s#%s#%s", oldSubjectPattern, oldPredicatePattern, oldObjectPattern));
-            mappedStatement = ODCSFTTestUtils.setObject(mappedStatement, newObjectPattern);
+            mappedStatement = LDFusionToolTestUtils.setObject(mappedStatement, newObjectPattern);
         }
         return mappedStatement;
     }

@@ -1,14 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import com.google.common.collect.Table;
-import cz.cuni.mff.odcleanstore.conflictresolution.CRContext;
-import cz.cuni.mff.odcleanstore.conflictresolution.ConflictResolutionPolicy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumAggregationErrorStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.EnumCardinality;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunction;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionFunctionRegistry;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolutionStrategy;
-import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import cz.cuni.mff.odcleanstore.conflictresolution.*;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ResolutionFunctionNotRegisteredException;
 import cz.cuni.mff.odcleanstore.conflictresolution.impl.CRContextImpl;
@@ -22,7 +15,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.AlternativeUriNavigator;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.EmptyUriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.ODCSFusionToolCRUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.LDFusionToolCRUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.util.StatementMapper;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ClusterIterator;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCS;
@@ -195,7 +188,7 @@ public class ResourceDescriptionConflictResolverImpl implements ResourceDescript
             Set<Resource> resolvedResources) throws ConflictResolutionException {
 
         // Step 1: resolve conflicts for each (non-canonical) subject and property
-        Table<Resource, URI, Collection<ResolvedStatement>> conflictClustersTable = ODCSFusionToolCRUtils.newHashTable();
+        Table<Resource, URI, Collection<ResolvedStatement>> conflictClustersTable = LDFusionToolCRUtils.newHashTable();
         for (URI property : dependentProperties) {
             List<Statement> conflictingStatements = statementsToResolveByProperty.get(property);
             if (conflictingStatements == null) {

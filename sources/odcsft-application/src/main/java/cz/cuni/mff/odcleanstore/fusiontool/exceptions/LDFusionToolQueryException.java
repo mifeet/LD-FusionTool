@@ -4,7 +4,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
  * A general ODCS-FusionTool exception.
  * @author Jan Michelfeit
  */
-public class ODCSFusionToolQueryException extends ODCSFusionToolApplicationException {
+public class LDFusionToolQueryException extends LDFusionToolApplicationException {
     private static final long serialVersionUID = 3420323334894817996L;
 
     private final String query;
@@ -16,14 +16,14 @@ public class ODCSFusionToolQueryException extends ODCSFusionToolApplicationExcep
      * @param sourceName data source name
      * @param cause the cause
      */
-    public ODCSFusionToolQueryException(Integer errorCode, String query, String sourceName, Throwable cause) {
+    public LDFusionToolQueryException(Integer errorCode, String query, String sourceName, Throwable cause) {
         super(errorCode, "Repository query error for source " + sourceName, cause);
         this.query = query;
     }
 
     /**
      * Return the error code of the error.
-     * @see cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes
+     * @see LDFusionToolErrorCodes
      * @return error code or null
      */
     public String getQuery() {

@@ -4,7 +4,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.ResourceDescriptionFilter;
@@ -25,8 +25,8 @@ import java.util.Collection;
  *
  * This class is not thread-safe.
 */
-public class ODCSFusionToolExecutor implements FusionToolExecutor {
-    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolExecutor.class);
+public class LDFusionToolExecutor implements FusionExecutor {
+    private static final Logger LOG = LoggerFactory.getLogger(LDFusionToolExecutor.class);
 
     private final boolean hasVirtuosoSource;
     private final Long maxOutputTriples;
@@ -34,7 +34,7 @@ public class ODCSFusionToolExecutor implements FusionToolExecutor {
     private final MemoryProfiler memoryProfiler;
     private ResourceDescriptionFilter resourceDescriptionFilter;
 
-    public ODCSFusionToolExecutor() {
+    public LDFusionToolExecutor() {
         this(false, null, false, new NoOpFilter());
     }
 
@@ -45,7 +45,7 @@ public class ODCSFusionToolExecutor implements FusionToolExecutor {
      * @param maxOutputTriples maximum number of triples to be processed; null means unlimited
      * @param isProfilingOn whether to measure profiling information
      */
-    public ODCSFusionToolExecutor(boolean hasVirtuosoSource, Long maxOutputTriples, boolean isProfilingOn) {
+    public LDFusionToolExecutor(boolean hasVirtuosoSource, Long maxOutputTriples, boolean isProfilingOn) {
         this(hasVirtuosoSource, maxOutputTriples, isProfilingOn, new NoOpFilter());
     }
 
@@ -56,7 +56,7 @@ public class ODCSFusionToolExecutor implements FusionToolExecutor {
      * @param maxOutputTriples maximum number of triples to be processed; null means unlimited
      * @param isProfilingOn whether to measure profiling information
      */
-    public ODCSFusionToolExecutor(
+    public LDFusionToolExecutor(
             boolean hasVirtuosoSource, Long maxOutputTriples, boolean isProfilingOn, ResourceDescriptionFilter resourceDescriptionFilter) {
         this.hasVirtuosoSource = hasVirtuosoSource;
         this.maxOutputTriples = maxOutputTriples;
@@ -75,7 +75,7 @@ public class ODCSFusionToolExecutor implements FusionToolExecutor {
 
     @Override
     public void fuse(ResourceDescriptionConflictResolver conflictResolver, InputLoader inputLoader, CloseableRDFWriter rdfWriter)
-            throws ODCSFusionToolException, ConflictResolutionException, IOException {
+            throws LDFusionToolException, ConflictResolutionException, IOException {
 
         // Initialize triple counters
         long outputTriples = 0;

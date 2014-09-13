@@ -7,7 +7,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestriction;
 import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.Source;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,7 +59,7 @@ public abstract class RepositoryLoaderBase {
      */
     protected String getPrefixDecl() {
         if (cachedPrefixDecl == null) {
-            cachedPrefixDecl = ODCSFusionToolAppUtils.buildPrefixDecl(source.getPrefixes());
+            cachedPrefixDecl = LDFusionToolUtils.buildPrefixDecl(source.getPrefixes());
         }
         return cachedPrefixDecl;
     }

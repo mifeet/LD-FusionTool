@@ -3,7 +3,7 @@
  */
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 
@@ -33,7 +33,7 @@ public class MapdbCollectionFactory implements LargeCollectionFactory {
      * @throws IOException error creating temporary file
      */
     public MapdbCollectionFactory(File workingDirectory) throws IOException {
-        this.dbFile = ODCSFusionToolAppUtils.createTempFile(workingDirectory, TEMP_FILE_PREFIX);
+        this.dbFile = LDFusionToolUtils.createTempFile(workingDirectory, TEMP_FILE_PREFIX);
     }
 
     @Override

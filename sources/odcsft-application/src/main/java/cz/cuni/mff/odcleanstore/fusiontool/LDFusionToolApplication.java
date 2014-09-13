@@ -5,7 +5,7 @@ import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.simpleframework.xml.core.PersistenceException;
@@ -22,7 +22,7 @@ import java.util.TimeZone;
  * The main entry point of the application.
  * @author Jan Michelfeit
  */
-public final class ODCSFusionToolApplication {
+public final class LDFusionToolApplication {
 
     private static String getUsage() {
         //return "Usage:\n java -jar odcs-fusion-tool-<version>.jar [--verbose] [--profile] [--only-conflicts] [--only-mapped] <xml config file>"
@@ -75,12 +75,12 @@ public final class ODCSFusionToolApplication {
 
         try {
 
-            FusionToolComponentFactory componentFactory = new ODCSFusionToolComponentFactory(config);
-            FusionToolRunner runner = new FusionToolRunner(componentFactory);
+            FusionComponentFactory componentFactory = new LDFusionToolComponentFactory(config);
+            FusionRunner runner = new FusionRunner(componentFactory);
             runner.setProfilingOn(config.isProfilingOn());
             runner.runFusionTool();
 
-        } catch (ODCSFusionToolException e) {
+        } catch (LDFusionToolException e) {
             System.err.println("Error:");
             System.err.println("  " + e.getMessage());
             if (e.getCause() != null) {
@@ -117,7 +117,7 @@ public final class ODCSFusionToolApplication {
                 logLevel = Level.INFO;
                 break;
         }
-        LogManager.getLogger(ODCSFusionToolApplication.class.getPackage().getName()).setLevel(logLevel);
+        LogManager.getLogger(LDFusionToolApplication.class.getPackage().getName()).setLevel(logLevel);
         LogManager.getLogger(ResourceDescriptionConflictResolver.class.getPackage().getName()).setLevel(logLevel);
     }
 
@@ -263,6 +263,6 @@ public final class ODCSFusionToolApplication {
     }
 
     /** Disable constructor. */
-    private ODCSFusionToolApplication() {
+    private LDFusionToolApplication() {
     }
 }

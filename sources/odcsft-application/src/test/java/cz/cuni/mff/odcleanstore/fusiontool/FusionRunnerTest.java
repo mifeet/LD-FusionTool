@@ -13,10 +13,10 @@ import org.openrdf.model.Model;
 
 import static org.mockito.Mockito.*;
 
-public class FusionToolRunnerTest {
+public class FusionRunnerTest {
     @Test
     public void runsFusionTool() throws Exception {
-        FusionToolComponentFactory componentFactory = mock(FusionToolComponentFactory.class);
+        FusionComponentFactory componentFactory = mock(FusionComponentFactory.class);
         UriMappingIterable uriMapping = mock(UriMappingIterable.class);
         when(componentFactory.getUriMapping()).thenReturn(uriMapping);
 
@@ -32,7 +32,7 @@ public class FusionToolRunnerTest {
         CloseableRDFWriter rdfWriter = mock(CloseableRDFWriter.class);
         when(componentFactory.getRDFWriter()).thenReturn(rdfWriter);
 
-        FusionToolExecutor executor = mock(FusionToolExecutor.class);
+        FusionExecutor executor = mock(FusionExecutor.class);
         when(executor.getMemoryProfiler()).thenReturn(MemoryProfiler.createInstance(true));
         when(executor.getTimeProfiler()).thenReturn(ProfilingTimeCounter.createInstance(EnumFusionCounters.class, true));
         when(componentFactory.getExecutor(uriMapping)).thenReturn(executor);
@@ -43,7 +43,7 @@ public class FusionToolRunnerTest {
         UriMappingWriter sameAsWriter = mock(UriMappingWriter.class);
         when(componentFactory.getSameAsLinksWriter()).thenReturn(sameAsWriter);
 
-        FusionToolRunner runner = new FusionToolRunner(componentFactory);
+        FusionRunner runner = new FusionRunner(componentFactory);
         runner.setProfilingOn(true);
         runner.runFusionTool();
 

@@ -4,7 +4,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.LargeCollectionFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
@@ -42,7 +42,7 @@ public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
     }
 
     @Override
-    protected UriCollection createSubjectsQueue(UriCollection initialSubjects) throws ODCSFusionToolException {
+    protected UriCollection createSubjectsQueue(UriCollection initialSubjects) throws LDFusionToolException {
         UriCollection subjectsQueue = createBufferedSubjectsCollection(initialSubjects);
         try {
             // do not keep this open longer than necessary
@@ -78,9 +78,9 @@ public class TransitiveSubjectsSetInputLoader extends SubjectsSetInputLoader {
      * Creates a collection to hold subject URIs queued to be processed.
      * @param seedSubjects initial URIs to fill in the collection
      * @return collection of URIs
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
-    private UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects) throws ODCSFusionToolException {
+    private UriCollection createBufferedSubjectsCollection(UriCollection seedSubjects) throws LDFusionToolException {
         Set<String> buffer = largeCollectionFactory.createSet();
         UriCollection queuedSubjects = new BufferedSubjectsCollection(buffer);
         UriMappingIterable uriMapping = getUriMapping();

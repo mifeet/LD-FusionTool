@@ -1,9 +1,9 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
 import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
 import org.openrdf.OpenRDFException;
@@ -37,9 +37,9 @@ public class SameAsLinkRepositoryLoader extends RepositoryLoaderBase implements 
      * Loads owl:sameAs links from relevant named graphs and adds them to the given canonical URI mapping.
      * @param uriMapping URI mapping where loaded links will be added
      * @return number of loaded owl:sameAs links
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException repository error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException repository error
      */
-    public long loadSameAsMappings(UriMappingImpl uriMapping) throws ODCSFusionToolException {
+    public long loadSameAsMappings(UriMappingImpl uriMapping) throws LDFusionToolException {
         long startTime = System.currentTimeMillis();
         long linkCount = 0;
         
@@ -48,7 +48,7 @@ public class SameAsLinkRepositoryLoader extends RepositoryLoaderBase implements 
         try {
             linkCount += loadSameAsLinks(uriMapping, constructQuery.trim());
         } catch (OpenRDFException e) {
-            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_SAMEAS, constructQuery, constructSource.getName(), e);
+            throw new LDFusionToolQueryException(LDFusionToolErrorCodes.QUERY_SAMEAS, constructQuery, constructSource.getName(), e);
         }
 
         LOG.debug(String.format("ODCS-FusionTool: loaded & resolved %,d owl:sameAs links from source %s in %d ms",

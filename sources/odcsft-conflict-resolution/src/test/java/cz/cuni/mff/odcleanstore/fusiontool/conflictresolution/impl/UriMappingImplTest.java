@@ -2,15 +2,11 @@ package cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.openrdf.model.BNode;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.OWL;
 
@@ -25,7 +21,7 @@ public class UriMappingImplTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        ODCSFTTestUtils.resetURICounter();
+        LDFusionToolTestUtils.resetURICounter();
     }
 
     private String getAndTestMappedUri(String uri, UriMapping mapping) {
@@ -39,7 +35,7 @@ public class UriMappingImplTest {
     @Test
     public void testEmptyMapping() {
         UriMappingImpl instance = new UriMappingImpl();
-        URI uri = VF.createURI(ODCSFTTestUtils.getUniqueURIString());
+        URI uri = VF.createURI(LDFusionToolTestUtils.getUniqueURIString());
         URI result = instance.mapURI(uri);
         assertThat(result, is(uri));
     }
@@ -48,8 +44,8 @@ public class UriMappingImplTest {
     public void mapsBlankNodeWhenMapResourceCalled() throws Exception {
         // Arrange
         UriMappingImpl instance = new UriMappingImpl();
-        String uriString1 = ODCSFTTestUtils.getUniqueURIString();
-        String uriString2 = ODCSFTTestUtils.getUniqueURIString();
+        String uriString1 = LDFusionToolTestUtils.getUniqueURIString();
+        String uriString2 = LDFusionToolTestUtils.getUniqueURIString();
         instance.addLink(uriString1, uriString2);
 
         // Act
@@ -65,17 +61,17 @@ public class UriMappingImplTest {
 
     @Test
     public void testNonEmptyMapping1() {
-        String uri1 = ODCSFTTestUtils.getUniqueURIString();
-        String uri2 = ODCSFTTestUtils.getUniqueURIString();
-        String uri3 = ODCSFTTestUtils.getUniqueURIString();
-        String uri4 = ODCSFTTestUtils.getUniqueURIString();
+        String uri1 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri2 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri3 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri4 = LDFusionToolTestUtils.getUniqueURIString();
 
         LinkedList<Statement> sameAsLinks = new LinkedList<Statement>();
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 uri1,
                 OWL.SAMEAS.stringValue(),
                 uri2));
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 uri2,
                 OWL.SAMEAS.stringValue(),
                 uri3));
@@ -95,21 +91,21 @@ public class UriMappingImplTest {
 
     @Test
     public void testNonEmptyMapping2() {
-        String rootURI = ODCSFTTestUtils.getUniqueURIString();
-        String uri1 = ODCSFTTestUtils.getUniqueURIString();
-        String uri2 = ODCSFTTestUtils.getUniqueURIString();
-        String uri3 = ODCSFTTestUtils.getUniqueURIString();
+        String rootURI = LDFusionToolTestUtils.getUniqueURIString();
+        String uri1 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri2 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri3 = LDFusionToolTestUtils.getUniqueURIString();
 
         LinkedList<Statement> sameAsLinks = new LinkedList<Statement>();
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 rootURI,
                 OWL.SAMEAS.stringValue(),
                 uri1));
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 rootURI,
                 OWL.SAMEAS.stringValue(),
                 uri2));
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 rootURI,
                 OWL.SAMEAS.stringValue(),
                 uri3));
@@ -129,20 +125,20 @@ public class UriMappingImplTest {
 
     @Test
     public void testCycleMapping() {
-        String uri1 = ODCSFTTestUtils.getUniqueURIString();
-        String uri2 = ODCSFTTestUtils.getUniqueURIString();
-        String uri3 = ODCSFTTestUtils.getUniqueURIString();
+        String uri1 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri2 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri3 = LDFusionToolTestUtils.getUniqueURIString();
 
         LinkedList<Statement> sameAsLinks = new LinkedList<Statement>();
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 uri1,
                 OWL.SAMEAS.stringValue(),
                 uri2));
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 uri2,
                 OWL.SAMEAS.stringValue(),
                 uri3));
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 uri3,
                 OWL.SAMEAS.stringValue(),
                 uri1));
@@ -160,16 +156,16 @@ public class UriMappingImplTest {
 
     @Test
     public void testPreferredURIs() {
-        String uri1 = ODCSFTTestUtils.getUniqueURIString();
-        String uri2 = ODCSFTTestUtils.getUniqueURIString();
-        String uri3 = ODCSFTTestUtils.getUniqueURIString();
+        String uri1 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri2 = LDFusionToolTestUtils.getUniqueURIString();
+        String uri3 = LDFusionToolTestUtils.getUniqueURIString();
 
         LinkedList<Statement> sameAsLinks = new LinkedList<Statement>();
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 uri1,
                 OWL.SAMEAS.stringValue(),
                 uri2));
-        sameAsLinks.add(ODCSFTTestUtils.createStatement(
+        sameAsLinks.add(LDFusionToolTestUtils.createStatement(
                 uri2,
                 OWL.SAMEAS.stringValue(),
                 uri3));

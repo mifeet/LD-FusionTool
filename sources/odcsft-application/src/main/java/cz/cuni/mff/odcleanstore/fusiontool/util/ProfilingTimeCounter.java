@@ -77,7 +77,7 @@ public class ProfilingTimeCounter<E extends Enum<E>> {
      */
     public String formatCounter(E counterId) {
         long timeInMs = lengths[counterId.ordinal()];
-        return ODCSFusionToolAppUtils.formatProfilingTime(timeInMs);
+        return LDFusionToolUtils.formatProfilingTime(timeInMs);
     }
 
     /**

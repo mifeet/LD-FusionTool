@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.util;
 
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 
 import java.io.IOException;
 
@@ -18,9 +18,9 @@ public interface UriCollection extends Closeable<IOException> {
     /**
      * Returns an element from the collection (in no particular order) and removes it.
      * @return the removed element
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
-    String next() throws ODCSFusionToolException;
+    String next() throws LDFusionToolException;
     
     /**
      * Adds a new URI to the collection. 

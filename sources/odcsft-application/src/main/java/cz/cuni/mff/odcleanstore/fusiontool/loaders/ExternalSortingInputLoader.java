@@ -5,10 +5,10 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolApplicationException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.NTupleMergeTransformException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolApplicationException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.ExternalSorter;
 import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesFileMerger;
 import cz.cuni.mff.odcleanstore.fusiontool.io.ntuples.NTuplesParser;
@@ -20,7 +20,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileAndAttributeI
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.DataFileNTuplesWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.extsort.ExternalSortingInputLoaderPreprocessor;
 import cz.cuni.mff.odcleanstore.fusiontool.util.FederatedRDFHandler;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.ParserConfig;
@@ -101,12 +101,12 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     @Override
-    public void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException {
+    public void initialize(UriMappingIterable uriMapping) throws LDFusionToolException {
         Preconditions.checkNotNull(uriMapping);
 
         LOG.info("Initializing input loader");
         if (maxMemoryLimit < Long.MAX_VALUE) {
-            LOG.info("  maximum memory limit is {} MB", String.format("%,.2f", maxMemoryLimit / (double) ODCSFusionToolAppUtils.MB_BYTES));
+            LOG.info("  maximum memory limit is {} MB", String.format("%,.2f", maxMemoryLimit / (double) LDFusionToolUtils.MB_BYTES));
         }
 
         canonicalResourceDescriptionProperties.clear();
@@ -140,20 +140,20 @@ public class ExternalSortingInputLoader implements InputLoader {
             mergedAttributeFileIterator = createParserIteratorFromSortedFile(sortedMergedAttributeFile);
 
             LOG.info("Input loader initialization finished");
-        } catch (ODCSFusionToolException e) {
+        } catch (LDFusionToolException e) {
             closeOnException();
             throw e;
         } catch (IOException e) {
             closeOnException();
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT, "Error creating temporary files in input loader", e);
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT, "Error creating temporary files in input loader", e);
         } catch (NTupleMergeTransformException e) {
             closeOnException();
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_MERGE, "Unexpected error when merging temporary files", e);
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_MERGE, "Unexpected error when merging temporary files", e);
         }
     }
 
     @Override
-    public boolean hasNext() throws ODCSFusionToolException {
+    public boolean hasNext() throws LDFusionToolException {
         if (dataFileIterator == null) {
             throw new IllegalStateException();
         }
@@ -161,13 +161,13 @@ public class ExternalSortingInputLoader implements InputLoader {
             return dataFileIterator.hasNext();
         } catch (Exception e) {
             closeOnException();
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_LOADING,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_LOADING,
                     "Error when reading temporary file in input loader", e);
         }
     }
 
     @Override
-    public ResourceDescription next() throws ODCSFusionToolException {
+    public ResourceDescription next() throws LDFusionToolException {
         if (dataFileIterator == null || mergedAttributeFileIterator == null) {
             throw new IllegalStateException();
         }
@@ -205,7 +205,7 @@ public class ExternalSortingInputLoader implements InputLoader {
             return new ResourceDescriptionImpl(firstCanonicalSubject, describingStatements);
         } catch (Exception e) {
             closeOnException();
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_HAS_NEXT,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_HAS_NEXT,
                     "Error when reading temporary file in input loader", e);
         }
     }
@@ -217,7 +217,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     @Override
-    public void close() throws ODCSFusionToolException {
+    public void close() throws LDFusionToolException {
         LOG.debug("Deleting input loader temporary files");
         if (dataFileIterator != null) {
             try {
@@ -259,7 +259,7 @@ public class ExternalSortingInputLoader implements InputLoader {
      * where c(x) is the canonical version of x.
      */
     private void copyInputsToTempFiles(Collection<AllTriplesLoader> dataSources, UriMappingIterable uriMapping, File dataFile, File attributeIndexFile)
-            throws ODCSFusionToolException {
+            throws LDFusionToolException {
         NTuplesWriter dataFileWriter = null;
         NTuplesWriter attributeIndexFileWriter = null;
         try {
@@ -284,7 +284,7 @@ public class ExternalSortingInputLoader implements InputLoader {
             }
             tempFilesWriteHandler.endRDF();
         } catch (Exception e) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_TMP_FILE_INIT,
                     "Error while writing quads to temporary file in input loader", e);
         } finally {
             tryCloseWriter(dataFileWriter);
@@ -292,9 +292,9 @@ public class ExternalSortingInputLoader implements InputLoader {
         }
     }
 
-    private Statement createStatement(List<Value> tuple) throws ODCSFusionToolException {
+    private Statement createStatement(List<Value> tuple) throws LDFusionToolException {
         if (tuple == null || tuple.size() < 4) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT_TUPLE,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT_TUPLE,
                     "Invalid format of temporary file, expected statement but found: " + tuple);
         }
         int size = tuple.size();
@@ -308,17 +308,17 @@ public class ExternalSortingInputLoader implements InputLoader {
         } catch (ClassCastException e) {
             String message = "Invalid format of temporary file, expected statement but found: "
                     + tuple.subList(tuple.size() - 4, tuple.size());
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT, message);
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INVALID_TMP_FILE_FORMAT, message);
         }
     }
 
-    private File sortAndDeleteFile(File inputFile) throws ODCSFusionToolException {
+    private File sortAndDeleteFile(File inputFile) throws LDFusionToolException {
         File sortedFile = sortFile(inputFile);
         inputFile.delete();
         return sortedFile;
     }
 
-    private File sortFile(File inputFile) throws ODCSFusionToolException {
+    private File sortFile(File inputFile) throws LDFusionToolException {
         // External sort the temporary file
         LOG.debug("Sorting temporary file");
         try {
@@ -328,10 +328,10 @@ public class ExternalSortingInputLoader implements InputLoader {
             BufferedWriter writer = createTempFileWriter(sortedFile);
 
             externalSorter.sort(reader, inputFile.length(), writer);
-            LOG.debug("Sorting finished in {}", ODCSFusionToolAppUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
+            LOG.debug("Sorting finished in {}", LDFusionToolUtils.formatProfilingTime(System.currentTimeMillis() - startTime));
             return sortedFile;
         } catch (IOException e) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_SORT,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_SORT,
                     "Error while sorting quads in input loader", e);
         }
     }
@@ -341,7 +341,7 @@ public class ExternalSortingInputLoader implements InputLoader {
     }
 
     private File createTempFile() throws IOException {
-        File tempFile = ODCSFusionToolAppUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
+        File tempFile = LDFusionToolUtils.createTempFile(cacheDirectory, TEMP_FILE_PREFIX);
         temporaryFiles.add(tempFile); // register it so that we don't forget to delete it
         return tempFile;
     }
@@ -367,11 +367,11 @@ public class ExternalSortingInputLoader implements InputLoader {
         return new BufferedWriter(new OutputStreamWriter(outputStream, CHARSET));
     }
 
-    private NTuplesParser createParserIteratorFromSortedFile(File sortedTempFile) throws ODCSFusionToolException {
+    private NTuplesParser createParserIteratorFromSortedFile(File sortedTempFile) throws LDFusionToolException {
         try {
             return new NTuplesParser(createTempFileReader(sortedTempFile), parserConfig);
         } catch (IOException e) {
-            throw new ODCSFusionToolApplicationException(ODCSFusionToolErrorCodes.INPUT_LOADER_PARSE_TEMP_FILE,
+            throw new LDFusionToolApplicationException(LDFusionToolErrorCodes.INPUT_LOADER_PARSE_TEMP_FILE,
                     "Error while initializing temporary file reader in input loader", e);
         }
     }

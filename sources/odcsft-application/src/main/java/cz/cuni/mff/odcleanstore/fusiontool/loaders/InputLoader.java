@@ -3,12 +3,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.Closeable;
-import org.openrdf.model.URI;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Loader of input quads to be resolved.
@@ -16,14 +14,14 @@ import java.util.Set;
  * All quads sharing the same subject, however, are guaranteed to be returned in a single batch of quads
  * returned by {@link #next()}.
  */
-public interface InputLoader extends Closeable<ODCSFusionToolException> {
+public interface InputLoader extends Closeable<LDFusionToolException> {
     /**
      * Perform any initialization. This operation can be expensive.
      * More demanding initialization should be done here instead of in the constructor.
      * @param uriMapping canonical URI mapping
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
-    void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException;
+    void initialize(UriMappingIterable uriMapping) throws LDFusionToolException;
 
     /**
      * Returns the next batch of quads.
@@ -33,16 +31,16 @@ public interface InputLoader extends Closeable<ODCSFusionToolException> {
      * Returning an empty collection is a valid output, it doesn't indicate end of data as long as
      * {@link #hasNext()} returns true, though.
      * @return next batch of quads
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
-    ResourceDescription next() throws ODCSFusionToolException;
+    ResourceDescription next() throws LDFusionToolException;
 
     /**
      * Indicates if there are more quads available.
      * @return true if there are more quads available
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException error
      */
-    boolean hasNext() throws ODCSFusionToolException;
+    boolean hasNext() throws LDFusionToolException;
 
     /**
      * This method can be used to update state of quad loader with result of conflict resolution

@@ -6,10 +6,10 @@ package cz.cuni.mff.odcleanstore.fusiontool.exceptions;
  *
  * @author Jan Michelfeit
  */
-public final class ODCSFusionToolErrorCodes {
+public final class LDFusionToolErrorCodes {
 
     /** Disable constructor for a utility class. */
-    private ODCSFusionToolErrorCodes() {
+    private LDFusionToolErrorCodes() {
     }
 
 

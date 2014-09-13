@@ -7,7 +7,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.io.CountingOutputStream;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.io.SplitFileNameGenerator;
-import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.slf4j.Logger;
@@ -76,7 +76,7 @@ public class SplittingRDFWriter implements CloseableRDFWriter {
             File file = fileNameGenerator.nextFile();
             LOG.info("Creating a new output file: {}", file.getName());
             
-            ODCSFusionToolAppUtils.ensureParentsExists(file);
+            LDFusionToolUtils.ensureParentsExists(file);
             currentOutputStream = new CountingOutputStream(new FileOutputStream(file));
             currentRDFWriter = writerFactory.createFileRDFWriter(outputFormat, currentOutputStream, dataContext, metadataContext);
 

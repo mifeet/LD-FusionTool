@@ -14,18 +14,13 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * Various utility methods.
  */
-public final class ODCSFusionToolAppUtils {
-    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolAppUtils.class);
+public final class LDFusionToolUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(LDFusionToolUtils.class);
     private static final String TEMP_FILE_SUFFIX = ".tmp";
 
     private static final long HOUR_MS = ODCSUtils.MILLISECONDS * ODCSUtils.TIME_UNIT_60 * ODCSUtils.TIME_UNIT_60;
@@ -40,7 +35,7 @@ public final class ODCSFusionToolAppUtils {
     public static final long GB_BYTES = 1024 * 1024 * 1024;
 
     /** Disable constructor for a utility class. */
-    private ODCSFusionToolAppUtils() {
+    private LDFusionToolUtils() {
     }
 
     /**

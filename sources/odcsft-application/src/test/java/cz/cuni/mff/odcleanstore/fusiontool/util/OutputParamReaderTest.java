@@ -2,7 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool.util;
 
 import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -25,7 +25,7 @@ public class OutputParamReaderTest {
         assertThat(result, equalTo("value1"));
     }
 
-    @Test(expected = ODCSFusionToolException.class)
+    @Test(expected = LDFusionToolException.class)
     public void throwsWhenRequiredStringParamMissing() throws Exception {
         // Arrange
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, "name");
@@ -36,7 +36,7 @@ public class OutputParamReaderTest {
         paramReader.getRequiredStringValue("key1");
     }
 
-    @Test(expected = ODCSFusionToolException.class)
+    @Test(expected = LDFusionToolException.class)
     public void throwsWhenRequiredStringParamEmpty() throws Exception {
         // Arrange
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, "name");
@@ -105,7 +105,7 @@ public class OutputParamReaderTest {
         assertThat(result, equalTo(123));
     }
 
-    @Test(expected = ODCSFusionToolException.class)
+    @Test(expected = LDFusionToolException.class)
     public void throwsWhenRequiredIntParamMissing() throws Exception {
         // Arrange
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, "name");
@@ -116,7 +116,7 @@ public class OutputParamReaderTest {
         paramReader.getRequiredIntValue("key1");
     }
 
-    @Test(expected = ODCSFusionToolException.class)
+    @Test(expected = LDFusionToolException.class)
     public void throwsWhenRequiredIntParamMalformed() throws Exception {
         // Arrange
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, null);
@@ -202,7 +202,7 @@ public class OutputParamReaderTest {
         assertThat(result, equalTo(123l));
     }
 
-    @Test(expected = ODCSFusionToolException.class)
+    @Test(expected = LDFusionToolException.class)
     public void throwsWhenRequiredLongParamMissing() throws Exception {
         // Arrange
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, "name");
@@ -213,7 +213,7 @@ public class OutputParamReaderTest {
         paramReader.getRequiredLongValue("key1");
     }
 
-    @Test(expected = ODCSFusionToolException.class)
+    @Test(expected = LDFusionToolException.class)
     public void throwsWhenRequiredLongParamMalformed() throws Exception {
         // Arrange
         DataSourceConfigImpl dataSourceConfig = new DataSourceConfigImpl(EnumDataSourceType.SPARQL, null);

@@ -62,7 +62,7 @@ public class CanonicalUriFileHelper {
         if (canonicalUrisFile == null) {
             return;
         }
-        ODCSFusionToolAppUtils.ensureParentsExists(canonicalUrisFile);
+        LDFusionToolUtils.ensureParentsExists(canonicalUrisFile);
         String canonicalUrisFileName = canonicalUrisFile.getName();
         File baseDirectory = canonicalUrisFile.getParentFile();
         long counter = 0;
@@ -84,7 +84,7 @@ public class CanonicalUriFileHelper {
                         "Written %,d canonical URIs to file '%s' (total size %s)",
                         counter,
                         canonicalUrisFileName,
-                        ODCSFusionToolAppUtils.humanReadableSize(byteCount)));
+                        LDFusionToolUtils.humanReadableSize(byteCount)));
             } catch (IOException e) {
                 LOG.error("Cannot write canonical URIs file {}", canonicalUrisFileName);
                 // Intentionally do not throw an exception

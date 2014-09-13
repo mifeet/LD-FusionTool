@@ -4,7 +4,7 @@ import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import org.openrdf.model.Statement;
 
@@ -27,12 +27,12 @@ public class TestInputLoader implements InputLoader {
     }
 
     @Override
-    public void initialize(UriMappingIterable uriMapping) throws ODCSFusionToolException {
+    public void initialize(UriMappingIterable uriMapping) throws LDFusionToolException {
 
     }
 
     @Override
-    public ResourceDescription next() throws ODCSFusionToolException {
+    public ResourceDescription next() throws LDFusionToolException {
         Collection<Statement> statements = iterator.next();
         if (statements.isEmpty()) {
             return new ResourceDescriptionImpl(null, statements);
@@ -42,7 +42,7 @@ public class TestInputLoader implements InputLoader {
     }
 
     @Override
-    public boolean hasNext() throws ODCSFusionToolException {
+    public boolean hasNext() throws LDFusionToolException {
         return iterator.hasNext();
     }
 
@@ -52,7 +52,7 @@ public class TestInputLoader implements InputLoader {
     }
 
     @Override
-    public void close() throws ODCSFusionToolException {
+    public void close() throws LDFusionToolException {
         iterator = null;
     }
 }

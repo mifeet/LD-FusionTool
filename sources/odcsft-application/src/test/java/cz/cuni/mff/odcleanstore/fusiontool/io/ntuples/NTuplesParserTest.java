@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io.ntuples;
 
 import com.google.common.collect.ImmutableList;
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils;
 import org.junit.Test;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
@@ -126,7 +126,7 @@ public class NTuplesParserTest {
         }
 
         // Assert
-        assertThat(tuples, contains((List<Value>) ImmutableList.of((Value) ODCSFTTestUtils.createHttpUri("uri2"), ODCSFTTestUtils.createHttpUri("uri3"))));
+        assertThat(tuples, contains((List<Value>) ImmutableList.of((Value) LDFusionToolTestUtils.createHttpUri("uri2"), LDFusionToolTestUtils.createHttpUri("uri3"))));
     }
 
 }

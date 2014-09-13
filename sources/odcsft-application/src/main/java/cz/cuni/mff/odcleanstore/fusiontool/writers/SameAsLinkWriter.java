@@ -5,7 +5,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
 import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
 import cz.cuni.mff.odcleanstore.fusiontool.config.OutputImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriToSameAsIterator;
 import org.openrdf.model.Statement;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -51,7 +51,7 @@ public class SameAsLinkWriter implements UriMappingWriter {
                 }
                 LOG.info("Written {} owl:sameAs links", linkCounter);
             }
-        } catch (ODCSFusionToolException e) {
+        } catch (LDFusionToolException e) {
             throw new IOException(e);
         } finally {
             if (writers != null) {
@@ -62,7 +62,7 @@ public class SameAsLinkWriter implements UriMappingWriter {
         }
     }
 
-    private List<CloseableRDFWriter> createOutputWriters() throws IOException, ODCSFusionToolException {
+    private List<CloseableRDFWriter> createOutputWriters() throws IOException, LDFusionToolException {
         List<CloseableRDFWriter> writers = new LinkedList<>();
         for (Output output : outputs) {
             if (output.getType() != EnumOutputType.FILE || output.getParams().get(ConfigParameters.OUTPUT_SAME_AS_FILE) == null) {

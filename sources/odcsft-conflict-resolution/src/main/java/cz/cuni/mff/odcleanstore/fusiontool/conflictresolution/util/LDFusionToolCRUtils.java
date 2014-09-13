@@ -12,12 +12,12 @@ import java.util.*;
 /**
  * Various utility methods for conflict resolution.
  */
-public final class ODCSFusionToolCRUtils {
+public final class LDFusionToolCRUtils {
     //private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolCRUtils.class);
     private static final Supplier<List<Statement>> LIST_SUPPLIER = new ListSupplier();
 
     /** Disable constructor for a utility class. */
-    private ODCSFusionToolCRUtils() {
+    private LDFusionToolCRUtils() {
     }
 
     /**

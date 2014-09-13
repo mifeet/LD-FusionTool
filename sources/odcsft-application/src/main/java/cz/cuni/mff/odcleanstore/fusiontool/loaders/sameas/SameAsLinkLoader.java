@@ -1,7 +1,7 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.sameas;
 
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 
 /**
  * Loader of owl:sameAs (or equivalent) links.
@@ -13,5 +13,5 @@ public interface SameAsLinkLoader {
      * @return number of loaded owl:sameAs links
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolExceptionException repository error
      */
-    public long loadSameAsMappings(UriMappingImpl uriMapping) throws ODCSFusionToolException;
+    public long loadSameAsMappings(UriMappingImpl uriMapping) throws LDFusionToolException;
 }

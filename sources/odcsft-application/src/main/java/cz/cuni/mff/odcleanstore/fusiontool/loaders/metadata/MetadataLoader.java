@@ -1,8 +1,8 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders.metadata;
 
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolErrorCodes;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolQueryException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolErrorCodes;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolQueryException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.RepositoryLoaderBase;
 import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
 import org.openrdf.OpenRDFException;
@@ -37,16 +37,16 @@ public class MetadataLoader extends RepositoryLoaderBase {
      * Loads relevant metadata and adds them to the given metadata collection.
      *
      * @param metadata named graph metadata where loaded metadata are added
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException repository error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException repository error
      */
-    public void loadNamedGraphsMetadata(Model metadata) throws ODCSFusionToolException {
+    public void loadNamedGraphsMetadata(Model metadata) throws LDFusionToolException {
         long startTime = System.currentTimeMillis();
         String query = "";
         try {
             query = addPrefixDecl(constructSource.getConstructQuery());
             loadMetadataInternal(metadata, query);
         } catch (OpenRDFException e) {
-            throw new ODCSFusionToolQueryException(ODCSFusionToolErrorCodes.QUERY_NG_METADATA, query, constructSource.getName(), e);
+            throw new LDFusionToolQueryException(LDFusionToolErrorCodes.QUERY_NG_METADATA, query, constructSource.getName(), e);
         }
 
         LOG.debug("ODCS-FusionTool: Metadata loaded from source {} in {} ms",

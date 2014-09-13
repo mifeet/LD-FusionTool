@@ -1,6 +1,6 @@
 package cz.cuni.mff.odcleanstore.fusiontool.io;
 
-import cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.openrdf.model.Resource;
@@ -25,7 +25,7 @@ public class DefaultContextRDFInserterTest {
 
     @Before
     public void setUp() throws Exception {
-        defaultContext = ODCSFTTestUtils.createHttpUri("defaultContext");
+        defaultContext = LDFusionToolTestUtils.createHttpUri("defaultContext");
     }
 
     @Test
@@ -33,7 +33,7 @@ public class DefaultContextRDFInserterTest {
         // Arrange
         Repository repository = initRepository();
         RepositoryConnection connection = repository.getConnection();
-        Statement statement = ODCSFTTestUtils.createHttpStatement("a", "b", "c", null);
+        Statement statement = LDFusionToolTestUtils.createHttpStatement("a", "b", "c", null);
 
         // Act
         DefaultContextRDFInserter inserter = new DefaultContextRDFInserter(connection, defaultContext);
@@ -58,8 +58,8 @@ public class DefaultContextRDFInserterTest {
         // Arrange
         Repository repository = initRepository();
         RepositoryConnection connection = repository.getConnection();
-        URI statementContext = ODCSFTTestUtils.createHttpUri("d");
-        Statement statement = ODCSFTTestUtils.createHttpStatement("a", "b", "c", "d");
+        URI statementContext = LDFusionToolTestUtils.createHttpUri("d");
+        Statement statement = LDFusionToolTestUtils.createHttpStatement("a", "b", "c", "d");
 
         // Act
         DefaultContextRDFInserter inserter = new DefaultContextRDFInserter(connection, defaultContext);

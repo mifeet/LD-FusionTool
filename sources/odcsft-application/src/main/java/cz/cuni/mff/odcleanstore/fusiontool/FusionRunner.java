@@ -3,7 +3,7 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
@@ -19,13 +19,13 @@ import java.io.IOException;
  * See sample configuration files (sample-config-full.xml) for overview of all processing options.
  * <p/>
  * This class is not thread-safe.
- * @see ODCSFusionToolExecutor
+ * @see LDFusionToolExecutor
  */
-public class FusionToolRunner {
+public class FusionRunner {
     protected boolean isProfilingOn = false;
-    protected final FusionToolComponentFactory componentFactory;
+    protected final FusionComponentFactory componentFactory;
 
-    public FusionToolRunner(FusionToolComponentFactory componentFactory) {
+    public FusionRunner(FusionComponentFactory componentFactory) {
         this.componentFactory = componentFactory;
     }
 
@@ -35,11 +35,11 @@ public class FusionToolRunner {
 
     /**
      * Performs the actual LD-FusionTool task according to the given configuration.
-     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException general fusion error
+     * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException general fusion error
      * @throws java.io.IOException I/O error when writing results
      * @throws cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException conflict resolution error
      */
-    public void runFusionTool() throws ODCSFusionToolException, IOException, ConflictResolutionException {
+    public void runFusionTool() throws LDFusionToolException, IOException, ConflictResolutionException {
         InputLoader inputLoader = null;
         CloseableRDFWriter rdfWriter = null;
         ProfilingTimeCounter<EnumFusionCounters> timeProfiler = ProfilingTimeCounter.createInstance(EnumFusionCounters.class, isProfilingOn);
@@ -62,7 +62,7 @@ public class FusionToolRunner {
             timeProfiler.startCounter(EnumFusionCounters.INITIALIZATION);
             ResourceDescriptionConflictResolver conflictResolver = componentFactory.getConflictResolver(metadata, uriMapping);
             rdfWriter = componentFactory.getRDFWriter();
-            FusionToolExecutor executor = componentFactory.getExecutor(uriMapping);
+            FusionExecutor executor = componentFactory.getExecutor(uriMapping);
             timeProfiler.stopAddCounter(EnumFusionCounters.INITIALIZATION);
 
             // Do the actual work

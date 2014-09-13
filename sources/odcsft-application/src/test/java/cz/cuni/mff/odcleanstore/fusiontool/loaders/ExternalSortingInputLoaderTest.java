@@ -10,7 +10,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.UriMapping;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterableImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
+import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.EnumSerializationFormat;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesFileLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesLoader;
@@ -40,7 +40,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
-import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ODCSFTTestUtils.*;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
@@ -323,7 +323,7 @@ public class ExternalSortingInputLoaderTest {
         }
 
         // Assert
-        assertThat(caughtException, instanceOf(ODCSFusionToolException.class));
+        assertThat(caughtException, instanceOf(LDFusionToolException.class));
         File[] filesInWorkingDir = testDir.getRoot().listFiles();
         assertThat(filesInWorkingDir.length, equalTo(1)); // only the input file should remain
     }
@@ -572,7 +572,7 @@ public class ExternalSortingInputLoaderTest {
         return result;
     }
 
-    private Map<Resource, TreeSet<Statement>> collectResourceDescriptions(ExternalSortingInputLoader inputLoader) throws ODCSFusionToolException {
+    private Map<Resource, TreeSet<Statement>> collectResourceDescriptions(ExternalSortingInputLoader inputLoader) throws LDFusionToolException {
         Map<Resource, TreeSet<Statement>> result = new HashMap<>();
         inputLoader.initialize(uriMapping);
         while (inputLoader.hasNext()) {
@@ -634,7 +634,7 @@ public class ExternalSortingInputLoaderTest {
         return inputFile;
     }
 
-    private void collectResult(ExternalSortingInputLoader inputLoader, Set<Statement> result) throws ODCSFusionToolException {
+    private void collectResult(ExternalSortingInputLoader inputLoader, Set<Statement> result) throws LDFusionToolException {
         inputLoader.initialize(uriMapping);
         while (inputLoader.hasNext()) {
             result.addAll(inputLoader.next().getDescribingStatements());
