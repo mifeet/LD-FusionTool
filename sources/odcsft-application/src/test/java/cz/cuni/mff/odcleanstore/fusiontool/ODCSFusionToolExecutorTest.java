@@ -23,7 +23,7 @@ public class ODCSFusionToolExecutorTest {
     @Test
     public void processesAllInputStatements() throws Exception {
         // Arrange
-        ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor();
+        FusionToolExecutor executor = new ODCSFusionToolExecutor();
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
                 //(Collection<Statement>) ImmutableList.<Statement>of(),
                 (Collection<Statement>) ImmutableList.of(
@@ -38,7 +38,7 @@ public class ODCSFusionToolExecutorTest {
         TestRDFWriter rdfWriter = new TestRDFWriter();
 
         // Act
-        executor.execute(inputLoader, rdfWriter, new TestConflictResolver());
+        executor.fuse(new TestConflictResolver(), inputLoader, rdfWriter);
 
         // Assert
         List<ResolvedStatement> resolvedStatements = rdfWriter.getCollectedResolvedStatements();
@@ -52,7 +52,7 @@ public class ODCSFusionToolExecutorTest {
     public void respectsMaxOutputTriples() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
+        FusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -69,7 +69,7 @@ public class ODCSFusionToolExecutorTest {
         TestRDFWriter rdfWriter = new TestRDFWriter();
 
         // Act
-        executor.execute(inputLoader, rdfWriter, new TestConflictResolver());
+        executor.fuse(new TestConflictResolver(), inputLoader, rdfWriter);
 
         // Assert
         List<ResolvedStatement> resolvedStatements = rdfWriter.getCollectedResolvedStatements();
@@ -81,7 +81,7 @@ public class ODCSFusionToolExecutorTest {
     public void suppliesAllQuadsInClusterToConflictResolver() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
+        FusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
         ImmutableList<Collection<Statement>> inputStatements = ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -100,7 +100,7 @@ public class ODCSFusionToolExecutorTest {
         TestConflictResolver conflictResolver = new TestConflictResolver();
 
         // Act
-        executor.execute(inputLoader, rdfWriter, conflictResolver);
+        executor.fuse(conflictResolver, inputLoader, rdfWriter);
 
         // Assert
         assertThat(conflictResolver.getCollectedStatements().size(), equalTo(inputStatements.size()));
@@ -113,7 +113,7 @@ public class ODCSFusionToolExecutorTest {
     public void updatesInputLoaderWithResolvedStatements() throws Exception {
         // Arrange
         long maxOutputTriples = 5;
-        ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
+        FusionToolExecutor executor = new ODCSFusionToolExecutor(false, maxOutputTriples, false);
         ImmutableList<Collection<Statement>> inputStatements = ImmutableList.<Collection<Statement>>of(
                 ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
@@ -132,7 +132,7 @@ public class ODCSFusionToolExecutorTest {
         TestConflictResolver conflictResolver = new TestConflictResolver();
 
         // Act
-        executor.execute(inputLoader, rdfWriter, conflictResolver);
+        executor.fuse(conflictResolver, inputLoader, rdfWriter);
 
         // Assert
         assertThat(inputLoader.getCollectedResolvedStatements(), equalTo(rdfWriter.collectedResolvedStatements));
@@ -141,7 +141,7 @@ public class ODCSFusionToolExecutorTest {
     @Test
     public void processesAllInputStatementsWhenHasVirtuosoSource() throws Exception {
         // Arrange
-        ODCSFusionToolExecutor executor = new ODCSFusionToolExecutor(true, Long.MAX_VALUE, true);
+        FusionToolExecutor executor = new ODCSFusionToolExecutor(true, Long.MAX_VALUE, true);
         TestInputLoader inputLoader = new TestInputLoader(ImmutableList.of(
                 (Collection<Statement>) ImmutableList.<Statement>of(),
 
@@ -157,7 +157,7 @@ public class ODCSFusionToolExecutorTest {
         TestRDFWriter rdfWriter = new TestRDFWriter();
 
         // Act
-        executor.execute(inputLoader, rdfWriter, new TestConflictResolver());
+        executor.fuse(new TestConflictResolver(), inputLoader, rdfWriter);
 
         // Assert
         List<ResolvedStatement> resolvedStatements = rdfWriter.getCollectedResolvedStatements();

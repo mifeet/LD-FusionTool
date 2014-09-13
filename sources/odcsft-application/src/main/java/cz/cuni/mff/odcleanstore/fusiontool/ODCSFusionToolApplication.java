@@ -2,16 +2,7 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 
 import cz.cuni.mff.odcleanstore.conflictresolution.exceptions.ConflictResolutionException;
 import cz.cuni.mff.odcleanstore.core.ODCSUtils;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ApplicationArgs;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Config;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigImpl;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigReader;
-import cz.cuni.mff.odcleanstore.fusiontool.config.ConstructSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfig;
-import cz.cuni.mff.odcleanstore.fusiontool.config.EnumOutputType;
-import cz.cuni.mff.odcleanstore.fusiontool.config.Output;
-import cz.cuni.mff.odcleanstore.fusiontool.config.SourceConfig;
+import cz.cuni.mff.odcleanstore.fusiontool.config.*;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptionConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.InvalidInputException;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
@@ -83,8 +74,11 @@ public final class ODCSFusionToolApplication {
         System.out.println("Starting conflict resolution, this may take a while... \n");
 
         try {
-            ODCSFusionToolRunner odcsFusionToolRunner = new ODCSFusionToolRunner(config);
-            odcsFusionToolRunner.runFusionTool();
+
+            FusionToolComponentFactory componentFactory = new ODCSFusionToolComponentFactory(config);
+            FusionToolRunner runner = new FusionToolRunner(componentFactory, config.isProfilingOn());
+            runner.runFusionTool();
+
         } catch (ODCSFusionToolException e) {
             System.err.println("Error:");
             System.err.println("  " + e.getMessage());

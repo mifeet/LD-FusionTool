@@ -5,23 +5,13 @@ import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescriptio
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.urimapping.UriMappingIterable;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
-import cz.cuni.mff.odcleanstore.fusiontool.util.CanonicalUriFileHelper;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
-import cz.cuni.mff.odcleanstore.fusiontool.writers.CanonicalUriFileWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
-import cz.cuni.mff.odcleanstore.fusiontool.writers.SameAsLinkWriter;
 import org.openrdf.model.Model;
-import org.openrdf.model.URI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Loads and prepares all inputs for data fusion executor, executes data fusion and outputs additional metadata
@@ -31,13 +21,13 @@ import java.util.Set;
  * This class is not thread-safe.
  * @see ODCSFusionToolExecutor
  */
-public abstract class AbstractFusionToolRunner {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractFusionToolRunner.class);
+public class FusionToolRunner {
+    protected final boolean isProfilingOn;
+    protected final FusionToolComponentFactory componentFactory;
 
-    protected boolean isProfilingOn;
-
-    public AbstractFusionToolRunner(boolean isProfilingOn) {
+    public FusionToolRunner(FusionToolComponentFactory componentFactory, boolean isProfilingOn) {
         this.isProfilingOn = isProfilingOn;
+        this.componentFactory = componentFactory;
     }
 
     /**
@@ -53,32 +43,32 @@ public abstract class AbstractFusionToolRunner {
         try {
             // Load source named graphs metadata
             timeProfiler.startCounter(EnumFusionCounters.META_INITIALIZATION);
-            Model metadata = getMetadata();
+            Model metadata = componentFactory.getMetadata();
 
             // Load & resolve owl:sameAs links
-            UriMappingIterable uriMapping = getUriMapping();
+            UriMappingIterable uriMapping = componentFactory.getUriMapping();
             timeProfiler.stopAddCounter(EnumFusionCounters.META_INITIALIZATION);
 
             // Create & initialize quad loader
             timeProfiler.startCounter(EnumFusionCounters.DATA_INITIALIZATION);
-            inputLoader = getInputLoader();
+            inputLoader = componentFactory.getInputLoader();
             inputLoader.initialize(uriMapping);
             timeProfiler.stopAddCounter(EnumFusionCounters.DATA_INITIALIZATION);
 
             // Initialize executor
             timeProfiler.startCounter(EnumFusionCounters.INITIALIZATION);
-            ResourceDescriptionConflictResolver conflictResolver = getConflictResolver(metadata, uriMapping);
-            rdfWriter = getRDFWriter();
-            ODCSFusionToolExecutor executor = getExecutor(uriMapping);
+            ResourceDescriptionConflictResolver conflictResolver = componentFactory.getConflictResolver(metadata, uriMapping);
+            rdfWriter = componentFactory.getRDFWriter();
+            FusionToolExecutor executor = componentFactory.getExecutor(uriMapping);
             timeProfiler.stopAddCounter(EnumFusionCounters.INITIALIZATION);
 
             // Do the actual work
-            executor.execute(inputLoader, rdfWriter, conflictResolver);
+            executor.fuse(conflictResolver, inputLoader, rdfWriter);
 
             // Write metadata
             timeProfiler.startCounter(EnumFusionCounters.META_OUTPUT_WRITING);
-            getCanonicalUriWriter(uriMapping).write(uriMapping);
-            getSameAsLinksWriter().write(uriMapping);
+            componentFactory.getCanonicalUriWriter(uriMapping).write(uriMapping);
+            componentFactory.getSameAsLinksWriter().write(uriMapping);
             timeProfiler.stopAddCounter(EnumFusionCounters.META_OUTPUT_WRITING);
 
             // Print profiling information
@@ -92,52 +82,6 @@ public abstract class AbstractFusionToolRunner {
                 inputLoader.close();
             }
         }
-    }
-
-    protected abstract InputLoader getInputLoader() throws IOException, ODCSFusionToolException;
-
-    protected abstract CloseableRDFWriter getRDFWriter() throws IOException, ODCSFusionToolException;
-
-    protected abstract Model getMetadata() throws ODCSFusionToolException;
-
-    protected abstract UriMappingIterable getUriMapping() throws ODCSFusionToolException, IOException;
-
-    protected abstract ResourceDescriptionConflictResolver getConflictResolver(Model metadata, UriMappingIterable uriMapping);
-
-    protected abstract ODCSFusionToolExecutor getExecutor(UriMappingIterable uriMapping);
-
-    /**
-     * Returns writer for canonical URIs.
-     * @param uriMapping canonical URI mappings
-     * @throws java.io.IOException writing error
-     */
-    protected abstract CanonicalUriFileWriter getCanonicalUriWriter(UriMappingIterable uriMapping) throws IOException;
-
-    protected abstract SameAsLinkWriter getSameAsLinksWriter() throws IOException;
-
-    /**
-     * Returns set of URIs preferred for canonical URIs.
-     * The URIs are loaded from canonicalURIsInputFile if given and URIs present in settingsPreferredURIs are added.
-     * @param settingsPreferredURIs URIs occurring on fusion tool configuration
-     * @param canonicalURIsInputFile file with canonical URIs to be loaded; can be null
-     * @param preferredCanonicalURIs default set of preferred canonical URIs
-     * @return set of URIs preferred for canonical URIs
-     * @throws java.io.IOException error reading canonical URIs from file
-     */
-    protected Set<String> getPreferredURIs(
-            Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
-            Collection<String> preferredCanonicalURIs) throws IOException {
-
-        Set<String> preferredURIs = new HashSet<>(settingsPreferredURIs.size());
-        for (URI uri : settingsPreferredURIs) {
-            preferredURIs.add(uri.stringValue());
-        }
-        if (canonicalURIsInputFile != null) {
-            new CanonicalUriFileHelper().readCanonicalUris(canonicalURIsInputFile, preferredURIs);
-        }
-        preferredURIs.addAll(preferredCanonicalURIs);
-
-        return preferredURIs;
     }
 
     /**

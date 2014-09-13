@@ -162,8 +162,10 @@ public class ODCSFusionToolRunnerIntegrationTest {
         outputParams.put(ConfigParameters.OUTPUT_SAME_AS_FILE, sameAsFile.getAbsolutePath());
 
         // Act
-        ODCSFusionToolRunner runner = new ODCSFusionToolRunner(config);
-        runner.runFusionTool();
+
+        ODCSFusionToolComponentFactory componentFactory = new ODCSFusionToolComponentFactory(config);
+        FusionToolRunner fusionToolRunner = new FusionToolRunner(componentFactory, false);
+        fusionToolRunner.runFusionTool();
 
         // Assert - canonical URIs
         Set<String> canonicalUris = parseCanonicalUris(canonicalUrisOutputFile);

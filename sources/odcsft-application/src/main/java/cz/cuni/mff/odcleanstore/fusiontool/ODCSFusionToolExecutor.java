@@ -25,7 +25,7 @@ import java.util.Collection;
  *
  * This class is not thread-safe.
 */
-public class ODCSFusionToolExecutor {
+public class ODCSFusionToolExecutor implements FusionToolExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolExecutor.class);
 
     private final boolean hasVirtuosoSource;
@@ -40,7 +40,7 @@ public class ODCSFusionToolExecutor {
 
     /**
      * @param hasVirtuosoSource indicates whether the {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader}
-     *      given to {@code execute()} may contain a source of type
+     *      given to {@code fuse()} may contain a source of type
      *      {@link cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType#VIRTUOSO} (need for Virtuoso bug circumvention).
      * @param maxOutputTriples maximum number of triples to be processed; null means unlimited
      * @param isProfilingOn whether to measure profiling information
@@ -51,7 +51,7 @@ public class ODCSFusionToolExecutor {
 
     /**
      * @param hasVirtuosoSource indicates whether the {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader}
-     *      given to {@code execute()} may contain a source of type
+     *      given to {@code fuse()} may contain a source of type
      *      {@link cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType#VIRTUOSO} (need for Virtuoso bug circumvention).
      * @param maxOutputTriples maximum number of triples to be processed; null means unlimited
      * @param isProfilingOn whether to measure profiling information
@@ -73,7 +73,8 @@ public class ODCSFusionToolExecutor {
         return memoryProfiler;
     }
 
-    public void execute(InputLoader inputLoader, CloseableRDFWriter rdfWriter, ResourceDescriptionConflictResolver conflictResolver)
+    @Override
+    public void fuse(ResourceDescriptionConflictResolver conflictResolver, InputLoader inputLoader, CloseableRDFWriter rdfWriter)
             throws ODCSFusionToolException, ConflictResolutionException, IOException {
 
         // Initialize triple counters

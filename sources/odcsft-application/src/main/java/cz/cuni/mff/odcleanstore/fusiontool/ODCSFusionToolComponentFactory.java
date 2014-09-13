@@ -39,16 +39,19 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.ConstructSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.util.CanonicalUriFileHelper;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ODCSFusionToolAppUtils;
 import cz.cuni.mff.odcleanstore.fusiontool.util.UriCollection;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.*;
 import cz.cuni.mff.odcleanstore.vocabulary.ODCSInternal;
 import org.openrdf.model.Model;
+import org.openrdf.model.URI;
 import org.openrdf.model.impl.TreeModel;
 import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -60,8 +63,8 @@ import java.util.*;
  * This class is not thread-safe.
  * @see ODCSFusionToolExecutor
  */
-public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
-    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolRunner.class);
+public class ODCSFusionToolComponentFactory implements FusionToolComponentFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(ODCSFusionToolComponentFactory.class);
 
     private static final CloseableRDFWriterFactory rdfWriterFactory = new CloseableRDFWriterFactory();
 
@@ -78,15 +81,14 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      * Creates new instance.
      * @param config global configuration
      */
-    public ODCSFusionToolRunner(Config config) {
-        super(config.isProfilingOn());
+    public ODCSFusionToolComponentFactory(Config config) {
         this.config = config;
         isTransitive = false; // TODO
         repositoryFactory = new RepositoryFactory(config.getParserConfig());
     }
 
     @Override
-    protected ODCSFusionToolExecutor getExecutor(UriMappingIterable uriMapping) {
+    public ODCSFusionToolExecutor getExecutor(UriMappingIterable uriMapping) {
         return new ODCSFusionToolExecutor(
                 hasVirtuosoSource(config.getDataSources()),
                 config.getMaxOutputTriples(),
@@ -95,7 +97,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
     }
 
     @Override
-    protected InputLoader getInputLoader() throws IOException, ODCSFusionToolException {
+    public InputLoader getInputLoader() throws IOException, ODCSFusionToolException {
         long memoryLimit = calculateMemoryLimit();
         if (config.isLocalCopyProcessing()) {
             Collection<AllTriplesLoader> allTriplesLoaders = getAllTriplesLoaders();
@@ -225,7 +227,8 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      * @return metadata for conflict resolution
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      */
-    protected Model getMetadata() throws ODCSFusionToolException {
+    @Override
+    public Model getMetadata() throws ODCSFusionToolException {
         Collection<ConstructSource> metadataSources = getConstructSources(config.getMetadataSources());
         Model metadata = new TreeModel();
         for (ConstructSource source : metadataSources) {
@@ -241,7 +244,8 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException error
      * @throws java.io.IOException I/O error
      */
-    protected UriMappingIterable getUriMapping() throws ODCSFusionToolException, IOException {
+    @Override
+    public UriMappingIterable getUriMapping() throws ODCSFusionToolException, IOException {
         // FIXME: preference of prefixes from configuration
         Set<String> preferredURIs = getPreferredURIs(
                 config.getPropertyResolutionStrategies().keySet(),
@@ -271,6 +275,31 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
             loader.loadSameAsMappings(uriMapping);
         }
         return uriMapping;
+    }
+
+    /**
+     * Returns set of URIs preferred for canonical URIs.
+     * The URIs are loaded from canonicalURIsInputFile if given and URIs present in settingsPreferredURIs are added.
+     * @param settingsPreferredURIs URIs occurring on fusion tool configuration
+     * @param canonicalURIsInputFile file with canonical URIs to be loaded; can be null
+     * @param preferredCanonicalURIs default set of preferred canonical URIs
+     * @return set of URIs preferred for canonical URIs
+     * @throws java.io.IOException error reading canonical URIs from file
+     */
+    protected static Set<String> getPreferredURIs(
+            Set<URI> settingsPreferredURIs, File canonicalURIsInputFile,
+            Collection<String> preferredCanonicalURIs) throws IOException {
+
+        Set<String> preferredURIs = new HashSet<>(settingsPreferredURIs.size());
+        for (URI uri : settingsPreferredURIs) {
+            preferredURIs.add(uri.stringValue());
+        }
+        if (canonicalURIsInputFile != null) {
+            new CanonicalUriFileHelper().readCanonicalUris(canonicalURIsInputFile, preferredURIs);
+        }
+        preferredURIs.addAll(preferredCanonicalURIs);
+
+        return preferredURIs;
     }
 
     /**
@@ -309,7 +338,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      * @throws cz.cuni.mff.odcleanstore.fusiontool.exceptions.ODCSFusionToolException configuration error
      */
     @Override
-    protected CloseableRDFWriter getRDFWriter() throws IOException, ODCSFusionToolException {
+    public CloseableRDFWriter getRDFWriter() throws IOException, ODCSFusionToolException {
         List<CloseableRDFWriter> writers = new ArrayList<>(config.getOutputs().size());
         for (Output output : config.getOutputs()) {
             CloseableRDFWriter writer = rdfWriterFactory.createRDFWriter(output);
@@ -342,7 +371,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      * @return initialized conflict resolver
      */
     @Override
-    protected ResourceDescriptionConflictResolver getConflictResolver(Model metadata, UriMappingIterable uriMapping) {
+    public ResourceDescriptionConflictResolver getConflictResolver(Model metadata, UriMappingIterable uriMapping) {
         DistanceMeasureImpl distanceMeasure = new DistanceMeasureImpl();
         SourceQualityCalculator sourceQualityCalculator = new ODCSSourceQualityCalculator(
                 config.getScoreIfUnknown(),
@@ -369,7 +398,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
     }
 
     @Override
-    protected CanonicalUriFileWriter getCanonicalUriWriter(UriMappingIterable uriMapping) throws IOException {
+    public UriMappingWriter getCanonicalUriWriter(UriMappingIterable uriMapping) throws IOException {
         return new CanonicalUriFileWriter(config.getCanonicalURIsOutputFile());
     }
 
@@ -378,7 +407,7 @@ public class ODCSFusionToolRunner extends AbstractFusionToolRunner {
      * @throws java.io.IOException I/O error
      */
     @Override
-    protected SameAsLinkWriter getSameAsLinksWriter() throws IOException {
+    public UriMappingWriter getSameAsLinksWriter() throws IOException {
         return new SameAsLinkWriter(config.getOutputs(), config.getPrefixes());
     }
 
