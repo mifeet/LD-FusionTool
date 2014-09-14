@@ -133,4 +133,12 @@ public class LDFusionToolExecutor implements FusionExecutor {
             }
         }
     }
+
+    public Long getMaxOutputTriples() {
+        return maxOutputTriples;
+    }
+
+    public ResourceDescriptionFilter getResourceDescriptionFilter() {
+        return resourceDescriptionFilter;
+    }
 }
