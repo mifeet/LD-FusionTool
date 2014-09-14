@@ -14,7 +14,7 @@
     <description>Data Fusion &amp; Conflict Resolution tool for Linked Data.</description>
 
     <properties>
-        <odcs-version>1.1-SNAPSHOT</odcs-version>
+        <odcs-version>1.1.5</odcs-version>
         <sesame-version>2.7.11</sesame-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -50,22 +50,22 @@
 
     <repositories>
         <repository>
-            <id>odcleanstore</id>
+            <id>cz.cuni.mff.odcleanstore</id>
             <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/groups/public/</url>
         </repository>
         <repository>
-            <id>odcleanstore-thirdparty</id>
+            <id>cz.cuni.mff.odcleanstore-thirdparty</id>
             <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/thirdparty/</url>
         </repository>
     </repositories>
 
     <distributionManagement>
         <repository>
-            <id>odcleanstore</id>
+            <id>cz.cuni.mff.odcleanstore</id>
             <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
-            <id>odcleanstore</id>
+            <id>cz.cuni.mff.odcleanstore</id>
             <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
