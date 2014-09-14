@@ -1,6 +1,5 @@
 package cz.cuni.mff.odcleanstore.fusiontool.loaders;
 
-import com.google.common.base.Preconditions;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
 import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
@@ -35,6 +34,9 @@ import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Input loader performing an external sort on the input quads in order
@@ -89,9 +91,9 @@ public class ExternalSortingInputLoader implements InputLoader {
             ParserConfig parserConfig,
             long maxMemoryLimit) {
 
-        Preconditions.checkNotNull(dataSources);
-        Preconditions.checkNotNull(cacheDirectory);
-        Preconditions.checkNotNull(resourceDescriptionProperties);
+        checkNotNull(dataSources);
+        checkNotNull(cacheDirectory);
+        checkNotNull(resourceDescriptionProperties);
         this.dataSources = dataSources;
         this._resourceDescriptionProperties = resourceDescriptionProperties;
         this.maxMemoryLimit = maxMemoryLimit;
@@ -102,7 +104,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public void initialize(UriMappingIterable uriMapping) throws LDFusionToolException {
-        Preconditions.checkNotNull(uriMapping);
+        checkNotNull(uriMapping);
 
         LOG.info("Initializing input loader");
         if (maxMemoryLimit < Long.MAX_VALUE) {
@@ -154,9 +156,7 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public boolean hasNext() throws LDFusionToolException {
-        if (dataFileIterator == null) {
-            throw new IllegalStateException();
-        }
+        checkState(dataFileIterator != null);
         try {
             return dataFileIterator.hasNext();
         } catch (Exception e) {
@@ -168,9 +168,8 @@ public class ExternalSortingInputLoader implements InputLoader {
 
     @Override
     public ResourceDescription next() throws LDFusionToolException {
-        if (dataFileIterator == null || mergedAttributeFileIterator == null) {
-            throw new IllegalStateException();
-        }
+        checkState(dataFileIterator != null);
+        checkState(mergedAttributeFileIterator != null);
         try {
             if (!dataFileIterator.hasNext()) {
                 throw new NoSuchElementException();
