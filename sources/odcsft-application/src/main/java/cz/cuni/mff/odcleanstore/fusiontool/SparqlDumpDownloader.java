@@ -1,6 +1,10 @@
 package cz.cuni.mff.odcleanstore.fusiontool;
 
-import cz.cuni.mff.odcleanstore.fusiontool.config.*;
+import cz.cuni.mff.odcleanstore.fusiontool.config.ConfigParameters;
+import cz.cuni.mff.odcleanstore.fusiontool.config.DataSourceConfigImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.config.EnumDataSourceType;
+import cz.cuni.mff.odcleanstore.fusiontool.config.LDFTConfigConstants;
+import cz.cuni.mff.odcleanstore.fusiontool.config.SparqlRestrictionImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.io.RepositoryFactory;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.data.AllTriplesRepositoryLoader;
@@ -8,12 +12,22 @@ import cz.cuni.mff.odcleanstore.fusiontool.source.DataSource;
 import cz.cuni.mff.odcleanstore.fusiontool.source.DataSourceImpl;
 import cz.cuni.mff.odcleanstore.fusiontool.util.LDFusionToolUtils;
 import org.openrdf.model.Statement;
-import org.openrdf.rio.*;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFWriter;
+import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.RDFHandlerBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.zip.Deflater;
@@ -22,10 +36,10 @@ import java.util.zip.GZIPOutputStream;
 public class SparqlDumpDownloader {
     private static final Logger LOG = LoggerFactory.getLogger(SparqlDumpDownloader.class);
 
-    public static final File OUTPUT_FILE = new File("C:\\file.n3");
+    public static final File OUTPUT_FILE = new File("h:\\skola\\PhD\\proj\\vse-vestnik\\dump\\vestnik-dump3.n3");
     public static final RDFFormat FILE_SERIALIZATION = RDFFormat.NTRIPLES;
-    public static final String SPARQL_ENDPOINT = "http://example.com/sparql";
-    public static final String NAMED_GRAPH_RESTRICTION = "FILTER(?g = <http://graph>)";
+    public static final String SPARQL_ENDPOINT = "http://lod2-dev.vse.cz:8890/sparql";
+    public static final String NAMED_GRAPH_RESTRICTION = "FILTER(?g = <http://linked.opendata.cz/resource/dataset/vestnikverejnychzakazek.cz>)";
     public static final String NAMED_GRAPH_RESTRICTION_VAR = "g";
     public static final int SPARQL_RESULT_MAX_ROWS = 9_000;
     public static final int SPARQL_MIN_QUERY_INTERVAL = 2_000;
