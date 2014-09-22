@@ -2,9 +2,13 @@ package cz.cuni.mff.odcleanstore.fusiontool;
 
 import com.google.common.collect.ImmutableList;
 import cz.cuni.mff.odcleanstore.conflictresolution.ResolvedStatement;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.ResourceDescription;
+import cz.cuni.mff.odcleanstore.fusiontool.conflictresolution.impl.ResourceDescriptionImpl;
+import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.NoOpFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.TestConflictResolver;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.TestInputLoader;
+import cz.cuni.mff.odcleanstore.fusiontool.testutil.TestIsCanceledCallback;
 import cz.cuni.mff.odcleanstore.fusiontool.testutil.TestRDFWriter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
@@ -13,6 +17,8 @@ import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.openrdf.model.Statement;
 
 import java.util.Collection;
@@ -20,6 +26,7 @@ import java.util.List;
 
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.ContextAwareStatementIsEqual.contextAwareStatementIsEqual;
 import static cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils.createHttpStatement;
+import static cz.cuni.mff.odcleanstore.fusiontool.testutil.LDFusionToolTestUtils.createHttpUri;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -33,7 +40,6 @@ public class LDFusionToolExecutorTest {
                 (Collection<Statement>) ImmutableList.of(
                         createHttpStatement("s1", "p1", "o1", "g1"),
                         createHttpStatement("s1", "p1", "o1", "g2")),
-
 
                 ImmutableList.of(
                         createHttpStatement("s2", "p2", "o1", "g3"),
@@ -153,7 +159,6 @@ public class LDFusionToolExecutorTest {
                         createHttpStatement("s1", "p1", "o1", "g1"),
                         createHttpStatement("s1", "p1", "o1", "g2")),
 
-
                 ImmutableList.of(
                         createHttpStatement("s2", "p2", "o1", "g3"),
                         createHttpStatement("s2", "p2", "o2", "g3"))
@@ -169,6 +174,29 @@ public class LDFusionToolExecutorTest {
         assertThat(resolvedStatements.get(1).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s1", "p1", "o1", "g2")));
         assertThat(resolvedStatements.get(2).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s2", "p2", "o1", "g3")));
         assertThat(resolvedStatements.get(3).getStatement(), contextAwareStatementIsEqual(createHttpStatement("s2", "p2", "o2", "g3")));
+    }
+
+    @Test
+    public void cancelsExecution() throws Exception {
+        // Arrange
+        final TestIsCanceledCallback callback = new TestIsCanceledCallback();
+        LDFusionToolExecutor executor = getLDFusionToolExecutor(Long.MAX_VALUE, false);
+        executor.setIsCanceledCallback(callback);
+        final InputLoader inputLoader = Mockito.mock(InputLoader.class);
+        Mockito.when(inputLoader.hasNext()).thenReturn(true);
+        Mockito.when(inputLoader.next()).thenAnswer(new Answer<ResourceDescription>() {
+            @Override
+            public ResourceDescription answer(InvocationOnMock invocation) throws Throwable {
+                callback.cancel();
+                return new ResourceDescriptionImpl(createHttpUri("a"), ImmutableList.of(createHttpStatement("a", "b", "c")));
+            }
+        });
+
+        // Act
+        executor.fuse(new TestConflictResolver(), inputLoader, new TestRDFWriter());
+
+        // Assert
+        Mockito.verify(inputLoader, Mockito.times(1)).next();
     }
 
     private LDFusionToolExecutor getLDFusionToolExecutor(long maxOutputTriples, boolean hasVirtuosoSource) {

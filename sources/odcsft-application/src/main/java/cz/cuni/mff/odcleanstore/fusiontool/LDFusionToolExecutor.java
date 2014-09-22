@@ -8,6 +8,7 @@ import cz.cuni.mff.odcleanstore.fusiontool.exceptions.LDFusionToolException;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader;
 import cz.cuni.mff.odcleanstore.fusiontool.loaders.fiter.ResourceDescriptionFilter;
 import cz.cuni.mff.odcleanstore.fusiontool.util.EnumFusionCounters;
+import cz.cuni.mff.odcleanstore.fusiontool.util.IsCanceledCallback;
 import cz.cuni.mff.odcleanstore.fusiontool.util.MemoryProfiler;
 import cz.cuni.mff.odcleanstore.fusiontool.util.ProfilingTimeCounter;
 import cz.cuni.mff.odcleanstore.fusiontool.writers.CloseableRDFWriter;
@@ -23,7 +24,7 @@ import java.util.Collection;
  * See sample configuration files (sample-config-full.xml) for overview of all processing options.
  *
  * This class is not thread-safe.
-*/
+ */
 public class LDFusionToolExecutor implements FusionExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(LDFusionToolExecutor.class);
 
@@ -32,6 +33,7 @@ public class LDFusionToolExecutor implements FusionExecutor {
     private final ProfilingTimeCounter<EnumFusionCounters> timeProfiler;
     private final MemoryProfiler memoryProfiler;
     private ResourceDescriptionFilter resourceDescriptionFilter;
+    private IsCanceledCallback isCanceledCallback;
 
     /**
      * @param hasVirtuosoSource indicates whether the {@link cz.cuni.mff.odcleanstore.fusiontool.loaders.InputLoader}
@@ -66,7 +68,7 @@ public class LDFusionToolExecutor implements FusionExecutor {
         // Load & process input quads
         LOG.info("Starting conflict resolution");
         timeProfiler.startCounter(EnumFusionCounters.BUFFERING);
-        while (inputLoader.hasNext()) {
+        while (!isCanceled() && inputLoader.hasNext()) {
             timeProfiler.stopAddCounter(EnumFusionCounters.BUFFERING);
 
             // Load quads for the given subject
@@ -90,7 +92,7 @@ public class LDFusionToolExecutor implements FusionExecutor {
             Collection<ResolvedStatement> resolvedQuads = conflictResolver.resolveConflicts(resourceDescription);
             timeProfiler.stopAddCounter(EnumFusionCounters.CONFLICT_RESOLUTION);
             LOG.debug("Resolved {} quads resulting in {} quads (processed totally {} quads)",
-                    new Object[]{resourceDescription.getDescribingStatements().size(), resolvedQuads.size(), inputTriples});
+                    new Object[] {resourceDescription.getDescribingStatements().size(), resolvedQuads.size(), inputTriples});
 
             // Check if we have reached the limit on output triples
             if (checkMaxOutputTriples && outputTriples + resolvedQuads.size() > maxOutputTriples) {
@@ -113,6 +115,9 @@ public class LDFusionToolExecutor implements FusionExecutor {
             timeProfiler.startCounter(EnumFusionCounters.BUFFERING);
         }
         timeProfiler.stopAddCounter(EnumFusionCounters.BUFFERING);
+        if (isCanceled()) {
+            LOG.warn("The execution was canceled!");
+        }
         LOG.info(String.format("Processed %,d quads which were resolved to %,d output quads.", inputTriples, outputTriples));
     }
 
@@ -141,4 +146,13 @@ public class LDFusionToolExecutor implements FusionExecutor {
     public ResourceDescriptionFilter getResourceDescriptionFilter() {
         return resourceDescriptionFilter;
     }
+
+    public void setIsCanceledCallback(IsCanceledCallback isCanceledCallback) {
+        this.isCanceledCallback = isCanceledCallback;
+    }
+
+    private boolean isCanceled() {
+        return isCanceledCallback != null && isCanceledCallback.isCanceled();
+    }
 }
+
