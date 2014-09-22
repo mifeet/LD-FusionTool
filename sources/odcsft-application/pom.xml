@@ -1,0 +1,176 @@
+<?xml version="1.0" ?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>odcsft-application</artifactId>
+	<name>ODCS-FusionTool Application</name>
+	<version>1.1.0</version>
+	<description>ODCS-FustionTool standalone (command-line) application.</description>
+		
+	<parent>
+		<groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
+		<artifactId>odcs-fusion-tool</artifactId>
+		<version>1.1.0</version>
+	</parent>
+
+	<dependencies>
+        <dependency>
+            <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
+            <artifactId>odcsft-util</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
+            <artifactId>odcsft-conflict-resolution</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+        <dependency>
+			<groupId>cz.cuni.mff.odcleanstore</groupId>
+			<artifactId>odcs-conflictresolution</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.openlinksw</groupId>
+            <artifactId>virtuoso-sesame</artifactId>
+		</dependency>
+		<dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.externalsortinginjava</groupId>
+            <artifactId>externalsortinginjava</artifactId>
+            <version>0.1.9</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.6.4</version>
+            <optional>true</optional>
+        </dependency>
+
+		<!-- Dependency for XML configuration parser -->
+		<dependency>
+			<groupId>org.simpleframework</groupId>
+			<artifactId>simple-xml</artifactId>
+			<version>2.7</version>
+		</dependency>
+		<!-- Dependency for in-file storage for URIs that need to be frequently used in the algorithm -->
+		<dependency>
+			<groupId>org.mapdb</groupId>
+			<artifactId>mapdb</artifactId>
+			<version>1.0.5</version>
+		</dependency>
+		<!-- Dependencies for from Sesame -->
+		<dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-model</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-rio-rdfxml</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-rio-n3</artifactId>
+		</dependency>
+		<dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-rio-trig</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-rio-nquads</artifactId>
+        </dependency>
+		<dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-repository-sparql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-repository-sail</artifactId>
+		</dependency>
+        <dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-sail-memory</artifactId>
+		</dependency>
+        <dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-sail-nativerdf</artifactId>
+		</dependency>
+        <dependency>
+			<groupId>org.openrdf.sesame</groupId>
+			<artifactId>sesame-queryparser-sparql</artifactId>
+		</dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
+        </dependency>
+    </dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.0</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<minimizeJar>false</minimizeJar>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<finalName>${project.artifactId}-${project.version}-executable</finalName>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>cz.cuni.mff.odcleanstore.fusiontool.LDFusionToolApplication</mainClass>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+							</transformers>
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9</version>
+				<configuration>
+					<overview>${basedir}/javadoc-overview.html</overview>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

@@ -8,13 +8,14 @@
     <Prefix id="xsd" namespace="http://www.w3.org/2001/XMLSchema#" />
     <Prefix id="owl" namespace="http://www.w3.org/2002/07/owl#" />
     <Prefix id="odcs" namespace="http://opendata.cz/infrastructure/odcleanstore/" />
+    <Prefix id="fb" namespace="http://rdf.freebase.com/ns/" />
   </Prefixes>
   
   <!-- Definitions of inputs; the <Source/> tag can contain three types of sources:
        <DataSource> representing data to be fused,
-	   <MetadataSource> representing metadata for data fusion,
-	   <SameAsSource> representing owl:sameAs links to be used;
-	   there can be multiple children of each kind given; at least one <DataSource> child is required -->
+       <MetadataSource> representing metadata for data fusion,
+       <SameAsSource> representing owl:sameAs links to be used;
+       there can be multiple children of each kind given; at least one <DataSource> child is required -->
   <Sources>
     <!-- Data source of type "virtuoso"; connects to an Openlink Virtuoso database instance using JDBC -->
     <DataSource type="virtuoso" name="virtuoso_local">
@@ -67,24 +68,24 @@
     </DataSource>
     
     <!-- Source containing metadata for data fusion 
-	     'type' attribute can have the same values as <DataSource> -->
-	<MetadataSource type="sparql" name="metadata-local">
+         'type' attribute can have the same values as <DataSource> -->
+    <MetadataSource type="sparql" name="metadata-local">
       <!-- SPARQL Construct query selecting the owl:sameAs links -->
       <ConstructQuery>
-      	CONSTRUCT {?g odcs:score ?s } WHERE { ?g odcs:score ?s } 
-	  </ConstructQuery>
-	  
+          CONSTRUCT {?g odcs:score ?s } WHERE { ?g odcs:score ?s } 
+      </ConstructQuery>
+      
       <Param name="endpointUrl" value="http://localhost:8890/sparql" />
     </MetadataSource>
-	
-	<!-- Source containing owl:sameAs links for data fusion; 
-	     'type' attribute can have the same values as <DataSource> -->
-	<SameAsSource type="sparql" name="sameAs-local">
+    
+    <!-- Source containing owl:sameAs links for data fusion; 
+         'type' attribute can have the same values as <DataSource> -->
+    <SameAsSource type="sparql" name="sameAs-local">
       <!-- SPARQL Construct query selecting the owl:sameAs links -->
       <ConstructQuery>
-      	CONSTRUCT {?s owl:sameAs ?o} WHERE { ?s owl:sameAs ?o } 
-	  </ConstructQuery>
-	  
+          CONSTRUCT {?s owl:sameAs ?o} WHERE { ?s owl:sameAs ?o } 
+      </ConstructQuery>
+      
       <Param name="endpointUrl" value="http://localhost:8890/sparql" />
     </SameAsSource>
   </Sources>
@@ -108,25 +109,20 @@
     <!-- If set to true, all data are downloaded to a local file prior to processing;
          this is slower for smaller datasets but much faster for large data sets accessed via a SPARQL endpoint;
          when set to true, <SeedResourceRestriction> will have no effect and all input triples will be processed;
-         (optional, defaults to false) -->
-    <Param name="localCopyProcessing" value="false" />
+         (optional, defaults to true) -->
+    <Param name="localCopyProcessing" value="true" />
 
-    <!-- SPARQL group graph pattern giving seed resources for data fusion;
-         if given, subjects matching the SPARQL variable given in attribute 'var' will be loaded as seed resources
-         and only triples having these seed resources as subject will be processed;
-         if attribute 'transitive' is set (default) to true, also resources transitively reachable from seed resources will be processed;
-         optional (if not given, all triples from source graphs are processed) -->
-    <SeedResourceRestriction var="s" transitive="true">
-      ?s rdf:type &lt;http://purl.org/procurement/public-contracts#Contract&gt; 
-    </SeedResourceRestriction>
-  </DataProcessing>      
+    <!-- If not empty, only resources of the given (RDFS/OWL) class will be processed;
+         if omitted or empty, all resources in input data will be processed -->
+    <Param name="processResourcesWithClass" value="http://schema.org/PostalAddress" />
+  </DataProcessing>
   
   <!-- Definition of conflict resolution settings (optional) -->
   <ConflictResolution>
     <!-- Spefifies the default conflict resolution policy; (optional);
          'function' attribute defines the conflict resolution function (optional attribute, defaults to ALL),
          'cardinality' attribute defines the expected cardinality of the property - possible values are 'MANYVALUED' and 'SINGLEVALUED'
-		        (optional, default to MANYVALUED),
+                (optional, defaults to MANYVALUED),
          'aggregationErrroStrategy' defines the aggregation error strategy - possible values are 'IGNORE' and 'RETURN_ALL'
                (optional, defaults to RETURN_ALL)
           <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function -->
@@ -135,14 +131,16 @@
     <!-- <ResolutionStrategy> elements specify a conflict resolution policy:
          'function' attribute defines the conflict resolution method (optional attribute, defaults to ALL),
           'cardinality' attribute defines the expected cardinality of the property - possible values are 'MANYVALUED' and 'SINGLEVALUED'
-		        (optional, default to MANYVALUED),
+                (optional, defaults to MANYVALUED),
          'aggregationErrorStrategy' defines the aggregation error strategy - possible values are 'IGNORE' and 'RETURN_ALL'
-              (optional, default to RETURN_ALL)
+              (optional, defaults to RETURN_ALL)
+         'dependsOn' specifies dependency of properties, i.e. values of dependent properties will be resolved together and not independently
+              (optional, defaults to no dependency)
          <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function -->
-    <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED">
+    <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED" dependsOn="fb:latitude">
       <!-- Definition of properties to which the resolution strategy applies to -->
-      <Property id="http://rdf.freebase.com/ns/location.geocode.longtitude"/>
-      <Property id="http://rdf.freebase.com/ns/location.geocode.latitude" />
+      <Property id="fb:location.geocode.longtitude"/>
+      <Property id="fb:location.geocode.latitude" />
     </ResolutionStrategy>
     <ResolutionStrategy function="BEST">
       <Property id="rdfs:label"/>
@@ -178,7 +176,7 @@
     </Output>
     
     <!-- Definition of output to a Virtuoso database instance using JDBC;
-	     note that Virtuoso isn't compatible with the standard SPARQL endpoint -->
+         note that Virtuoso isn't compatible with the standard SPARQL endpoint -->
     <Output type="virtuoso" name="virtuoso-output">
       <!-- Hostname for the Virtuoso database instance; (required) -->
       <Param name="host" value="localhost" />
