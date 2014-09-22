@@ -7,25 +7,25 @@
 
 	<artifactId>odcsft-application</artifactId>
 	<name>ODCS-FusionTool Application</name>
-	<version>1.1.0</version>
+	<version>1.1.1-SNAPSHOT</version>
 	<description>ODCS-FustionTool standalone (command-line) application.</description>
 		
 	<parent>
 		<groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
 		<artifactId>odcs-fusion-tool</artifactId>
-		<version>1.1.0</version>
+		<version>1.1.1-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
         <dependency>
             <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
             <artifactId>odcsft-util</artifactId>
-            <version>1.1.0</version>
+            <version>1.1.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
             <artifactId>odcsft-conflict-resolution</artifactId>
-            <version>1.1.0</version>
+            <version>1.1.1-SNAPSHOT</version>
         </dependency>
         <dependency>
 			<groupId>cz.cuni.mff.odcleanstore</groupId>
