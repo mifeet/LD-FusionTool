@@ -1,7 +1,7 @@
 LD-FusionTool
 ==========
-Data Fusion and Conflict Resolution tool for Linked Data
-----------
+###Data Fusion and Conflict Resolution tool for Linked Data
+
 
 
 LD-FusionTool is a standalone tool (and [a module](https://github.com/mifeet/FusionTool-DPU) for [UnifiedViews](http://unifiedviews.eu) ETL framework) executing the Data Fusion and Conflict Resolution steps in the integration process for RDF, where data are merged to produce consistent and clean representations of objects, and conflicts which emerged during data integration need to be resolved.
