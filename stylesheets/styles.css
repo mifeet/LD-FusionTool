@@ -183,7 +183,7 @@ h1 {
 }
 
 h2 {
-  font-size: 1.5em;
+  font-size: 2em;
   margin: 0.83em 0;
 }
 
@@ -546,7 +546,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   color: #e8e8e8;
-  margin: 0 0 10px;
+  margin: 35px 0  15px 0;
   font-family: 'OpenSansRegular', "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: normal;
 }
@@ -564,7 +564,7 @@ h1 {
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 28px;
 }
 
 h4, h5, h6 {
@@ -784,12 +784,12 @@ section {
   max-width: 650px;
   padding: 30px 0px 50px 0px;
   margin: 20px 0;
-  margin-top: 70px;
+  margin-top: 20px;
 }
 section #title {
   border: 0;
   outline: none;
-  margin: 0 0 50px 0;
+  margin: 40px 0 10px 0;
   padding: 0 0 5px 0;
 }
 section #title h1 {
@@ -806,32 +806,32 @@ section #title p {
   font-size: 18px;
   text-align: center;
 }
-section #title .credits {
+section .credits {
   font-size: 11px;
   font-family: 'OpenSansRegular', "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: normal;
   color: #696969;
-  margin-top: -10px;
+  margin-top: -20px;
 }
-section #title .credits.left {
+section .credits.left {
   float: left;
 }
-section #title .credits.right {
+section .credits.right {
   float: right;
 }
 
 @media print, screen and (max-width: 720px) {
-  #title .credits {
+  .credits {
     display: block;
     width: 100%;
     line-height: 30px;
     text-align: center;
   }
-  #title .credits .left {
+  .credits .left {
     float: none;
     display: block;
   }
-  #title .credits .right {
+  .credits .right {
     float: none;
     display: block;
   }
@@ -848,4 +848,12 @@ section #title .credits.right {
   nav {
     display: none;
   }
+}
+
+.ldft-name {
+  color: rgb(173,211,230);
+}
+
+.ldft-name-fusion {
+  /* color: rgb(108,182,244);*/
 }

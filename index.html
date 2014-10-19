@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>CR-Batch by mifeet</title>
+    <title>LD-FusionTool - Data Fusion for Linked Data</title>
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>-->
     <script src="javascripts/respond.js"></script>
     <!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -20,9 +20,9 @@
   <body>
       <div id="header">
         <nav>
-          <li class="fork"><a href="https://github.com/mifeet/cr-batch">View On GitHub</a></li>
-          <li class="downloads"><a href="https://github.com/mifeet/cr-batch/zipball/master">ZIP</a></li>
-          <li class="downloads"><a href="https://github.com/mifeet/cr-batch/tarball/master">TAR</a></li>
+          <li class="fork"><a href="https://github.com/mifeet/ld-fusiontool">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/mifeet/ld-fusiontool/zipball/master">Sources</a></li>
+          <li class="downloads"><a href="https://github.com/mifeet/ld-fusiontool/zipball/master">Binary distribution</a></li>
           <li class="title">DOWNLOADS</li>
         </nav>
       </div><!-- end header -->
@@ -31,20 +31,72 @@
 
       <section>
         <div id="title">
-          <h1>CR-Batch</h1>
-          <p>Standalone RDF data fusion tool based on ODCleanStore Conflict Resolution</p>
+          <h1>LD-FusionTool</h1>
+          <p>Data Fusion and Conflict Resolution tool for Linked Data
           <hr>
-          <span class="credits left">Project maintained by <a href="https://github.com/mifeet">mifeet</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
         </div>
 
-        <h1>CR-Batch</h1>
+<h2>About <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span></h2>
+<p>
+The value of <a href="http://linkeddata.org/">Linked Data</a> lies in the ability to link pieces of data, even across data sources. A data integration process can provide a unified view on the data. Tools covering all steps of the integration process need to be designed and developed in order to leverage the potential for semantic applications and the enterprise environment where data integration is crucial. 
 
-<p>CR-Batch is a standalone tool for execution of data fusion and conflict resolution on RDF data accessible through a SPARQL endpoint. CR-Batch is based on the conflict resolution component implemented in <a href="https://sourceforge.net/p/odcleanstore/wiki/Home/">ODCleanStore</a>, a Linked Data management tool.</p>
+<p><span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> covers the Data Fusion step in the integration process, where data are merged to produce consistent and clean representations of objects, and conflicts which emerged during data integration need to be resolved. This involves several tasks that <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> tackles:
 
-<p>Currently, CR-Batch works only with data processed by ODCleanStore. In order to use it, one should deploy ODCleanStore and then run CR-Batch on the clean database instance of ODCleanStore. Please refer to ODCleanStore <a href="http://sourceforge.net/projects/odcleanstore/files/odcleanstore/0.3/ODCleanStore%20User%20Manual.pdf/download">User Manual</a> for more information about ODCleanStore and general information about the conflict resolution executed by CR-Batch.</p>
-      </section>
+<ul>
+  <li>Resolution of schema and identity conflicts - different identifiers (URIs) for resources and properties from used ontologies (discovered, e.g., by <a href="http://en.wikipedia.org/wiki/Record_linkage">data deduplication</a> and schema matching) need to be resolved.</li>
+  <li>Resolution of data conflicts - multiple (potentially) conflicting values of a property need to be resolved according to chosen policies. Conflicts can emerge, e.g., when integrating different sources or after deduplication.
+  <li>Quality assessment - the output may optionally contain metadata estimating quality of the produced RDF triples. Unlike other tools, <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> evaluates the quality of <em>fused data</em> (as opposed to source data) and levarages infomration available during data fusion.
+  <li>Provenance tracking - the origin of all fused RDF triples can be traced back to the original sources.
+</ul>
 
+<p>
+In addition, <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> leverages the structure of the RDF graph by considering <a href="http://iswc2014.semanticweb.org/accepted_posters_demos">dependency of properties and resources</a> in order to simplify data fusion and improve the quality of results.
+</p>
+
+<h2>How <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> works</h2>
+
+<a href="images/diagram-ldft3.png"><img style="float:right; margin:0 0 15px 10px" src="images/diagram-ldft2.png" /></a>
+<p>
+The figure in this section depicts a high-level architecture of <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span>.
+
+<p>
+For more information about how <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> works, please refer to the following publications:
+
+<ul style="clear:both">
+  <li><a href="http://iswc2014.semanticweb.org/accepted_posters_demos">New Directions in Linked Data Fusion</a> (poster at ISWC 2014)</li>
+  <li><a href="http://arxiv.org">Linked Data Integration with Conflicts</a> (submission to Journal of Web Semantics, 2014)</li>
+  <li><a href="http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=6341559&url=http%3A%2F%2Fieeexplore.ieee.org%2Fxpls%2Fabs_all.jsp%3Farnumber%3D6341559">Linked Open Data Aggregation: Conflict Resolution and Aggregate Quality</a> (COMPSAC 2012, 1st IEEE International Workshop on Methods for Establishing Trust with Open Data)</li>
+  <li><a href="http://iswc2012.semanticweb.org/sites/default/files/paper_37.pdf">Linked Data Fusion in ODCleanStore</a> (demo at ISWC 2012)
+</ul>
+
+
+<h2>Running <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span></h2>
+
+<p><span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> is distributed as an executable java .jar archive. You can download the binary along with examples <a href="">here</a>.
+
+<p><span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> can be run with Java, e.g., with the following command:
+
+<p><code>java -jar odcsft-application-&lt;version&gt;-executable.jar</code>
+
+<p>Running it without parameters prints out the usage message with possible options.
+
+<p>What and how should be fused is configured with an XML configuration file. See  <a href="https://github.com/mifeet/LD-FusionTool/tree/master/examples">examples</a> which also serve as documentation of the configuration XML.
+
+<h2><span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> in UnifiedViews</h2>
+
+<p><span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span> was originally developed for a Linked Data processing framework ODCleanStore (hence it was originally named ODCS-FusionTool), which has been superceded by ETL tool <a href="http://unifiedviews.eu/">UnifiedViews</a> developed as a joint project of  Charles University, <a href="http://www.semantic-web.at/">Semantic Web Company GmbH</a>, <a href="http://www.semantica.cz/">Semantica.cz s.r.o.</a>, and <a href="http://www.eea.cz/">EEA s.r.o.</a>
+
+<p>The version for UnifiedViews is available as a Data Processing Unit at <a href="https://github.com/mifeet/FusionTool-DPU">GitHub</a>.
+
+<h2>Contact</h2>
+With questions or suggestions related to <span class="ldft-name">LD-<span class="ldft-name-fusion">Fusion</span>Tool</span>, you can contact the <a href="http://www.ksi.mff.cuni.cz/~michelfeit/">main author</a>. Issues and problems can be reported at <a href="https://github.com/mifeet/LD-FusionTool/issues">GitHub</a>.
+
+
+</section>
+<section>
+          <span class="credits left">Project maintained by <a href="https://github.com/mifeet">mifeet</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+       </section>
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
