@@ -7,20 +7,20 @@
 
 	<artifactId>odcsft-conflict-resolution</artifactId>
 	<name>ODCS-FusionTool Conflict Resolution</name>
-	<version>1.1.2</version>
+	<version>1.1.3-SNAPSHOT</version>
 	<description>ODCS-FustionTool conflict resolver implementation.</description>
 		
 	<parent>
 		<groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
 		<artifactId>odcs-fusion-tool</artifactId>
-		<version>1.1.2</version>
+		<version>1.1.3-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
         <dependency>
             <groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
             <artifactId>odcsft-util</artifactId>
-            <version>1.1.2</version>
+            <version>1.1.3-SNAPSHOT</version>
         </dependency>
 		<dependency>
 			<groupId>cz.cuni.mff.odcleanstore</groupId>

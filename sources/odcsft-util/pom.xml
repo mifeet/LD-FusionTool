@@ -7,12 +7,12 @@
 
 	<artifactId>odcsft-util</artifactId>
 	<name>ODCS-FusionTool Utilities</name>
-	<version>1.1.2</version>
+	<version>1.1.3-SNAPSHOT</version>
 		
 	<parent>
 		<groupId>cz.cuni.mff.odcleanstore.fusiontool</groupId>
 		<artifactId>odcs-fusion-tool</artifactId>
-		<version>1.1.2</version>
+		<version>1.1.3-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
