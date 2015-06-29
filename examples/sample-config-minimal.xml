@@ -2,12 +2,8 @@
 <Config>
   <!-- Definitions of data sources; (required) -->
   <Sources>
-    <!-- Definition of a data source connecting to an Openlink Virtuoso database instance using JDBC -->
-    <DataSource type="virtuoso">
-      <Param name="host" value="localhost" />
-      <Param name="port" value="1111" />
-      <Param name="username" value="dba" />
-      <Param name="password" value="dba" />
+    <DataSource type="file">
+      <Param name="path" value="data.rdf" />
     </DataSource>
   </Sources>
   
