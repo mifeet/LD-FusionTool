@@ -50,23 +50,32 @@
 
     <repositories>
         <repository>
-            <id>cz.cuni.mff.odcleanstore</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/groups/public/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>odcs-libs-release</id>
+            <name>libs-release</name>
+            <url>http://odcs.xrg.cz:8080/artifactory/libs-release-local</url>
         </repository>
         <repository>
-            <id>cz.cuni.mff.odcleanstore-thirdparty</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/thirdparty/</url>
+            <snapshots/>
+            <id>odcs-libs-snapshot</id>
+            <name>libs-snapshot</name>
+            <url>http://odcs.xrg.cz:8080/artifactory/libs-snapshot-local</url>
         </repository>
     </repositories>
 
     <distributionManagement>
         <repository>
-            <id>cz.cuni.mff.odcleanstore</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/releases/</url>
+            <id>odcs.xrg.cz</id>
+            <name>odcs.xrg.cz-releases</name>
+            <url>http://odcs.xrg.cz:8080/artifactory/libs-release-local</url>
         </repository>
+
         <snapshotRepository>
-            <id>cz.cuni.mff.odcleanstore</id>
-            <url>http://gd.projekty.ms.mff.cuni.cz:9123/nexus/content/repositories/snapshots/</url>
+            <id>odcs.xrg.cz</id>
+            <name>odcs.xrg.cz-snapshots</name>
+            <url>http://odcs.xrg.cz:8080/artifactory/libs-snapshot-local</url>
         </snapshotRepository>
     </distributionManagement>
 
