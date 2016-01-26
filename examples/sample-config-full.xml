@@ -125,7 +125,8 @@
                 (optional, defaults to MANYVALUED),
          'aggregationErrroStrategy' defines the aggregation error strategy - possible values are 'IGNORE' and 'RETURN_ALL'
                (optional, defaults to RETURN_ALL)
-          <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function -->
+          <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function ;
+          see https://github.com/mifeet/LD-FusionTool/wiki/Resolution-strategy-configuration for more info -->
     <DefaultStrategy function="ALL" cardinality="MANYVALUED" aggregationErrorStrategy="RETURN_ALL" />
     
     <!-- <ResolutionStrategy> elements specify a conflict resolution policy:
@@ -136,7 +137,8 @@
               (optional, defaults to RETURN_ALL)
          'dependsOn' specifies dependency of properties, i.e. values of dependent properties will be resolved together and not independently
               (optional, defaults to no dependency)
-         <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function -->
+         <Param name="..." value="..." /> optional subelements define additional parameters for the resolution function;
+         see https://github.com/mifeet/LD-FusionTool/wiki/Resolution-strategy-configuration for more info -->
     <ResolutionStrategy function="AVG" cardinality="SINGLEVALUED" dependsOn="fb:latitude">
       <!-- Definition of properties to which the resolution strategy applies to -->
       <Property id="fb:location.geocode.longtitude"/>
